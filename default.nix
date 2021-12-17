@@ -3,10 +3,12 @@
 pkgs.stdenv.mkDerivation {
   name = "z";
   src = ./.;
-  buildInputs = [ pkgs.nodejs ];
   installPhase = ''
     cp -r $src/. .
-    node compile.js
-    mv out $out
+
+    mkdir $out
+    mv {src/,notes/,serve.js} $out
+    echo "${pkgs.nodejs}/bin/node ./serve.js" > $out/run.sh
+    chmod +x $out/run.sh
   '';
 }
