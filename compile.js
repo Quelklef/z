@@ -59,8 +59,45 @@ class BinRel {
 }
 
 
+class Graph {
+  constructor(nodes, getid, succs) {
+    this.nodes = new Set(nodes);
+
+    this.getid = getid;
+    this.succs = succs;
+
+    this.distMat = {};
+
+    for (const node of this.nodes) {
+      const row = this.distMat[getid(node)] = {};
+      for (const node2 of this.nodes) row[node2] = Infinity;
+
+      const seen = new Set();
+      let frontier = new Set([node]);
+      let dist = 0;
+      while (frontier.size) {
+        for (const fnode of frontier) {
+          row[getid(fnode)] = dist;
+          seen.add(fnode);
+        }
+        frontier = new Set([...frontier].flatMap(node => [...this.succs(node)]).filter(n => !seen.has(n)));
+        dist++;
+      }
+    }
+  }
+
+  distance(from, to) {
+    return this.distMat[this.getid(from)][this.getid(to)];
+  }
+}
+
+
 function j_norm(s) {
   return s.toLowerCase();
+}
+
+function min(x, y) {
+  return x < y ? x : y;
 }
 
 function extract(text, open, close) {
@@ -202,8 +239,14 @@ class Note {
     }
   }
 
+  const graph = new Graph(
+    Object.values(notes),
+    note => note.id,
+    note => note.refby,
+  );
+
   for (const note of Object.values(notes)) {
-    fs.writeFileSync(`./out/${note.id}.html`, compile(note));
+    fs.writeFileSync(`./out/${note.id}.html`, compile(note, graph));
   }
 
   {
@@ -220,7 +263,7 @@ class Note {
 }
 
 
-function compile(note) {
+function compile(note, graph) {
   const source = note.source;
   const jtrie = new Trie(Object.keys(note.jmap));
 
@@ -324,8 +367,13 @@ ${html}
 
 
 <u>Referenced by:</u>
-<ul style="line-height: 1em">${[...note.refby].sort((a, b) => b.popularity - a.popularity).map(n => n.listItemHtml).join('')}</ul>
-  `);
+<ul style="line-height: 1em">${
+  [...note.refby]
+    .sort((a, b) => b.popularity - a.popularity)
+    .map(n => n.listItemHtml)
+    .join('')
+}</ul>
+`);
 }
 
 
