@@ -55,6 +55,7 @@ function extract_tagged(text, open, close) {
 function compile(text, termsMap) {
 
   const terms = mktrie(Object.keys(termsMap));
+  const text_lower = text.toLowerCase();
 
   const refs = new Set();
 
@@ -74,15 +75,17 @@ function compile(text, termsMap) {
       continue main;
     }
 
-    const term = terms.longest_prefix_of(text.slice(i));
-    if (term) {
-      const word = text.slice(i, i + term.length);
-      if (normalize_word(word) === term) {
-        const src = termsMap[term][0];
-        body += `<a href="/${src}.html">${word}</a>`;
-        refs.add(src);
-        i += word.length;
-        continue main;
+    if (!'abcdefghijklmnopqrstuvwxyz'.includes(text[i - 1])) {
+      const term = terms.longest_prefix_of(text_lower.slice(i));
+      if (term && !'abcdefghijklmnopqrstuvwxyz'.includes(text[i + term.length])) {
+        const word = text.slice(i, i + term.length);
+        if (normalize_word(word) === term) {
+          const src = termsMap[term][0];
+          body += `<a href="/${src}.html">${word}</a>`;
+          refs.add(src);
+          i += word.length;
+          continue main;
+        }
       }
     }
 
@@ -95,14 +98,15 @@ function compile(text, termsMap) {
   const html = `
 <!DOCTYPE HTML>
 <head>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" integrity="sha384-R4558gYOUz8mP9YWpZJjofhk+zx0AS11p36HnD2ZKj/6JR5z27gSSULCNHIRReVs" crossorigin="anonymous">
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" integrity="sha384-z1fJDqw8ZApjGO3/unPWUPsIymfsJmyrDVWC8Tv/a1HeOtGmkwNd/7xUS0Xcnvsx" crossorigin="anonymous"></script>
-    <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"
-      onload="renderMathInElement(document.body, { delimiters: [ { left: '$$', right: '$$', display: false } ] });"
-    ></script>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" integrity="sha384-R4558gYOUz8mP9YWpZJjofhk+zx0AS11p36HnD2ZKj/6JR5z27gSSULCNHIRReVs" crossorigin="anonymous">
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js" integrity="sha384-z1fJDqw8ZApjGO3/unPWUPsIymfsJmyrDVWC8Tv/a1HeOtGmkwNd/7xUS0Xcnvsx" crossorigin="anonymous"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js" integrity="sha384-+XBljXPPiv+OzfbB3cVmLHf4hdUFHlWNZN5spNQ7rmHTXpd7WvJum6fIACpNNfIR" crossorigin="anonymous"
+    onload="renderMathInElement(document.body, { delimiters: [ { left: '$$', right: '$$', display: false } ] });"
+  ></script>
 </head>
 <body>
-<div style="font-size: 14px; white-space: pre-wrap; font-family: monospace; line-height: 1.1em; margin: 5em 15em;">
+<div style="font-size: 14px; white-space: pre-wrap; font-family: monospace; line-height: 1.1em; margin: 5vh 15vw;">
 ${body}
 </div>
 </body>
