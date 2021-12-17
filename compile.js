@@ -1,7 +1,39 @@
 const fs = require('fs');
 
+function mktrie(strings) {
+  const present = Symbol("present");
+  const trie = {};
+
+  for (const str of strings) {
+    let root = trie;
+    for (const c of str) {
+      root[c] = root[c] || {};
+      root = root[c];
+    }
+    root[present] = true;
+  }
+
+  return {
+
+    longest_prefix_of(str) {
+      let result = null;
+      let root = trie;
+      let path = '';
+      for (const c of str) {
+        if (root[present]) result = path;
+        root = root[c];
+        path += c;
+        if (root === undefined) break;
+        if (root[present]) result = path;
+      }
+      return result;
+    }
+
+  }
+}
+
 function normalize_word(word) {
-  return [...word.toLowerCase()].filter(c => 'abcdefghijklmnopqrstuvwxyz'.includes(c)).join('');
+  return word.toLowerCase();
 }
 
 function extract_tagged(text, open, close) {
@@ -21,15 +53,16 @@ function extract_tagged(text, open, close) {
 }
 
 function compile(text, termsMap) {
+
+  const terms = mktrie(Object.keys(termsMap));
+
+  const refs = new Set();
+
   let body = '';
-
   let i = 0;
-  while (i < text.length) {
 
-    while (text[i] === ' ') {
-      body += ' ';
-      i++;
-    }
+  main:
+  while (i < text.length) {
 
     // [!explicit reference!]
     if (text.slice(i, i + 2) === '[!') {
@@ -37,24 +70,29 @@ function compile(text, termsMap) {
       const note = text.slice(i + 2, j);
       body += `<a href="/${note}">${note}</a>`;
       i = j + 2;
+      refs.add(note);
+      continue main;
     }
 
-    else {
-      let j = text.indexOf(' ', i);
-      j = j === -1 ? text.length : j;
-      const word = text.slice(i, j);
-      if ( (termsMap[word] || []).length === 1 ) {
-        const [src] = termsMap[word];
+    const term = terms.longest_prefix_of(text.slice(i));
+    if (term) {
+      const word = text.slice(i, i + term.length);
+      if (normalize_word(word) === term) {
+        const src = termsMap[term][0];
         body += `<a href="/${src}.html">${word}</a>`;
-      } else {
-        body += word;
+        refs.add(src);
+        i += word.length;
+        continue main;
       }
-      i = j;
     }
+
+    body += text[i];
+    i++;
+    continue main;
 
   }
 
-  return `
+  const html = `
 <!DOCTYPE HTML>
 <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" integrity="sha384-R4558gYOUz8mP9YWpZJjofhk+zx0AS11p36HnD2ZKj/6JR5z27gSSULCNHIRReVs" crossorigin="anonymous">
@@ -64,11 +102,13 @@ function compile(text, termsMap) {
     ></script>
 </head>
 <body>
-<div style="font-size: 14px; white-space: pre; font-family: monospace; line-height: 1.1em; margin: 5em 15em;">
+<div style="font-size: 14px; white-space: pre-wrap; font-family: monospace; line-height: 1.1em; margin: 5em 15em;">
 ${body}
 </div>
 </body>
 `;
+
+  return { html, refs };
 }
 
 function main() {
@@ -76,6 +116,7 @@ function main() {
   fs.mkdirSync('./out');
   const names = fs.readdirSync('./notes').map(fname => fname.slice(0, fname.length - '.z'.length));
 
+  // map term -> Array(defining note names)
   let termsMap = {};
   for (const name of names) {
     const text = fs.readFileSync('./notes/' + name + '.z').toString();
@@ -84,9 +125,41 @@ function main() {
       termsMap[term] = [].concat(termsMap[term] || [], [name]);
   }
 
+  // map name -> Set(referenced names)
+  const refMap = {};
   for (const name of names) {
     const text = fs.readFileSync('./notes/' + name + '.z').toString();
-    fs.writeFileSync('./out/' + name + '.html', compile(text, termsMap));
+    const { html, refs } = compile(text, termsMap);
+    refMap[name] = refs;
+    fs.writeFileSync('./out/' + name + '.html', html);
+  }
+
+  const refMap_inv = {};
+  for (const k in refMap) {
+    for (const v of refMap[k]) {
+      refMap_inv[v] = [].concat(refMap_inv[v] || [], [k]);
+    }
+  }
+
+  {
+    const pop = name => ( refMap_inv[name] || [] ).length;
+
+    const namesByPop = names;
+    namesByPop.sort((a, b) => pop(b) - pop(a));
+
+    let items = [];
+    for (const name of namesByPop) {
+      const text = fs.readFileSync('./notes/' + name + '.z').toString();
+      const terms = extract_tagged(text, '[:', ':]');
+      items.push(`<li><a href="/${name}.html">${name}</a> x${pop(name)} (${[...terms].join(' ')})</li>`);
+    }
+    const html = `
+<!DOCTYPE HTML>
+<body>
+  ${items.join('\n')}
+</body>
+    `;
+    fs.writeFileSync('./out/index.html', html);
   }
 }
 
