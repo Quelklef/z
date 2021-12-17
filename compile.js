@@ -2,7 +2,7 @@ const fs = require('fs');
 
 
 class Trie {
-  constructor(strings, normalize) {
+  constructor(strings) {
     this.isElement = Symbol("isElement");
 
     this.trie = {};
@@ -59,150 +59,278 @@ class BinRel {
 }
 
 
+function j_norm(s) {
+  return s.toLowerCase();
+}
+
+function extract(text, open, close) {
+  const result = new Set();
+  let i = 0;
+  while (true) {
+    i = text.indexOf(open, i);
+    const j = text.indexOf(close, i);
+    if (i === -1 || j === -1) break;
+    result.add(text.slice(i + open.length, j));
+    i = j + close.length;
+  }
+  return result;
+}
+
+// preimage mapping
+// map k v -> map v [k]
+function invert(map) {
+  const inv = {};
+  for (const k in map) {
+    for (const v of map[k]) {
+      if (!(v in inv)) inv[v] = [];
+      inv[v].push(k);
+    }
+  }
+  return inv;
+}
+
 class Note {
-  constructor(id, text) {
+  constructor({ id, fname, jdefs, jmap, refs, refby }) {
     this.id = id;
-    this.text = text;
+    this.fname = fname;
+    this.jdefs = jdefs;
+    this.jmap = jmap;
+    this.refs = refs;
+    this.refby = refby;
+  }
+
+  get source() {
+    return fs.readFileSync(this.fname).toString();
   }
 
   get href() {
     return `/${this.id}.html`;
   }
 
-  get jargon() {
-    const jargon = new Set();
-    let i = 0;
-    while (true) {
-      i = this.text.indexOf('[:', i);
-      const j = this.text.indexOf(':]', i);
-      if (i === -1 || j === -1) break;
-      jargon.add(Note.toJarg(this.text.slice(i + 2, j)));
-      i = j + 2;
-    }
-    return jargon;
+  get popularity() {
+    return this.refby.size;
   }
 
-  static toJarg(s) {
-    return s.toLowerCase();
+  get jrefs() {
+    return Object.keys(this.jmap);
+  }
+
+  get listItemHtml() {
+    return `<li><a href="${this.href}">${this.id}</a> (⋆${this.popularity}) (${[...this.jdefs].join(', ')})</li>`;
   }
 }
 
 
-class Graph {
-  constructor(notes) {
-    this.notesMap = {};
-    for (const note of notes)
-      this.notesMap[note.id] = note;
+{
 
-    const jargon = [...notes].flatMap(note => [...note.jargon]);
-    this.jargonTrie = new Trie(jargon);
+  fs.rmSync('./out', { recursive: true, force: true });
+  fs.mkdirSync('./out');
 
-    this.jargonReln = new BinRel(notes.flatMap(note => [...note.jargon].map(jarg => [note, jarg])));
+  const noteIds = new Set(fs.readdirSync('./notes').map(fname => fname.slice(0, fname.length - '.z'.length)));
+  const getSource = noteId => fs.readFileSync(`./notes/${noteId}.z`).toString();
+
+  const mapJargonDef = {};  // note id -> Set(defined jargon)
+  {
+    for (const noteId of noteIds)
+      mapJargonDef[noteId] = new Set([...extract(getSource(noteId), '[:', ':]')].map(j_norm));
   }
 
-  compile(note) {
+  const mapJargonMen = {};  // note id -> Set(mentioned jargon)
+  {
+    const allJargon = new Trie(Object.values(mapJargonDef).flatMap(jarg => [...jarg]));
+    for (const noteId of noteIds) {
+      const jargon = mapJargonMen[noteId] = new Set();
+      const source = getSource(noteId);
 
-    const meta = {
-      references: new Set()
-    };
-
-    let i = 0;
-    let result = '';
-
-    loop:
-    while (i < note.text.length) {
-
-      // LaTeX (inline)
-      latex_inline:
-      if (note.text.startsWith('$$', i)) {
-        const j = note.text.indexOf('$$', i + 2);
-        if (j === -1) break latex_inline;
-        result += note.text.slice(i, j + 2);
-        i = j + 2;
-        continue loop;
-      }
-
-      // LaTeX (block)
-      latex_block:
-      if (note.text.startsWith('$[', i)) {
-        const j = note.text.indexOf(']$', i + 2);
-        if (j === -1) break latex_block;
-        result += note.text.slice(i, j + 2);
-        i = j + 2;
-        continue loop;
-      }
-
-      span:
-      if (note.text.startsWith('\\', i) && !note.text.startsWith('\\\\', i)) {
-        const pairs = {
-          '[': ']',
-          '(': ')',
-          '<': '>',
-          '{': '}',
-          '$': '$',
-        };
-
-        let j = i;
-        while (!Object.keys(pairs).includes(note.text[j])) j++;
-        const open = note.text[j];
-        const close = pairs[open];
-
-        const tag = note.text.slice(i + 1, j);
-
-        const k = note.text.indexOf(close, j + 1);
-        if (k === -1) break span;
-        const content = note.text.slice(j + 1, k);
-
-        result += (
-            tag === 'i' ? `<i>${content}</i>`
-          : tag === 'b' ? `<b>${content}</b>`
-          : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
-          : `<span>${content}</span>`
-        );
-
-        i = k + 1;
-      }
-
-      // [[explicit reference]]
-      if (note.text.startsWith('[[', i)) {
-        const j = note.text.indexOf(']]', i);
-        const reference = note.text.slice(i + 2, j);
-        const jarg = Note.toJarg(reference);
-        const source = [...this.jargonReln.rtlGet(jarg)][0];
-        if (source)
-          result += `<a href="${source.href}">${reference}</a>`;
-        else
-          result += `<span style="color:ref">${reference}</span>`;
-        i = j + 2;
-
-        if (reference in this.notesMap)
-          meta.references.add(this.notesMap[reference]);
-        continue loop;
-      }
-
-      // Implicit reference
-      implicit: {
-        if (/\w/.test(note.text[i - 1])) break implicit;
-        const jarg = this.jargonTrie.longestPrefixOf(Note.toJarg(note.text.slice(i)));
-        if (!jarg || /\w/.test(note.text[i + jarg.length])) break implicit;
-        const source = [...this.jargonReln.rtlGet(jarg)][0];  // n.b. [0] is arbitrary
-        const word = note.text.slice(i, i + jarg.length);
-        result += `<a href="${source.href}">${word}</a>`;
+      let i = 0;
+      while (i < source.length) {
+        if (/\w/.test(source[i - 1])) { i++; continue; }
+        const jarg = allJargon.longestPrefixOf(j_norm(source.slice(i)));
+        if (!jarg || /\w/.test(source[i + jarg.length])) { i++; continue; }
+        const word = source.slice(i, i + jarg.length);
+        jargon.add(j_norm(word));
         i += word.length;
-
-        meta.references.add(source);
-        continue loop;
       }
+    }
+  }
 
-      // Default case
-      result += note.text[i];
-      i++;
-      continue loop;
+  // Resolve implicit references
+  const mapJargonRef = {};  // note id -> jarg -> target note id
+  {
+    // Do it naively (for now)
+    const mapJargonDef_inv = invert(mapJargonDef);
+    for (const noteId of noteIds) {
+      mapJargonRef[noteId] = {};
+      for (const jarg of mapJargonMen[noteId]) {
+        mapJargonRef[noteId][jarg] = mapJargonDef_inv[jarg][0];
+      }
+    }
+  }
 
+  const mapRef = {} // note id -> Set(referenced notes)
+  {
+    for (const noteId of noteIds) {
+      mapRef[noteId] = new Set([
+        ...extract(getSource(noteId), '[[', ']]'),  // explicit
+        ...Object.values(mapJargonRef[noteId]),  // implicit
+      ]);
+    }
+  }
+
+  let notes = {};
+  {
+    for (const noteId of noteIds) {
+      notes[noteId] = new Note({
+        id: noteId,
+        fname: `./notes/${noteId}.z`,
+        jdefs: mapJargonDef[noteId],
+        jmap: null,
+        refs: mapRef[noteId],
+        refby: null,
+      });
     }
 
-  const html = `
-<!DOCTYPE HTML>
+    for (const noteId of noteIds) {
+      const jmap = notes[noteId].jmap = {};
+      for (const [jarg, refId] of Object.entries(mapJargonRef[noteId])) {
+        jmap[jarg] = notes[refId];
+      }
+    }
+
+    for (const noteId of noteIds) {
+      notes[noteId].refby = new Set([...noteIds].filter(nid => mapRef[nid].has(noteId)).map(nid => notes[nid]));
+    }
+  }
+
+  for (const note of Object.values(notes)) {
+    fs.writeFileSync(`./out/${note.id}.html`, compile(note));
+  }
+
+  {
+    const notesByPopularity = [...Object.values(notes)];
+    notesByPopularity.sort((a, b) => b.popularity - a.popularity);
+
+    const html = template(`<ul>${notesByPopularity.map(n => n.listItemHtml).join('')}</ul>`);
+    fs.writeFileSync('./out/index.html', html);
+  }
+
+
+  console.log('done');
+
+}
+
+
+function compile(note) {
+  const source = note.source;
+  const jtrie = new Trie(Object.keys(note.jmap));
+
+  let i = 0;
+  let html = '';
+
+  loop:
+  while (i < source.length) {
+
+    // LaTeX (inline)
+    latex_inline:
+    if (source.startsWith('$$', i)) {
+      const j = source.indexOf('$$', i + 2);
+      if (j === -1) break latex_inline;
+      html += source.slice(i, j + 2);
+      i = j + 2;
+      continue loop;
+    }
+
+    // LaTeX (block)
+    latex_block:
+    if (source.startsWith('$[', i)) {
+      const j = source.indexOf(']$', i + 2);
+      if (j === -1) break latex_block;
+      html += source.slice(i, j + 2);
+      i = j + 2;
+      continue loop;
+    }
+
+    span:
+    if (source.startsWith('\\', i) && !source.startsWith('\\\\', i)) {
+      const pairs = {
+        '[': ']',
+        '(': ')',
+        '<': '>',
+        '{': '}',
+        '$': '$',
+      };
+
+      let j = i;
+      while (!Object.keys(pairs).includes(source[j])) j++;
+      const open = source[j];
+      const close = pairs[open];
+
+      const tag = source.slice(i + 1, j);
+
+      const k = source.indexOf(close, j + 1);
+      if (k === -1) break span;
+      const content = source.slice(j + 1, k);
+
+      html += (
+          tag === 'i' ? `<i>${content}</i>`
+        : tag === 'b' ? `<b>${content}</b>`
+        : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
+        : `<span>${content}</span>`
+      );
+
+      i = k + 1;
+    }
+
+    // [[explicit reference]]
+    if (source.startsWith('[[', i)) {
+      const j = source.indexOf(']]', i);
+      const refToWord = source.slice(i + 2, j);
+      const refToNote = note.jmap[j_norm(refToWord)];
+      if (refToNote)
+        html += `<a href="${refToNote.href}">${refToWord}</a>`;
+      else
+        html += `<span style="color:ref">${refToWord}</span>`;
+      i = j + 2;
+      continue loop;
+    }
+
+    // Implicit reference
+    implicit: {
+      if (/\w/.test(source[i - 1])) break implicit;
+      const jarg = jtrie.longestPrefixOf(j_norm(source.slice(i)));
+      if (!jarg || /\w/.test(source[i + jarg.length])) break implicit;
+      const word = source.slice(i, i + jarg.length);
+      const refToNote = note.jmap[jarg];
+      html += `<a href="${refToNote.href}">${word}</a>`;
+      i += word.length;
+      continue loop;
+    }
+
+    // Default case
+    html += source[i];
+    i++;
+    continue loop;
+
+  }
+
+  return template(`
+${html}
+
+
+
+
+
+
+
+
+<u>Referenced by:</u>
+<ul style="line-height: 1em">${[...note.refby].sort((a, b) => b.popularity - a.popularity).map(n => n.listItemHtml).join('')}</ul>
+  `);
+}
+
+
+function template(body) {
+  return `<!DOCTYPE HTML>
 <head>
   <meta charset="utf-8">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" integrity="sha384-R4558gYOUz8mP9YWpZJjofhk+zx0AS11p36HnD2ZKj/6JR5z27gSSULCNHIRReVs" crossorigin="anonymous">
@@ -219,62 +347,25 @@ a {
   color: #ab3972;
   background-color: #ab39720d;
 }
+
+#main {
+  font-size: 14px;
+  white-space: pre-wrap;
+  font-family: monospace;
+  line-height: 1.5em;
+  margin: 0 27vw 35vh 27vw;
+}
 </style>
 
-<div style="font-size: 14px; white-space: pre-wrap; font-family: monospace; line-height: 1.5em; margin: 8vh 28vw;">
-${result}
+<div id="main">
+ζ &bull; <a href="/">Index</a>
+
+
+  ${body}
 </div>
-</body>
-`;
 
-  return { html, meta };
-
-  }
+</body>`;
 }
 
 
-{
-  fs.rmSync('./out', { recursive: true, force: true });
-  fs.mkdirSync('./out');
 
-  const notes = fs.readdirSync('./notes').map(fname => {
-    const id = fname.slice(0, fname.length - '.z'.length);
-    const text = fs.readFileSync('./notes/' + fname).toString();
-    return new Note(id, text);
-  });
-
-  const graph = new Graph(notes);
-
-  const refReln = new BinRel();
-
-  for (const note of notes) {
-    const { html, meta } = graph.compile(note);
-    fs.writeFileSync('./out/' + note.href, html);
-    for (const ref of meta.references)
-      refReln.add(note, ref);
-  }
-
-  {
-    const popularity = new Map();
-    for (const note of notes) popularity.set(note, 0);
-    for (const note of notes)
-      for (const ref of refReln.ltrGet(note))
-        popularity.set(ref, popularity.get(ref) + 1);
-
-    const notesByPopularity = [...notes];
-    notesByPopularity.sort((a, b) => popularity.get(b) - popularity.get(a));
-
-    const items = notesByPopularity.map(note =>
-      `<li><a href="${note.href}">${note.id}</a> x${popularity.get(note)} (${[...note.jargon].join('; ')})</li>`);
-
-    const html = `
-<!DOCTYPE HTML>
-<body>
-  ${items.join('\n')}
-</body>
-    `;
-    fs.writeFileSync('./out/index.html', html);
-  }
-
-  console.log('done');
-}
