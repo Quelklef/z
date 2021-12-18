@@ -125,7 +125,7 @@ function decorate(notes, meta) {
   for (const note of notes) {
     note.mkLink = function(text = null) {
       text = text || note.id;
-      return `<a href="#" onclick="app.routes.note('${note.id}')">${text}</a>`;
+      return `<a href="#/${note.id}" onclick="app.routes.note('${note.id}')">${text}</a>`;
     }
   }
 
@@ -288,7 +288,9 @@ async function main() {
     }
   }
 
-  app.routes.index();
+  const id = window.location.hash.slice(2);
+  if (id && id in meta.notesById) app.routes.note(id);
+  else app.routes.index();
 }
 
 main();
