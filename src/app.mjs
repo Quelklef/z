@@ -85,7 +85,6 @@ function decorate(notes, meta) {
       meta.jargonToDefiningNoteSetMap[jarg].add(note);
     }
   }
-  console.log(meta.jargonToDefiningNoteSetMap);
 
   for (const note of notes) {
     note.mentionedJargonToDefiningNoteMap = {};
@@ -165,6 +164,16 @@ function renderNote(note) {
     if (note.text.startsWith('$[', i)) {
       const j = note.text.indexOf(']$', i + 2);
       if (j === -1) break latex_block;
+      html += note.text.slice(i, j + 2);
+      i = j + 2;
+      continue loop;
+    }
+
+    // Definitions
+    defn:
+    if (note.text.startsWith('[:', i)) {
+      const j = note.text.indexOf(':]', i + 2);
+      if (j === -1) break defn;
       html += note.text.slice(i, j + 2);
       i = j + 2;
       continue loop;
@@ -267,7 +276,6 @@ function doKatex() {
   // Fix that here
   for (const $el of document.getElementsByClassName('katex-display')) {
     const text = $el.parentNode.nextSibling;
-    console.log($el, text);
     if (text && text.nodeName === '#text' && text.textContent.startsWith('\n'))
       text.textContent = text.textContent.slice(1);
   }
