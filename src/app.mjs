@@ -262,6 +262,15 @@ function doKatex() {
       ]
     }
   );
+
+  // Display math has weird margins in elements with white-space:pre-wrap
+  // Fix that here
+  for (const $el of document.getElementsByClassName('katex-display')) {
+    const text = $el.parentNode.nextSibling;
+    console.log($el, text);
+    if (text && text.nodeName === '#text' && text.textContent.startsWith('\n'))
+      text.textContent = text.textContent.slice(1);
+  }
 }
 
 async function main() {
