@@ -224,6 +224,10 @@ function renderNote(note) {
     }
 
     // Implicit reference
+    // TODO:
+    //   This has a bug where if two jargs A,B match the current text,
+    //   and A is shorter than B, and A does not end on a word boundary
+    //   but B does, then we will fail to add a link to B.
     implicit: {
       if (/\w/.test(note.text[i - 1])) break implicit;
       const jarg = mentionedJargonTrie.longestPrefixOf(j_norm(note.text.slice(i)));

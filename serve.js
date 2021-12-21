@@ -39,7 +39,7 @@ const server = http.createServer((req, res) => {
 
     let data = null;
     try {
-      data = fs.readFileSync('./src' + url);
+      data = fs.readFileSync('./app' + url);
     } catch (e) { }
 
     if (data !== null) {
