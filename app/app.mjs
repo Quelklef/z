@@ -42,7 +42,6 @@ async function getNotes() {
 
   const notes = [];
   await Promise.all(noteIds.map(async noteId => {
-    console.log(`Loading ${noteId}`)
     const content = await (await fetch(`/api/get/${noteId}`)).text();
     notes.push({
       text: content,
@@ -139,6 +138,14 @@ function renderIndex(notes, meta) {
   );
 }
 
+function chompDelimited(text, i, open, close) {
+  if (!text.startsWith(open, i)) return [i, null];
+  const j = text.indexOf(close, i + open.length);
+  if (j === -1) return [i, null];
+  const content = text.slice(i + open.length, j);
+  return [j + close.length, content];
+}
+
 function renderNote(note) {
 
   const mentionedJargonTrie = new Trie(note.mentionedJargonSet);
@@ -149,24 +156,20 @@ function renderNote(note) {
   loop:
   while (i < note.text.length) {
 
-    // LaTeX (inline)
-    latex_inline:
-    if (note.text.startsWith('$$', i)) {
-      const j = note.text.indexOf('$$', i + 2);
-      if (j === -1) break latex_inline;
-      html += note.text.slice(i, j + 2);
-      i = j + 2;
-      continue loop;
-    }
-
-    // LaTeX (block)
-    latex_block:
-    if (note.text.startsWith('$[', i)) {
-      const j = note.text.indexOf(']$', i + 2);
-      if (j === -1) break latex_block;
-      html += note.text.slice(i, j + 2);
-      i = j + 2;
-      continue loop;
+    // literal sections
+    {
+      const literalDelims = [
+        ['$$', '$$'],  // inline latex
+        ['$[', ']$'],  // block latex
+      ];
+      for (const [open, close] of literalDelims) {
+        let content;
+        [i, content] = chompDelimited(note.text, i, open, close);
+        if (content !== null) {
+          html += open + content + close;
+          continue loop;
+        }
+      }
     }
 
     // Definitions
@@ -187,27 +190,36 @@ function renderNote(note) {
         '<': '>',
         '{': '}',
         '$': '$',
+        '::': ';;',
       };
 
-      let j = i;
-      while (!Object.keys(pairs).includes(note.text[j])) j++;
-      const open = note.text[j];
-      const close = pairs[open];
+      let j = i, open, close;
+      done: while (!open) {
+        for (const [left, right] of Object.entries(pairs)) {
+          if (note.text.startsWith(left, j)) {
+            [open, close] = [left, right];
+            break done;
+          }
+        }
+        j++;
+      }
 
-      const tag = note.text.slice(i + 1, j);
+      const tag = note.text.slice(i + '\\'.length, j);
 
-      const k = note.text.indexOf(close, j + 1);
+      const k = note.text.indexOf(close, j + open.length);
       if (k === -1) break span;
-      const content = note.text.slice(j + 1, k);
+      const content = note.text.slice(j + open.length, k);
 
       html += (
           tag === 'i' ? `<i>${content}</i>`
         : tag === 'b' ? `<b>${content}</b>`
         : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
+        : tag === 'z' ? `<script type="text/tikz"> ${content} </script>`
+        : tag === 'Z' ? `<center><script type="text/tikz"> ${content} </script></center>`
         : `<span>${content}</span>`
       );
 
-      i = k + 1;
+      i = k + close.length;
     }
 
     // [[explicit reference]]

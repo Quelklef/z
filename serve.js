@@ -37,10 +37,13 @@ const server = http.createServer((req, res) => {
 
     const url = req.url === '/' ? '/index.html' : req.url;
 
+    const roots = ['./app', './static'];
     let data = null;
-    try {
-      data = fs.readFileSync('./app' + url);
-    } catch (e) { }
+    for (const root of roots) {
+      try {
+        data = fs.readFileSync(root + url);
+      } catch (e) { }
+    }
 
     if (data !== null) {
       if (url.endsWith('.js') || url.endsWith('.mjs'))

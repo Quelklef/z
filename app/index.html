@@ -4,9 +4,33 @@
   <meta charset="utf-8">
   <title>ζ</title>
 
+  <!-- KaTeX -->
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css"l >
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.js"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/contrib/auto-render.min.js"></script>
+
+  <!-- TikZ -->
+  <link rel="stylesheet" type="text/css" href="http://tikzjax.com/v1/fonts.css">
+  <script>
+    _fetch_old = fetch;
+    fetch = function(url, opts, ..._) {
+      let isTikzjaxReq = false;
+      {
+        let urlObj;
+        try {
+          urlObj = new URL(url);
+        } catch { };
+        isTikzjaxReq = urlObj && urlObj.host === 'tikzjax.com';
+      }
+
+      if (isTikzjaxReq) {
+        return _fetch_old(url, { ...opts, mode: 'no-cors' });
+      } else {
+        return _fetch_old(url, opts);
+      }
+    }
+  </script>
+  <script src="tikzjax.js"></script>
 
   <script src="./app.mjs" type="module"></script>
 
