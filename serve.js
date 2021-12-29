@@ -37,7 +37,7 @@ const server = http.createServer((req, res) => {
 
     const url = req.url === '/' ? '/index.html' : req.url;
 
-    const roots = ['./app', './static'];
+    const roots = ['./', './static'];
     let data = null;
     for (const root of roots) {
       try {

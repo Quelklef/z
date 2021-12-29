@@ -1,5 +1,33 @@
+class Trie {
+  constructor(strings) {
+    this.isElement = Symbol("isElement");
 
-import { Trie } from './trie.mjs';
+    this.trie = {};
+    strings = new Set(strings);
+    for (const str of strings) {
+      let root = this.trie;
+      for (const ch of str)
+        root = (root[ch] = root[ch] || {});
+      root[this.isElement] = true;
+    }
+  }
+
+  longestPrefixOf(string) {
+    let result = null;
+    let root = this.trie;
+    let path = '';
+
+    for (const ch of string) {
+      if (root[this.isElement]) result = path;
+      root = root[ch];
+      path += ch;
+      if (root === undefined) break;
+    }
+    if (root && root[this.isElement]) result = path;
+
+    return result;
+  }
+}
 
 function min(x, y) {
   return x < y ? x : y;
@@ -37,19 +65,20 @@ function j_norm(s) {
 
 // -- end util -- //
 
-async function getNotes() {
-  const noteIds = await (await fetch('/api/list')).json();
+const getNotes = async function() {
+  const listResponse = await fetch('/api/list');
+  const noteIds = await listResponse.json();
 
-  const notes = [];
-  await Promise.all(noteIds.map(async noteId => {
-    const content = await (await fetch(`/api/get/${noteId}`)).text();
-    notes.push({
+  async function getNote(noteId) {
+    const getResponse = await fetch(`/api/get/${noteId}`);
+    const content = await getResponse.text();
+    return {
       text: content,
       id: noteId,
-    });
-  }));
+    };
+  }
 
-  return notes;
+  return await Promise.all(noteIds.map(getNote));
 }
 
 function decorate(notes, meta) {
@@ -163,7 +192,8 @@ function renderNote(note) {
         ['$$', '$$'],  // inline latex
         ['$[', ']$'],  // block latex
       ];
-      for (const [open, close] of literalDelims) {
+      for (const elem of literalDelims) {
+        const [open, close] = elem;
         let content;
         [i, content] = chompDelimited(note.text, i, open, close);
         if (content !== null) {
@@ -196,7 +226,8 @@ function renderNote(note) {
 
       let j = i, open, close;
       done: while (!open) {
-        for (const [left, right] of Object.entries(pairs)) {
+        for (const elem of Object.entries(pairs)) {
+          const [left, right] = elem;
           if (note.text.startsWith(left, j)) {
             [open, close] = [left, right];
             break done;
@@ -298,7 +329,7 @@ function doKatex() {
   }
 }
 
-async function main() {
+async function fmain() {
   const notes = await getNotes();
   const meta = {};
   decorate(notes, meta);
@@ -327,4 +358,4 @@ async function main() {
   else app.routes.index();
 }
 
-main();
+exports.fmain = fmain;
