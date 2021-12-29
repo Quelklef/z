@@ -69,6 +69,7 @@ function decorate(notes, meta) {
     while (i < note.text.length) {
       if (/\w/.test(note.text[i - 1])) { i++; continue; }
       const jarg = meta.allJargonTrie.longestPrefixOf(j_norm(note.text.slice(i)));
+      if (note.definedJargonSet.has(jarg)) { i++; continue; }
       if (!jarg || /\w/.test(note.text[i + jarg.length])) { i++; continue; }
       const word = note.text.slice(i, i + jarg.length);
       note.mentionedJargonSet.add(jarg);
