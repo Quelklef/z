@@ -73,10 +73,46 @@ in {
     buildInputs =
       [ (nixed.command { srcs = [ ''$(realpath "$PWD/app")'' ]; })
         pkgs.nodejs
+        pkgs.entr
       ];
 
     shellHook = ''
-      echo '✨🐈✨'
+
+      function z.build-inc {(
+        echo
+      )}
+
+      function z.build-full {(
+        set -eo pipefaile
+        rm -rf .working
+        z.build-inc
+      )}
+
+      function z.workflow-build {
+        echo Watching
+        { find app; find notes; echo serve.js; } | entr -s '
+          set -eo pipefail
+          echo "Inc build"
+
+          mkdir -p .working
+          cd .working
+
+          [ -d static ] || {
+            mkdir static
+            cp -r ${static}/. ./static
+          }
+
+          rm -rf app index.html serve.js notes
+          cp -r ../{app/,app/index.html,serve.js,notes/} .
+
+          purs-nix bundle
+        '
+      }
+
+      function z.workflow-serve {(
+        cd .working && ls serve.js | entr -cr node serve.js
+      )}
+
     '';
   };
 
