@@ -9,6 +9,15 @@ purs-nix =
        };
   in import fetched {};
 
+elmish-latest =
+  let src = pkgs.fetchFromGitHub
+              { owner = "ursi";
+                repo   = "purescript-elmish";
+                rev    = "87ee4b198f86bf57d215fd220899206f13b5f7a4";
+                sha256 = "0yx3jvjsasm8hrczda18j8mngr7q7z77z9cfr0crnsj4jbkx5pap";
+              };
+  in purs-nix.ps-pkgs-ns.ursi.elmish.local src;
+
 npmlock2nix =
   let fetched = builtins.fetchGit {
         url = "https://github.com/tweag/npmlock2nix.git";

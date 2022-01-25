@@ -65,7 +65,7 @@ function j_norm(s) {
 
 // -- end util -- //
 
-const getNotes = async function() {
+async function getNotes() {
   const listResponse = await fetch('/api/list');
   const noteIds = await listResponse.json();
 
@@ -78,7 +78,11 @@ const getNotes = async function() {
     };
   }
 
-  return await Promise.all(noteIds.map(getNote));
+  const notes = await Promise.all(noteIds.map(getNote));
+
+  const meta = {};
+  decorate(notes, meta);
+  return notes;
 }
 
 function decorate(notes, meta) {
@@ -153,19 +157,22 @@ function decorate(notes, meta) {
   for (const note of notes) {
     note.mkLink = function(text = null) {
       text = text || note.id;
-      return `<a href="#/${note.id}" onclick="app.routes.note('${note.id}')">${text}</a>`;
+      if (!window.navs) window.navs = {};
+      window.navs[note.id] = function() { window.navTo(note); };
+      return `<a href="#/${note.id}" onclick="window.navs['${note.id}']()">${text}</a>`;
     }
   }
 
 }
 
-function renderIndex(notes, meta) {
-  return (
+function renderIndex(notes) {
+  const html = (
     [...notes]
       .sort((na, nb) => nb.popularity - na.popularity)
       .map(note => `${note.mkLink()} (⋆${note.popularity}) (${[...note.definedJargonSet].join(', ')})`)
       .join('\n')
   );
+  return { html };
 }
 
 function chompDelimited(text, i, open, close) {
@@ -176,7 +183,7 @@ function chompDelimited(text, i, open, close) {
   return [j + close.length, content];
 }
 
-function renderNote(note) {
+function renderForView(note) {
 
   const mentionedJargonTrie = new Trie(note.mentionedJargonSet);
 
@@ -290,7 +297,7 @@ function renderNote(note) {
 
   }
 
-  return `
+  html = `
 ${html}
 
 
@@ -308,9 +315,11 @@ ${html}
     .join('')
 }</ul>`;
 
+  return { html };
+
 }
 
-function doKatex() {
+exports.doKatex = function() {
   window.renderMathInElement(document.body,
     { delimiters:
       [
@@ -329,33 +338,16 @@ function doKatex() {
   }
 }
 
-async function fmain() {
-  const notes = await getNotes();
-  const meta = {};
-  decorate(notes, meta);
 
-  const $main = document.getElementsByTagName('main')[0];
+// -- //
 
-  const app = window.app = {};
+exports.getNotes = getNotes;
+exports.renderForView = renderForView;
+exports.renderIndex = renderIndex;
 
-  app.routes = {};
-  app.routes.index = function() {
-    console.log('Route to index');
-    $main.innerHTML = renderIndex(notes, meta);
-    doKatex();
-  }
-  app.routes.note = function(noteId) {
-    console.log(`Route to ${noteId}`);
-    const note = meta.notesById[noteId];
-    if (note) {
-      $main.innerHTML = renderNote(note);
-      doKatex();
-    }
-  }
-
-  const id = window.location.hash.slice(2);
-  if (id && id in meta.notesById) app.routes.note(id);
-  else app.routes.index();
-}
-
-exports.fmain = fmain;
+exports.establish = navToImpl => () => {
+  window.navTo = function(note) {
+    console.log('Nav to ' + note.id);
+    navToImpl(note)();
+  };
+};

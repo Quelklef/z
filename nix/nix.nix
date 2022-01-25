@@ -1,6 +1,6 @@
 let
 
-inherit (import ./pins.nix) pkgs purs-nix npmlock2nix gitignoreSource;
+inherit (import ./pins.nix) pkgs purs-nix npmlock2nix gitignoreSource elmish-latest;
 
 nixed = purs-nix.purs
   { srcs = [ ../app ];
@@ -11,6 +11,9 @@ nixed = purs-nix.purs
         lists
         maybe
         node-fs
+        elmish-latest
+        aff
+        aff-promise
       ];
   };
 
@@ -90,7 +93,7 @@ in {
 
       function z.workflow-build {
         echo Watching
-        { find app; find notes; echo serve.js; } | entr -s '
+        { find app; find notes; echo serve.js; } | entr -sc '
           set -eo pipefail
           echo "Inc build"
 
