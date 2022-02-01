@@ -5,6 +5,8 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (runEffectFn1)
 import Effect.Aff (launchAff_)
+import Data.Maybe (Maybe (..))
+import Data.Nullable (Nullable, toMaybe)
 import Data.Generic.Rep (class Generic)
 import Control.Promise (Promise, toAffE)
 import Control.Monad.Writer.Class (tell)
@@ -16,12 +18,14 @@ import Html as H
 foreign import data Note :: Type
 
 foreign import getNotes :: Effect (Promise (Array Note))
+foreign import loadNote :: Array Note -> Effect (Nullable Note)
 
 foreign import renderForView :: Note -> { html :: String }
 foreign import renderIndex :: Array Note -> { html :: String }
 
 foreign import establish :: (Note -> Effect Unit) -> Effect Unit
 foreign import doKatex :: Effect Unit
+foreign import doTikz :: Effect Unit
 
 
 type Model =
@@ -33,17 +37,17 @@ data Page = Index | View Note
 
 derive instance Generic Page _
 
-data Message = NavTo Page
+data Msg = NavTo Page
 
-derive instance Generic Message _
-
-
-
-update :: Model -> Message -> Update Message Model
-update model (NavTo page) = pure $ model { page = page }
+derive instance Generic Msg _
 
 
-view :: Model -> { head :: Array (Html Message), body :: Array (Html Message) }
+
+updateImpl :: Model -> Msg -> Update Msg Model
+updateImpl model (NavTo page) = pure $ model { page = page }
+
+
+view :: Model -> { head :: Array (Html Msg), body :: Array (Html Msg) }
 view model = case model.page of
   Index -> fromBody $ H.rawHtml (renderIndex model.notes).html
   View note -> fromBody $ H.rawHtml (renderForView note).html
@@ -53,33 +57,37 @@ view model = case model.page of
 
 
 main :: Effect Unit
-main = do
+main = launchAff_ do
 
-  let
-    reestablish :: Update Message Unit
-    reestablish = do
-      tell $ Cmd \sendMsg -> do
-        establish \note -> sendMsg (NavTo $ View note)
+  notes <- toAffE getNotes
+  mInitNote <- liftEffect $ toMaybe <$> loadNote notes
 
-  launchAff_ do
-    notes <- toAffE getNotes
+  liftEffect $ flip runEffectFn1 unit $
 
-    let init _ = reestablish $> model0 notes
-
-    liftEffect $ flip runEffectFn1 unit $
       app
-        { init
-        , update: \model msg -> do
+        { init: \_ -> do
             reestablish
             afterRender doKatex
-            update model msg
+            afterRender doTikz
+            let page = case mInitNote of
+                  Nothing -> Index
+                  Just n -> View n
+            pure $ { notes, page }
+        , update
         , view
         , subscriptions: mempty
         }
 
+
   where
 
-  model0 notes =
-    { page: Index
-    , notes
-    }
+  reestablish :: Update Msg Unit
+  reestablish = do
+    tell $ Cmd \sendMsg -> do
+      establish \note -> sendMsg (NavTo $ View note)
+
+  update :: Model -> Msg -> Update Msg Model
+  update model msg = do
+    reestablish
+    afterRender doKatex
+    updateImpl model msg

@@ -30,7 +30,20 @@
       }
     }
   </script>
-  <script src="static/tikzjax.js"></script>
+
+  <script defer src="static/tikzjax.js"></script>
+  <!--
+  <script>
+    window._run_tikz = function() {
+      console.log('Run tikz');
+      const tag = document.createElement('script');
+      tag.src = 'static/tikzjax.js';
+      document.body.appendChild(tag);
+      console.log(tag);
+      window._run_tikz = function() {};
+    };
+  </script>
+  -->
 
   <script defer src="index.js"></script>
 

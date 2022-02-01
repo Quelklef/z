@@ -70,6 +70,7 @@ async function getNotes() {
   const noteIds = await listResponse.json();
 
   async function getNote(noteId) {
+    // console.log(`Fetching ${noteId}`);
     const getResponse = await fetch(`/api/get/${noteId}`);
     const content = await getResponse.text();
     return {
@@ -338,6 +339,10 @@ exports.doKatex = function() {
   }
 }
 
+exports.doTikz = function() {
+  window._run_tikz();
+}
+
 
 // -- //
 
@@ -350,4 +355,10 @@ exports.establish = navToImpl => () => {
     console.log('Nav to ' + note.id);
     navToImpl(note)();
   };
+};
+
+exports.loadNote = notes => () => {
+  const id = window.location.href.split('#/')[1];
+  if (!id) return null;
+  return notes.find(note => note.id === id);
 };

@@ -17,8 +17,6 @@ nixed = purs-nix.purs
       ];
   };
 
-node_modules = npmlock2nix.node_modules { src = gitignoreSource ./..; };
-
 static = pkgs.runCommand "z-static" {} ''
   mkdir $out
 
@@ -64,11 +62,6 @@ in {
       cp -r ${static}/. $out/static
 
       cp ${nixed.modules.Main.bundle {}} $out/index.js
-
-      if [ -d ${node_modules}/node_modules ]; then
-        mkdir -p $out/node_modules/
-        cp -r ${node_modules}/node_modules $out/
-      fi
     '';
   };
 
