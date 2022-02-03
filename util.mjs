@@ -65,7 +65,7 @@ export async function fsExists(path) {
 
 export async function renderTikZ(source, env) {
   return await env.cache.at([renderTikZ, source], async () => {
-    return await env.withTempDir(async tmp => {
+    return await withTempDir(async tmp => {
 
       console.log(`Rendering LaTeX [${source.length}]`);
 
@@ -82,14 +82,12 @@ export async function renderTikZ(source, env) {
       `;
       await fs.writeFile(plib.resolve(tmp, 'it.tex'), tex);
 
-      // TODO: svg would be ideal, but styles are overlapping
-      const b64 = await new Promise((resolve, reject) => {
+      return await new Promise((resolve, reject) => {
         child_process.exec(
           String.raw`
             cd ${tmp} \
-            && rubber --pdf it.tex \
-            && pdftocairo -png it.pdf \
-            && base64 it-1.png -w 0
+            && latex it.tex >/dev/null \
+            && { dvisvgm it.dvi --stdout | tail -n+3; }
           `,
           (error, stdout, stderr) => {
             if (error) reject(error);
@@ -97,10 +95,23 @@ export async function renderTikZ(source, env) {
           }
         )
       });
-      return `<span style="display:inline-block"><img src="data:image/png;base64,${b64}" style="width:75%" /></span>`;
 
     });
   });
+}
+
+
+export async function withTempDir(fun) {
+  let path = '/tmp/z-';
+  for (let i = 0; i < 20; i++)
+    path += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
+
+  await fs.mkdir(path);
+  try {
+    return await fun(path);
+  } finally {
+    await fs.rm(path, { recursive: true });
+  }
 }
 
 export function mkEnv(root) {
@@ -133,21 +144,6 @@ export function mkEnv(root) {
         await fs.writeFile(path, result);
         return result;
 
-      }
-    },
-
-    withTempDir: async function(fun) {
-      let path = '';
-      for (let i = 0; i < 20; i++)
-        path += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
-
-      path = plib.resolve(root, path);
-
-      await fs.mkdir(path);
-      try {
-        return await fun(path);
-      } finally {
-        await fs.rm(path, { recursive: true });
       }
     },
 
