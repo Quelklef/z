@@ -1,8 +1,3 @@
 notes/
-result
-static/
-result
-index.js
-output/
+out/
 node_modules/
-.working/
