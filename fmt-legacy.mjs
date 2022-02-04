@@ -236,6 +236,7 @@ export function phase3(note, graph, env) {
 <u>Referenced by:</u>
 <ul style="line-height: 1.2em">${
   [...note.referencedBy]
+    .map(id => graph.notesById[id])
     .sort((a, b) => b.popularity - a.popularity)
     .map(n => '<li><a href="' + n.href + '">' + n.id + '</a></li>')
     .join('')
