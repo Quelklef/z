@@ -4,14 +4,21 @@ import katex from 'katex';
 
 import { Trie, StringBuilder, renderTikZ } from './util.mjs';
 
-export async function * gather(pwd) {
+export async function * gather(pwd, env) {
   const ls = await fs.readdir(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
       const note = {};
       note.floc = floc;
-      note.id = plib.basename(note.floc, '.z');
+      note.source = (await fs.readFile(note.floc)).toString();
+      note.defines = extract(note.source, '[:', ':]');
+      note.isRoam = /\/[0-9]{20}r.z$/.test(note.floc);  // converted from roam export
+      if (note.isRoam && note.defines.size > 0) {
+        note.id = [...note.defines][0];
+      } else {
+        note.id = plib.basename(note.floc, '.z');
+      }
       yield note;
     }
   }
@@ -31,11 +38,8 @@ function extract(text, open, close) {
   return result;
 }
 
-export async function prep1_jargon(note, graph, env) {
+export async function phase1(note, graph, env) {
 
-  note.source = (await fs.readFile(note.floc)).toString();
-
-  note.defines = extract(note.source, '[:', ':]');
 
 }
 
@@ -59,7 +63,7 @@ function chompDelimited(text, i, open, close) {
   return [j + close.length, content];
 }
 
-export async function prep2_references(note, graph, env) {
+export async function phase2(note, graph, env) {
 
   let jtrie;
   jtrie = setMinus(graph.jargonSet, note.defines)
@@ -100,6 +104,35 @@ export async function prep2_references(note, graph, env) {
       html.add(note.source.slice(i, j + 2));
       i = j + 2;
       continue loop;
+    }
+
+    roam_span:
+    if (note.source.startsWith('__', i) || note.source.startsWith('**', i)) {
+      const delim = note.source.slice(i, i + 2);
+      let end = note.source.indexOf(delim, i + 2);
+      if (end === -1) end = note.source.length;
+      const content = note.source.slice(i + 2, end);
+      const tag = { '__': 'i', '**': 'b' }[delim];
+      html.add(`<${tag}>${content}</${tag}>`);
+      i = end + 2;
+    }
+
+    roam_code_block:
+    if (note.source.startsWith('```', i)) {
+      let end = note.source.indexOf('```', i + 3);
+      if (end === -1) end = note.source.length;
+      const content = note.source.slice(i + 3, end);
+      html.add(`<div style="white-space:pre;background:rgba(0,0,0,0.05);padding:1em;">${content}</div>`);
+      i = end + 3;
+    }
+
+    roam_code_inline:
+    if (note.source.startsWith('`', i)) {
+      let end = note.source.indexOf('`', i + 1);
+      if (end === -1) end = note.source.length;
+      const content = note.source.slice(i + 1, end);
+      html.add(`<span style="white-space:pre;background:rgba(0,0,0,0.05);">${content}</span>`);
+      i = end + 1;
     }
 
     span:
@@ -150,7 +183,7 @@ export async function prep2_references(note, graph, env) {
       const refToNote = [...(graph.jargonToDefiningNoteSet[refToWord] || [])][0];
       if (refToNote) {
         html.add(`<a href="${refToNote.href}">${refToWord}</a>`);
-        note.references.add(refToNote);
+        note.references.add(refToNote.id);
       } else {
         html.add(`<a style="color:red">${refToWord}</a>`);
       }
@@ -170,7 +203,7 @@ export async function prep2_references(note, graph, env) {
       const word = note.source.slice(i, i + jarg.length);
       const refToNote = [...(graph.jargonToDefiningNoteSet[jarg] || [])][0];
       if (refToNote) {
-        note.references.add(refToNote);
+        note.references.add(refToNote.id);
         html.add(`<a href="${refToNote.href}">${word}</a>`);
       } else {
         html.add(`<a style="color:red">${word}</a>`);
@@ -190,7 +223,7 @@ export async function prep2_references(note, graph, env) {
 
 }
 
-export function prep3_render(note, graph, env) {
+export function phase3(note, graph, env) {
   note.html = `${note.html.build()}
 
 

@@ -100,7 +100,6 @@ export async function renderTikZ(source, env) {
   });
 }
 
-
 export async function withTempDir(fun) {
   let path = '/tmp/z-';
   for (let i = 0; i < 20; i++)
@@ -114,38 +113,108 @@ export async function withTempDir(fun) {
   }
 }
 
-export function mkEnv(root) {
+export async function mkEnv(root) {
+  const croot = plib.resolve(root, '.cache');
+  if (!await fsExists(croot))
+    await fs.mkdir(croot);
+
   return {
 
     cache: {
+      _mkPath(keys) {
+        let hash = crypto.createHash('md5');
+        for (const key of keys)
+          hash.update(key.toString())
+        hash = hash.digest('hex');
+        return plib.resolve(croot, hash);
+      },
+
+      async get(keys) {
+        const path = this._mkPath(keys);
+        const text = (await fs.readFile(path)).toString();
+        return deserialize(text);
+      },
+
+      async has(keys) {
+        return await fsExists(this._mkPath(keys));
+      },
+
+      async put(keys, value) {
+        const path = this._mkPath(keys);
+        const text = serialize(value);
+        await fs.writeFile(path, text);
+      },
+
       async at(keys, fun) {
-
-        const croot = plib.resolve(root, '.cache');
-        if (!await fsExists(croot))
-          await fs.mkdir(croot);
-
-        let path;
-        {
-          let hash = crypto.createHash('md5');
-          for (const key of keys)
-            hash.update(key.toString())
-          hash = hash.digest('hex');
-          path = plib.resolve(croot, hash);
-        }
-
         try {
-          return await fs.readFile(path);
+          return await this.get(keys);
         } catch (e) {
           if (e.code === 'ENOENT');  // file dne
           else throw e;
         }
 
         const result = await fun();
-        await fs.writeFile(path, result);
+        await this.put(keys, result);
         return result;
-
-      }
+      },
     },
 
   };
+}
+
+export function serialize(obj) {
+  return JSON.stringify(toJson(obj));
+
+  function toJson(obj) {
+    if (obj === null || ['number', 'string', 'null', 'boolean'].includes(typeof obj))
+      return obj;
+
+    if (Array.isArray(obj))
+      return obj.map(toJson);
+
+    if (typeof obj === 'undefined')
+      return { _type: 'undefined' };
+
+    if (obj instanceof Set) {
+      return toJson({
+        _type: 'set',
+        values: toJson([...obj]),
+      });
+    }
+
+    if (Object.getPrototypeOf(obj) === Object.getPrototypeOf({})) {
+      const json = {};
+      for (const k in obj) {
+        json[k] = toJson(obj[k]);
+      }
+      return json;
+    }
+
+    throw Error(`Cannot serialize a ${typeof obj} // ${Object.getPrototypeOf(obj)}`);
+  }
+}
+
+export function deserialize(str) {
+  return fromJson(JSON.parse(str));
+
+  function fromJson(json) {
+    if (['number', 'string', 'null', 'boolean'].includes(typeof json))
+      return json;
+
+    if (Array.isArray(json))
+      return json.map(fromJson);
+
+    if (json._type === 'undefined')
+      return undefined;
+
+    if (json._type === 'set') {
+      const items = fromJson(json.values);
+      return new Set(items);
+    }
+
+    const obj = {};
+    for (const k in json)
+      obj[k] = fromJson(json[k]);
+    return obj;
+  }
 }
