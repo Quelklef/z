@@ -9,7 +9,7 @@ import * as fmt_legacy from './fmt-legacy.mjs';
 
 
 const formats = [
-  fmt_legacy
+  fmt_legacy,
 ];
 
 async function main() {
@@ -181,11 +181,10 @@ function withTemplate(body) {
 
     a {
       text-decoration: none;
-      border-bottom: 1px dotted hsla(330, 75%, 40%, 1);
       color: hsla(330, 75%, 40%, 1);
     }
     a:hover {
-      border-bottom-style: solid;
+      border-bottom: 1px dotted hsla(330, 75%, 40%, 1);
     }
 
     </style>

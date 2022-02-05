@@ -135,6 +135,16 @@ export async function phase2(note, graph, env) {
       i = end + 1;
     }
 
+    bullet:
+    if ('-*'.includes(note.source[i])) {
+      for (let j = i - 1; j >= 0; j--) {
+        if (note.source[j] === '\n') break;
+        if (note.source[j] !== ' ') break bullet;
+      }
+      html.add('&bull;');
+      i++;
+    }
+
     span:
     if (note.source.startsWith('\\', i) && !note.source.startsWith('\\\\', i)) {
       const pairs = {
