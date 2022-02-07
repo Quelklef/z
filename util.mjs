@@ -82,7 +82,7 @@ export async function renderTikZ(source, env) {
       `;
       await fs.writeFile(plib.resolve(tmp, 'it.tex'), tex);
 
-      return await new Promise((resolve, reject) => {
+      const result = await new Promise((resolve, reject) => {
         child_process.exec(
           String.raw`
             cd ${tmp} \
@@ -95,6 +95,9 @@ export async function renderTikZ(source, env) {
           }
         )
       });
+
+      console.log(`Rendering LaTeX [done] [${source.length}]`);
+      return result;
 
     });
   });

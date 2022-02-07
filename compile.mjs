@@ -26,10 +26,10 @@ async function main() {
   const graph = {};
   graph.notes = [];
 
-  console.log('Reading');
   await Promise.all(formats.map(async format => {
     for await (const note of format(pwd, graph, env)) {
       note.format = format;
+      console.log(`Reading [format=${format.name}] [${note.id}]`)
       graph.notes.push(note);
     }
   }));

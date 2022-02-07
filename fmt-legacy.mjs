@@ -4,7 +4,7 @@ import katex from 'katex';
 
 import { lazyAss, Trie, StringBuilder, renderTikZ } from './util.mjs';
 
-export default async function * (pwd, graph, env) {
+export default async function * legacy(pwd, graph, env) {
 
   const ls = await fs.readdir(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
@@ -40,6 +40,8 @@ async function mkNote(floc, graph, env) {
   //  .html (need note.popularity)
 
   lazyAss(note, 'initialHtmlAndReferenceSet', async () => {
+
+    console.log(`Rendering [${note.id}]`);
 
     let jtrie;
     jtrie = setMinus(graph.jargonSet, note.defines)
