@@ -218,3 +218,15 @@ export function deserialize(str) {
     return obj;
   }
 }
+
+// Lazy assignment
+export function lazyAss(obj, key, lz) {
+  Object.defineProperty(obj, key, {
+    configurable: true,
+    get() {
+      const val = lz();
+      Object.defineProperty(obj, key, { value: val });
+      return val;
+    }
+  });
+}
