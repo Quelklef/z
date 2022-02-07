@@ -1,4 +1,4 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import * as plib from 'path';
 import * as child_process from 'child_process';
 import * as crypto from 'crypto';
@@ -54,18 +54,9 @@ export function min(x, y) {
   return x < y ? x : y;
 }
 
-export async function fsExists(path) {
-  try {
-    await fs.access(path);
-    return true;
-  } catch (e) {
-    return false;
-  }
-};
-
-export async function renderTikZ(source, env) {
-  return await env.cache.at([renderTikZ, source], async () => {
-    return await withTempDir(async tmp => {
+export function renderTikZ(source, env) {
+  return env.cache.at([renderTikZ, source], () => {
+    return withTempDir(tmp => {
 
       console.log(`Rendering LaTeX [${source.length}]`);
 
@@ -80,46 +71,40 @@ export async function renderTikZ(source, env) {
 
         \end{document}
       `;
-      await fs.writeFile(plib.resolve(tmp, 'it.tex'), tex);
+      fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
 
-      const result = await new Promise((resolve, reject) => {
-        child_process.exec(
+      const stdout =
+        child_process.execSync(
           String.raw`
             cd ${tmp} \
             && latex it.tex >/dev/null \
             && { dvisvgm it.dvi --stdout | tail -n+3; }
-          `,
-          (error, stdout, stderr) => {
-            if (error) reject(error);
-            resolve(stdout.toString());
-          }
-        )
-      });
+          `);
 
       console.log(`Rendering LaTeX [done] [${source.length}]`);
-      return result;
+      return stdout.toString();
 
     });
   });
 }
 
-export async function withTempDir(fun) {
+export function withTempDir(fun) {
   let path = '/tmp/z-';
   for (let i = 0; i < 20; i++)
     path += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
 
-  await fs.mkdir(path);
+  fs.mkdirSync(path);
   try {
-    return await fun(path);
+    return fun(path);
   } finally {
-    await fs.rm(path, { recursive: true });
+    fs.rmSync(path, { recursive: true });
   }
 }
 
-export async function mkEnv(root) {
+export function mkEnv(root) {
   const croot = plib.resolve(root, '.cache');
-  if (!await fsExists(croot))
-    await fs.mkdir(croot);
+  if (!fs.existsSync(croot))
+    fs.mkdirSync(croot);
 
   return {
 
@@ -132,32 +117,32 @@ export async function mkEnv(root) {
         return plib.resolve(croot, hash);
       },
 
-      async get(keys) {
+      get(keys) {
         const path = this._mkPath(keys);
-        const text = (await fs.readFile(path)).toString();
+        const text = fs.readFileSync(path).toString();
         return deserialize(text);
       },
 
-      async has(keys) {
-        return await fsExists(this._mkPath(keys));
+      has(keys) {
+        return fs.existsSync(this._mkPath(keys));
       },
 
-      async put(keys, value) {
+      put(keys, value) {
         const path = this._mkPath(keys);
         const text = serialize(value);
-        await fs.writeFile(path, text);
+        fs.writeFileSync(path, text);
       },
 
-      async at(keys, fun) {
+      at(keys, fun) {
         try {
-          return await this.get(keys);
+          return this.get(keys);
         } catch (e) {
           if (e.code === 'ENOENT');  // file dne
           else throw e;
         }
 
-        const result = await fun();
-        await this.put(keys, result);
+        const result = fun();
+        this.put(keys, result);
         return result;
       },
     },

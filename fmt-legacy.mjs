@@ -1,28 +1,28 @@
 import * as plib from 'path';
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import katex from 'katex';
 
 import { lazyAss, Trie, StringBuilder, renderTikZ } from './util.mjs';
 
-export default async function * legacy(pwd, graph, env) {
+export default function * legacy(pwd, graph, env) {
 
-  const ls = await fs.readdir(plib.resolve(pwd, 'notes'))
+  const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
-      yield await mkNote(floc, graph, env);
+      yield mkNote(floc, graph, env);
     }
   }
 
 }
 
-async function mkNote(floc, graph, env) {
+function mkNote(floc, graph, env) {
 
   const note = {};
 
   note.floc = floc;
 
-  note.source = (await fs.readFile(note.floc)).toString();
+  note.source = fs.readFileSync(note.floc).toString();
 
   note.defines = extract(note.source, '[:', ':]');
 
@@ -39,7 +39,7 @@ async function mkNote(floc, graph, env) {
   //  .references (need graph.jargonSet)
   //  .html (need note.popularity)
 
-  lazyAss(note, 'initialHtmlAndReferenceSet', async () => {
+  lazyAss(note, 'initialHtmlAndReferenceSet', () => {
 
     console.log(`Rendering [${note.id}]`);
 
@@ -156,8 +156,8 @@ async function mkNote(floc, graph, env) {
             tag === 'i' ? `<i>${content}</i>`
           : tag === 'b' ? `<b>${content}</b>`
           : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
-          : tag === 'z' ? await renderTikZ(content, env)
-          : tag === 'Z' ? '<center>' + await renderTikZ(content, env) + '</center>'
+          : tag === 'z' ? renderTikZ(content, env)
+          : tag === 'Z' ? '<center>' + renderTikZ(content, env) + '</center>'
           : `<span>${content}</span>`
         );
 
@@ -211,13 +211,13 @@ async function mkNote(floc, graph, env) {
 
   });
 
-  lazyAss(note, 'references', async () => {
-    return (await note.initialHtmlAndReferenceSet)[1];
+  lazyAss(note, 'references', () => {
+    return note.initialHtmlAndReferenceSet[1];
   });
 
-  lazyAss(note, 'html', async () => {
+  lazyAss(note, 'html', () => {
     let html;
-    html = (await note.initialHtmlAndReferenceSet)[0];
+    html = note.initialHtmlAndReferenceSet[0];
     html = html.build();
     html += `
 

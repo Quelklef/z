@@ -1,8 +1,8 @@
-import { promises as fs } from 'fs';
+import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
 
-import { lazyAss, min, Trie, StringBuilder, fsExists, mkEnv, renderTikZ } from './util.mjs';
+import { lazyAss, min, Trie, StringBuilder, mkEnv, renderTikZ } from './util.mjs';
 
 import fmt_legacy from './fmt-legacy.mjs';
 
@@ -13,26 +13,26 @@ const formats = [
   fmt_legacy,
 ];
 
-async function main() {
+function main() {
 
   const pwd = process.env.PWD;
   const out = plib.resolve(pwd, 'out');
-  if (!await fsExists(out)) {
-    await fs.mkdir(out);
+  if (!fs.existsSync(out)) {
+    fs.mkdirSync(out);
   }
 
-  const env = await mkEnv(out);
+  const env = mkEnv(out);
 
   const graph = {};
   graph.notes = [];
 
-  await Promise.all(formats.map(async format => {
-    for await (const note of format(pwd, graph, env)) {
+  for (const format of formats) {
+    for (const note of format(pwd, graph, env)) {
       note.format = format;
       console.log(`Reading [format=${format.name}] [${note.id}]`)
       graph.notes.push(note);
     }
-  }));
+  }
   console.log(`Found ${graph.notes.length} notes`);
 
   for (const note of graph.notes) {
@@ -59,24 +59,22 @@ async function main() {
   for (const note of graph.notes)
     note.referencedBy = new Set();
   for (const note of graph.notes) {
-    for (const refId of await note.references)
+    for (const refId of note.references)
       graph.notesById[refId].referencedBy.add(note.id);
   }
 
   for (const note of graph.notes)
     note.popularity = note.referencedBy.size;
 
-  await Promise.all([
-    fs.writeFile(plib.resolve(out, 'index.html'), renderIndex(graph)),
-    ...graph.notes.map(async note => {
-      console.log(`Writing [${note.id}]`)
-      await fs.writeFile(
-        plib.resolve(out, note.href),
-        withTemplate(await note.html),
-      );
-    }),
+  fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
 
-  ]);
+  for (const note of graph.notes) {
+    console.log(`Writing [${note.id}]`)
+    fs.writeFileSync(
+      plib.resolve(out, note.href),
+      withTemplate(note.html),
+    );
+  }
 
   console.log('Done!');
 
