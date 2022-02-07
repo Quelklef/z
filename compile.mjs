@@ -2,7 +2,7 @@ import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
 
-import { lazyAss, min, Trie, StringBuilder, mkEnv, renderTikZ } from './util.mjs';
+import { lazyAss, Trie, StringBuilder, cache, renderTikZ } from './util.mjs';
 
 import fmt_legacy from './fmt-legacy.mjs';
 
@@ -21,19 +21,42 @@ function main() {
     fs.mkdirSync(out);
   }
 
-  const env = mkEnv(out);
+  cache.root = plib.resolve(out, '.cache');
 
   const graph = {};
   graph.notes = [];
 
+  graph.newNote = () => {
+    const note = {};
+    note.t = {};  // Transient data, doesn't get cached
+    return note;
+  };
+
   for (const format of formats) {
-    for (const note of format(pwd, graph, env)) {
-      note.format = format;
-      console.log(`Reading [format=${format.name}] [${note.id}]`)
+    for (const note of format(pwd, graph)) {
+      note.t.format = format;
+      // console.log(`Gathering [format=${format.name}] [${note.id}]`)
       graph.notes.push(note);
     }
   }
   console.log(`Found ${graph.notes.length} notes`);
+
+  for (const note of graph.notes) {
+    note.cacheKeys = [note.id, note.source];
+  }
+
+  // Consult the cache
+  for (let i = 0; i < graph.notes.length; i++) {
+    const note = graph.notes[i];
+    const cached = cache.getOr(note.cacheKeys, null);
+    if (cached) {
+      // console.log(`Cached [${note.id}]`);
+      graph.notes[i] = cached;
+      graph.notes[i].t.isFromCache = true;
+    } else {
+      note.t.isFromCache = false;
+    }
+  }
 
   for (const note of graph.notes) {
     lazyAss(note, 'href', () => {
@@ -69,11 +92,21 @@ function main() {
   fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
+    if (note.t.isFromCache) continue;
     console.log(`Writing [${note.id}]`)
     fs.writeFileSync(
       plib.resolve(out, note.href),
       withTemplate(note.html),
     );
+  }
+
+  for (const note of graph.notes) {
+    if (!note.t.isFromCache) {
+      console.log(`Caching [${note.id}]`);
+      const cacheKeys = note.cacheKeys;
+      note.t = {};
+      cache.put(cacheKeys, note);
+    }
   }
 
   console.log('Done!');

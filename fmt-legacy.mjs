@@ -4,21 +4,21 @@ import katex from 'katex';
 
 import { lazyAss, Trie, StringBuilder, renderTikZ } from './util.mjs';
 
-export default function * legacy(pwd, graph, env) {
+export default function * legacy(pwd, graph) {
 
   const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
-      yield mkNote(floc, graph, env);
+      yield mkNote(floc, graph);
     }
   }
 
 }
 
-function mkNote(floc, graph, env) {
+function mkNote(floc, graph) {
 
-  const note = {};
+  const note = graph.newNote();
 
   note.floc = floc;
 
@@ -39,7 +39,7 @@ function mkNote(floc, graph, env) {
   //  .references (need graph.jargonSet)
   //  .html (need note.popularity)
 
-  lazyAss(note, 'initialHtmlAndReferenceSet', () => {
+  lazyAss(note.t, 'initialHtmlAndReferenceSet', () => {
 
     console.log(`Rendering [${note.id}]`);
 
@@ -156,8 +156,8 @@ function mkNote(floc, graph, env) {
             tag === 'i' ? `<i>${content}</i>`
           : tag === 'b' ? `<b>${content}</b>`
           : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
-          : tag === 'z' ? renderTikZ(content, env)
-          : tag === 'Z' ? '<center>' + renderTikZ(content, env) + '</center>'
+          : tag === 'z' ? renderTikZ(content)
+          : tag === 'Z' ? '<center>' + renderTikZ(content) + '</center>'
           : `<span>${content}</span>`
         );
 
@@ -212,12 +212,12 @@ function mkNote(floc, graph, env) {
   });
 
   lazyAss(note, 'references', () => {
-    return note.initialHtmlAndReferenceSet[1];
+    return note.t.initialHtmlAndReferenceSet[1];
   });
 
   lazyAss(note, 'html', () => {
     let html;
-    html = note.initialHtmlAndReferenceSet[0];
+    html = note.t.initialHtmlAndReferenceSet[0];
     html = html.build();
     html += `
 

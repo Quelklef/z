@@ -50,12 +50,74 @@ export class StringBuilder {
   }
 }
 
-export function min(x, y) {
-  return x < y ? x : y;
-}
 
-export function renderTikZ(source, env) {
-  return env.cache.at([renderTikZ, source], () => {
+export const cache = {
+
+  // cache.root is a pseudo-constant set at program start
+  // This is bad code structure!
+  // I chose to do it this way because parameter-drilling is
+  // annoying and Javascript doesn't offer better solutions.
+  set root(root) {
+    root = plib.resolve(process.env.PWD, root);
+    if (!fs.existsSync(root))
+      fs.mkdirSync(root);
+    this._root = root;
+  },
+
+  get root() {
+    return this._root;
+  },
+
+  _mkPath(keys) {
+    let hash = crypto.createHash('md5');
+    for (const key of keys)
+      hash.update(key.toString())
+    hash = hash.digest('hex');
+    return plib.resolve(this.root, hash);
+  },
+
+  get(keys) {
+    const path = this._mkPath(keys);
+    const text = fs.readFileSync(path).toString();
+    return deserialize(text);
+  },
+
+  getOr(keys, fallback) {
+    try {
+      return this.get(keys);
+    } catch (e) {
+      if (e.code === 'ENOENT') return fallback;
+      else throw e;
+    }
+  },
+
+  has(keys) {
+    return fs.existsSync(this._mkPath(keys));
+  },
+
+  put(keys, value) {
+    const path = this._mkPath(keys);
+    const text = serialize(value);
+    fs.writeFileSync(path, text);
+  },
+
+  at(keys, fun) {
+    try {
+      return this.get(keys);
+    } catch (e) {
+      if (e.code === 'ENOENT');  // file dne
+      else throw e;
+    }
+
+    const result = fun();
+    this.put(keys, result);
+    return result;
+  },
+
+};
+
+export function renderTikZ(source) {
+  return cache.at([renderTikZ, source], () => {
     return withTempDir(tmp => {
 
       console.log(`Rendering LaTeX [${source.length}]`);
@@ -73,16 +135,23 @@ export function renderTikZ(source, env) {
       `;
       fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
 
-      const stdout =
-        child_process.execSync(
-          String.raw`
-            cd ${tmp} \
-            && latex it.tex >/dev/null \
-            && { dvisvgm it.dvi --stdout | tail -n+3; }
-          `);
+      const cmd = String.raw`
+        cd ${tmp} \
+        && latex it.tex 1>&2 \
+        && dvisvgm it.dvi \
+        && { cat it-1.svg | tail -n+3; }
+      `;
+
+      let result;
+      try {
+        result = child_process.execSync(cmd).toString();
+      } catch (err) {
+        console.log(err.stderr.toString());  // meh
+        throw 'tikz render failed; see above!';
+      }
 
       console.log(`Rendering LaTeX [done] [${source.length}]`);
-      return stdout.toString();
+      return result;
 
     });
   });
@@ -99,55 +168,6 @@ export function withTempDir(fun) {
   } finally {
     fs.rmSync(path, { recursive: true });
   }
-}
-
-export function mkEnv(root) {
-  const croot = plib.resolve(root, '.cache');
-  if (!fs.existsSync(croot))
-    fs.mkdirSync(croot);
-
-  return {
-
-    cache: {
-      _mkPath(keys) {
-        let hash = crypto.createHash('md5');
-        for (const key of keys)
-          hash.update(key.toString())
-        hash = hash.digest('hex');
-        return plib.resolve(croot, hash);
-      },
-
-      get(keys) {
-        const path = this._mkPath(keys);
-        const text = fs.readFileSync(path).toString();
-        return deserialize(text);
-      },
-
-      has(keys) {
-        return fs.existsSync(this._mkPath(keys));
-      },
-
-      put(keys, value) {
-        const path = this._mkPath(keys);
-        const text = serialize(value);
-        fs.writeFileSync(path, text);
-      },
-
-      at(keys, fun) {
-        try {
-          return this.get(keys);
-        } catch (e) {
-          if (e.code === 'ENOENT');  // file dne
-          else throw e;
-        }
-
-        const result = fun();
-        this.put(keys, result);
-        return result;
-      },
-    },
-
-  };
 }
 
 export function serialize(obj) {
@@ -178,7 +198,7 @@ export function serialize(obj) {
       return json;
     }
 
-    throw Error(`Cannot serialize a ${typeof obj} // ${Object.getPrototypeOf(obj)}`);
+    throw Error(`Cannot serialize a ${typeof obj} // ${Object.getPrototypeOf(obj).constructor.name}`);
   }
 }
 
@@ -211,6 +231,7 @@ export function deserialize(str) {
 export function lazyAss(obj, key, lz) {
   Object.defineProperty(obj, key, {
     configurable: true,
+    enumerable: true,
     get() {
       const val = lz();
       Object.defineProperty(obj, key, { value: val });
