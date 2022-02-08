@@ -3,36 +3,6 @@ import * as plib from 'path';
 import * as child_process from 'child_process';
 import * as crypto from 'crypto';
 
-export class Trie {
-  constructor(strings) {
-    this.isElement = Symbol("isElement");
-
-    this.trie = {};
-    strings = new Set(strings);
-    for (const str of strings) {
-      let root = this.trie;
-      for (const ch of str)
-        root = (root[ch] = root[ch] || {});
-      root[this.isElement] = true;
-    }
-  }
-
-  longestPrefixOf(string) {
-    let result = null;
-    let root = this.trie;
-    let path = '';
-
-    for (const ch of string) {
-      if (root[this.isElement]) result = path;
-      root = root[ch];
-      path += ch;
-      if (root === undefined) break;
-    }
-    if (root && root[this.isElement]) result = path;
-
-    return result;
-  }
-}
 
 export class StringBuilder {
   constructor() {
@@ -116,46 +86,7 @@ export const cache = {
 
 };
 
-export function renderTikZ(source) {
-  return cache.at([renderTikZ, source], () => {
-    return withTempDir(tmp => {
 
-      console.log(`Rendering LaTeX [${source.length}]`);
-
-      const tex = String.raw`
-        \documentclass{standalone}
-        \usepackage{tikz}
-        \usepackage{lmodern}
-        \usepackage[T1]{fontenc}
-        \begin{document}
-
-        ${source}
-
-        \end{document}
-      `;
-      fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
-
-      const cmd = String.raw`
-        cd ${tmp} \
-        && latex it.tex 1>&2 \
-        && dvisvgm it.dvi \
-        && { cat it-1.svg | tail -n+3; }
-      `;
-
-      let result;
-      try {
-        result = child_process.execSync(cmd).toString();
-      } catch (err) {
-        console.log(err.stderr.toString());  // meh
-        throw 'tikz render failed; see above!';
-      }
-
-      console.log(`Rendering LaTeX [done] [${source.length}]`);
-      return result;
-
-    });
-  });
-}
 
 export function withTempDir(fun) {
   let path = '/tmp/z-';

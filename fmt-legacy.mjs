@@ -1,8 +1,9 @@
 import * as plib from 'path';
+import * as child_process from 'child_process';
 import fs from 'fs';
 import katex from 'katex';
 
-import { lazyAss, Trie, StringBuilder, renderTikZ } from './util.mjs';
+import { lazyAss, StringBuilder, withTempDir, cache } from './util.mjs';
 
 export default function * legacy(pwd, graph) {
 
@@ -10,19 +11,21 @@ export default function * legacy(pwd, graph) {
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
-      yield mkNote(floc, graph);
+      const source = fs.readFileSync(floc).toString();
+      if (source.trim().split('\n')[0] !== 'format=reprise')
+        yield mkNote(floc, source, graph);
     }
   }
 
 }
 
-function mkNote(floc, graph) {
+function mkNote(floc, source, graph) {
 
   const note = graph.newNote();
 
   note.floc = floc;
 
-  note.source = fs.readFileSync(note.floc).toString();
+  note.source = source;
 
   note.defines = extract(note.source, '[:', ':]');
 
@@ -156,8 +159,8 @@ function mkNote(floc, graph) {
             tag === 'i' ? `<i>${content}</i>`
           : tag === 'b' ? `<b>${content}</b>`
           : tag === 'c' ? `<code style="background: rgba(0, 0, 0, 0.1)">${content}</code>`
-          : tag === 'z' ? renderTikZ(content)
-          : tag === 'Z' ? '<center>' + renderTikZ(content) + '</center>'
+          : tag === 'z' ? renderTeX(content)
+          : tag === 'Z' ? '<center>' + renderTeX(content) + '</center>'
           : `<span>${content}</span>`
         );
 
@@ -278,3 +281,75 @@ function chompDelimited(text, i, open, close) {
   return [j + close.length, content];
 }
 
+
+export function renderTeX(source) {
+  return cache.at([renderTeX, source], () => {
+    return withTempDir(tmp => {
+
+      console.log(`Rendering LaTeX [${source.length}]`);
+
+      const tex = String.raw`
+        \documentclass{standalone}
+        \usepackage{tikz}
+        \usepackage{lmodern}
+        \usepackage[T1]{fontenc}
+        \begin{document}
+
+        ${source}
+
+        \end{document}
+      `;
+      fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
+
+      const cmd = String.raw`
+        cd ${tmp} \
+        && latex it.tex 1>&2 \
+        && dvisvgm it.dvi \
+        && { cat it-1.svg | tail -n+3; }
+      `;
+
+      let result;
+      try {
+        result = child_process.execSync(cmd).toString();
+      } catch (err) {
+        console.log(err.stderr.toString());  // meh
+        throw 'tikz render failed; see above!';
+      }
+
+      console.log(`Rendering LaTeX [done] [${source.length}]`);
+      return result;
+
+    });
+  });
+}
+
+export class Trie {
+  constructor(strings) {
+    this.isElement = Symbol("isElement");
+
+    this.trie = {};
+    strings = new Set(strings);
+    for (const str of strings) {
+      let root = this.trie;
+      for (const ch of str)
+        root = (root[ch] = root[ch] || {});
+      root[this.isElement] = true;
+    }
+  }
+
+  longestPrefixOf(string) {
+    let result = null;
+    let root = this.trie;
+    let path = '';
+
+    for (const ch of string) {
+      if (root[this.isElement]) result = path;
+      root = root[ch];
+      path += ch;
+      if (root === undefined) break;
+    }
+    if (root && root[this.isElement]) result = path;
+
+    return result;
+  }
+}

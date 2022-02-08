@@ -2,15 +2,21 @@ import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
 
-import { lazyAss, Trie, StringBuilder, cache, renderTikZ } from './util.mjs';
+import { lazyAss, cache } from './util.mjs';
 
 import fmt_legacy from './fmt-legacy.mjs';
+fmt_legacy.source = fs.readFileSync('./fmt-legacy.mjs').toString();
+
+import fmt_reprise from './fmt-reprise.mjs';
+fmt_reprise.source = fs.readFileSync('./fmt-reprise.mjs').toString();
+
 
 
 
 
 const formats = [
   fmt_legacy,
+  fmt_reprise,
 ];
 
 function main() {
@@ -41,14 +47,12 @@ function main() {
   }
   console.log(`Found ${graph.notes.length} notes`);
 
-  for (const note of graph.notes) {
-    note.cacheKeys = [note.id, note.source];
-  }
+  const getCacheKeys = note => [note.id, note.source, note.t.format.source];
 
   // Consult the cache
   for (let i = 0; i < graph.notes.length; i++) {
     const note = graph.notes[i];
-    const cached = cache.getOr(note.cacheKeys, null);
+    const cached = cache.getOr(getCacheKeys(note), null);
     if (cached) {
       // console.log(`Cached [${note.id}]`);
       graph.notes[i] = cached;
@@ -92,8 +96,7 @@ function main() {
   fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
-    if (note.t.isFromCache) continue;
-    console.log(`Writing [${note.id}]`)
+    // console.log(`Writing [${note.id}]`)
     fs.writeFileSync(
       plib.resolve(out, note.href),
       withTemplate(note.html),
@@ -103,7 +106,7 @@ function main() {
   for (const note of graph.notes) {
     if (!note.t.isFromCache) {
       console.log(`Caching [${note.id}]`);
-      const cacheKeys = note.cacheKeys;
+      const cacheKeys = getCacheKeys(note);
       note.t = {};
       cache.put(cacheKeys, note);
     }
