@@ -86,7 +86,7 @@ function mkNote(floc, source, graph) {
     let buffer = null;
     const stack = [];
 
-    while (i < note.source.length) {
+    while (i <= note.source.length) {
 
       const out = buffer || comp.html;
 
@@ -130,13 +130,19 @@ function mkNote(floc, source, graph) {
         continue;
       }
 
+      if (note.source.startsWith('--', i)) {
+        out.add('&#8212;');
+        i += 2;
+        continue;
+      }
+
       // Implicit references
       const r = jmatcher.findMeAMatch(note.source, i);
       if (r !== null) {
         const [jarg, stepAmt] = r;
         const refNotes = graph.jargonToDefiningNoteSet[jarg];
         const refNote = [...refNotes][0];  // hmm
-        out.add(`<a href="${refNote.href}">${refNote.id}</a>`);
+        out.add(`<a href="${refNote.href}">${note.source.slice(i, i + stepAmt)}</a>`);
         i += stepAmt;
         continue;
       }

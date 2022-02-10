@@ -179,6 +179,11 @@ function withTemplate(body) {
       border-bottom: 1px dotted hsla(330, 75%, 40%, 1);
     }
 
+    hr {
+      border: none;
+      border-bottom: 1px dashed lightgrey;
+    }
+
     </style>
 
     </head>
