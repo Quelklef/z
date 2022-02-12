@@ -76,22 +76,33 @@ function mkNote(floc, source, graph) {
 
     console.log(`Rendering [${note.id}]`);
 
-    const jmatcher = new JargonMatcher(graph.jargonSet, s => s.toLowerCase());
+    const jmatcher = new JargonMatcher(graph.jargonSet, note.defines);
 
     const comp = {};
     comp.html = new StringBuilder();
     comp.references = new Set();
 
     let i = note.t.meta.continueIndex;
+    let isInitial = true;
+      // ^ True on all chars from the start of a line up to (and including) the first non-whitespace
     let buffer = null;
     const stack = [];
 
+    // Debug output
+    const debug = false;
+
     while (i <= note.source.length) {
+
+      if (debug) console.log('{{{' + note.source.slice(i, i + 35) + '}}}');
 
       const out = buffer || comp.html;
 
+      // Up isInitial
+      isInitial = note.source[i - 1] === '\n' || isInitial && note.source[i - 1] === ' ';
+
       // Escape a character
       if (note.source.startsWith('~', i)) {
+        if (debug) console.log('->> escape');
         out.add(note.source[i + 1]);
         i += 2;
         continue;
@@ -125,30 +136,57 @@ function mkNote(floc, source, graph) {
 
       // Buffering
       if (buffer !== null) {
+        if (debug) console.log('->> buffer');
         out.add(note.source[i]);
         i += 1;
         continue;
       }
 
+      // Em dash
       if (note.source.startsWith('--', i)) {
+        if (debug) console.log('->> emdash');
         out.add('&#8212;');
         i += 2;
+        continue;
+      }
+
+      // Bullet marks
+      if (isInitial && note.source.startsWith('- ', i)) {
+        if (debug) console.log('->> bullet');
+        out.add('&bull; ');
+        i += 2;
+        continue;
+      }
+
+      // Wider indents
+      if (isInitial && note.source[i] === ' ') {
+        if (debug) console.log('->> indent');
+        out.add('<span style="display:inline-block;width:1ch;white-space:pre;"></span>');
+        i++;
         continue;
       }
 
       // Implicit references
       const r = jmatcher.findMeAMatch(note.source, i);
       if (r !== null) {
+        if (debug) console.log('->> jargon:', r[0]);
         const [jarg, stepAmt] = r;
         const refNotes = graph.jargonToDefiningNoteSet[jarg];
-        const refNote = [...refNotes][0];  // hmm
-        out.add(`<a href="${refNote.href}">${note.source.slice(i, i + stepAmt)}</a>`);
+        let href;
+        if (refNotes && refNotes.size > 0) {
+          href = [...refNotes][0].href;  // hmm
+        } else {
+          console.warn(`warn: bad jargon ${jarg}`);
+          href = '#';
+        }
+        out.add(`<a href="${href}">${note.source.slice(i, i + stepAmt)}</a>`);
         i += stepAmt;
         continue;
       }
 
       // Inline LaTeX
       if (note.source.startsWith('$', i)) {
+        if (debug) console.log('->> inline latex');
         const j = note.source.indexOf('$', i + 1);
         if (j === -1) throw Error("Unclosed inline LaTeX");
         const latex = note.source.slice(i + 1, j);
@@ -159,6 +197,7 @@ function mkNote(floc, source, graph) {
 
       // Backslash commands
       if (note.source.startsWith('\\', i)) {
+        if (debug) console.log('->> backslash');
 
         const pairs = {
           '[': ']',
@@ -207,6 +246,15 @@ function mkNote(floc, source, graph) {
             });
             break;
 
+          // Section header
+          case 'sec':
+            out.add('<span class="section-header">');
+            stack.push({
+              marker: { type: 'token', token: pairs[opener] },
+              action: () => out.add('</span>'),
+            });
+            break;
+
           case 'tikz':
           case 'tex':
           case 'katex':
@@ -249,6 +297,7 @@ function mkNote(floc, source, graph) {
       }
 
       else {
+        if (debug) console.log('->> default');
         out.add(note.source[i]);
         i++;
         continue;
@@ -275,6 +324,25 @@ function mkNote(floc, source, graph) {
       html += `  &bull; <a href="${ref.href}">${ref.id}</a>\n`;
     }
 
+    html = `
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
+
+  #the-div {
+    font-family: 'Merriweather', serif;
+    font-size: 14px;
+  }
+
+  .section-header {
+    color: #c06;
+    border-bottom: 1px dotted #c06;
+    display: inline-block;
+    width: 100%;
+  }
+</style>
+<div id="the-div">${html}</div>
+    `;
+
     return html;
   });
 
@@ -283,64 +351,31 @@ function mkNote(floc, source, graph) {
 }
 
 class JargonMatcher {
-  constructor(jargs, normalize) {
+  constructor(jargs, exclude) {
+    this.jargs = [...jargs].sort((a, b) => b.length - a.length);
+    this.exclude = new Set([...exclude]);
+    this.M = Math.max(...this.jargs.map(j => j.length));
 
-    this.isElement = Symbol("isElement");
-
-    this.normalize = normalize;
-
-    this.trie = {};
-    jargs = new Set([...jargs].map(this.normalize));
-    for (const str of jargs) {
-      let root = this.trie;
-      for (const ch of str)
-        root = (root[ch] = root[ch] || {});
-      root[this.isElement] = true;
-    }
-
+    const anum_chars = new Set('abcdefghijklmnopqrstuvwxyz0123456789');
+    this.is_anum = c => anum_chars.has(c);
   }
-
-  longestPrefixOf(string) {
-    let result = null;
-    let root = this.trie;
-    let path = '';
-
-    for (const ch of string) {
-      if (root[this.isElement]) result = path;
-      root = root[ch];
-      path += ch;
-      if (root === undefined) break;
-    }
-    if (root && root[this.isElement]) result = path;
-
-    return result;
+  normEq(s1, s2) {
+    const norm = s => [...s.toLowerCase()].filter(this.is_anum).join('');
+    return norm(s1) === norm(s2);
   }
 
   findMeAMatch(str, idx0) {
-
-    let best = null;
-
-    let idxf;
-
-    done:
-    for (idxf = idx0 + 1; idxf < str.length; idxf++) {
-      const slice = this.normalize(str.slice(idx0, idxf));
-
-      let root = this.trie;
-      let path = '';
-      for (const ch of slice) {
-        if (root[this.isElement]) best = path;
-        root = root[ch];
-        path += ch;
-        if (root === undefined) break done;
+    if (this.is_anum(str[idx0 - 1]) || !this.is_anum(str[idx0])) return null;
+    for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
+      if (this.is_anum(str[idxf]) || !this.is_anum(str[idxf - 1])) continue;
+      for (const jarg of this.jargs) {
+        if (this.normEq(str.slice(idx0, idxf), jarg)) {
+          if (this.exclude.has(jarg)) return null;
+          return [jarg, idxf - idx0];
+        }
       }
     }
-
-    if (best)
-      return [best, idxf - idx0 - 1];
-    else
-      return null;
-
+    return null;
   }
 }
 

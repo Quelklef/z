@@ -83,6 +83,16 @@ function main() {
     }
   }
 
+  // Log longest jargon
+  {
+    let longest;
+    for (const jarg of graph.jargonSet)
+      if (!longest || jarg.length > longest.length)
+        longest = jarg;
+    if (longest)
+      console.log('Longest jargon at:', longest.length, 'is:', longest);
+  }
+
   for (const note of graph.notes)
     note.referencedBy = new Set();
   for (const note of graph.notes) {
@@ -153,7 +163,6 @@ function withTemplate(body) {
     <style>
 
     body {
-      margin: 0;
       padding: 4vh 50px;
       max-width: 800px;
       margin: 0 auto;
@@ -173,10 +182,11 @@ function withTemplate(body) {
 
     a {
       text-decoration: none;
-      color: hsla(330, 75%, 40%, 1);
+      color: black;
+      background-color: hsla(330, 75%, 85%, .25);
     }
     a:hover {
-      border-bottom: 1px dotted hsla(330, 75%, 40%, 1);
+      background-color: hsla(330, 75%, 70%, .50);
     }
 
     hr {

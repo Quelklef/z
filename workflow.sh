@@ -10,4 +10,8 @@ python3 -m http.server --directory out &
 pid=$!
 trap "kill $pid" EXIT
 
-{ find -name '*.mjs'; find notes; } | entr -c node compile.mjs
+while :; do
+  { find notes; find -name '*.mjs'; } | entr -c node compile.mjs || true
+  echo "Restarting..."
+  sleep 1
+done
