@@ -204,7 +204,9 @@ function mkNote(floc, source, graph) {
         const refNotes = graph.jargonToDefiningNoteSet[jarg];
         let href;
         if (refNotes && refNotes.size > 0) {
-          href = [...refNotes][0].href;  // hmm
+          const note = [...refNotes][0]
+          href = note.href;  // hmm
+          comp.references.add(note.id);
         } else {
           console.warn(`warn: bad jargon ${jarg}`);
           href = '#';
@@ -291,6 +293,17 @@ function mkNote(floc, source, graph) {
             stack.push({
               marker: { type: 'token', token: pairs[opener] },
               action: () => out.add('</span>'),
+            });
+            break;
+
+          // Explicit reference
+          case 'ref':
+            const noteId = flags.trim();
+            out.add(`<a href="${graph.notesById[noteId].href}">`);
+            comp.references.add(noteId);
+            stack.push({
+              marker: { type: 'token', token: pairs[opener] },
+              action: () => out.add('</a>'),
             });
             break;
 
