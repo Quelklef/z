@@ -63,9 +63,8 @@ function main() {
   }
 
   for (const note of graph.notes) {
-    lazyAss(note, 'href', () => {
-      return (note.id === 'index' ? 'index_' : note.id) + '.html';
-    });
+    lazyAss(note, 'href', () => '/n/' + note.id + '.html');
+    lazyAss(note, 'relativeOutLoc', () => 'n/' + note.id + '.html');
   }
 
   graph.notesById = {};
@@ -104,11 +103,12 @@ function main() {
     note.popularity = note.referencedBy.size;
 
   fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
+  if (!fs.existsSync(plib.resolve(out, 'n'))) fs.mkdirSync(plib.resolve(out, 'n'));
 
   for (const note of graph.notes) {
     // console.log(`Writing [${note.id}]`)
     fs.writeFileSync(
-      plib.resolve(out, note.href),
+      plib.resolve(out, note.relativeOutLoc),
       withTemplate(note.html),
     );
   }

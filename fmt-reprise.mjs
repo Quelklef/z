@@ -76,13 +76,14 @@ function mkNote(floc, source, graph) {
 
     console.log(`Rendering [${note.id}]`);
 
-    const jmatcher = new JargonMatcher(graph.jargonSet, note.defines);
+    const jmatcher = new JargonMatcherJargonMatcher(graph.jargonSet, note.defines);
 
     const comp = {};
     comp.html = new StringBuilder();
     comp.references = new Set();
 
     let i = note.t.meta.continueIndex;
+    let gensym = 0;
     let isInitial = true;
       // ^ True on all chars from the start of a line up to (and including) the first non-whitespace
     let buffer = null;
@@ -153,7 +154,7 @@ function mkNote(floc, source, graph) {
       // Bullet marks
       if (isInitial && note.source.startsWith('- ', i)) {
         if (debug) console.log('->> bullet');
-        out.add('&bull; ');
+        out.add('<span style="margin-right:0.75ch">&bull;</span>');
         i += 2;
         continue;
       }
@@ -246,9 +247,38 @@ function mkNote(floc, source, graph) {
             });
             break;
 
+          // Title
+          case 'title':
+            out.add('<span style="font-size: 18px; color: #c06; margin-bottom: 1em; display: inline-block;">');
+            stack.push({
+              marker: { type: 'token', token: pairs[opener] },
+              action: () => out.add('</span>'),
+            });
+            break;
+
           // Section header
           case 'sec':
             out.add('<span class="section-header">');
+            stack.push({
+              marker: { type: 'token', token: pairs[opener] },
+              action: () => out.add('</span>'),
+            });
+            break;
+
+          // Annotation reference
+          case 'aref':
+            const refToName = flags.trim() ? flags.trim() : ('' + (++gensym));
+            out.add(`<span class="annotation-reference" data-ref-to="${refToName}">`);
+            stack.push({
+              marker: { type: 'token', token: pairs[opener] },
+              action: () => out.add('</span>'),
+            });
+            break;
+
+          // Annotation definition
+          case 'adef':
+            const defName = flags.trim() ? flags.trim() : ('' + gensym);
+            out.add(`<span class="annotation-definition hidden" data-name="${defName}">`);
             stack.push({
               marker: { type: 'token', token: pairs[opener] },
               action: () => out.add('</span>'),
@@ -343,6 +373,65 @@ function mkNote(floc, source, graph) {
 <div id="the-div">${html}</div>
     `;
 
+    // Annotation implementation
+    html += `
+<style>
+.annotation-reference,
+.annotation-reference::before,
+.annotation-reference::after
+{
+  color: #c06;
+  cursor: pointer;
+}
+.annotation-reference::before { content: '['; }
+.annotation-reference::after  { content: ']'; }
+
+.annotation-reference.active {
+  font-weight: bold;
+}
+
+.annotation-definition {
+  display: block;
+  padding: .5em 1em;
+  margin: .5em;
+  background-color: rgba(0, 0, 0, 0.05);
+  border: 1px solid #c06;
+  border-radius: 5px;
+}
+.annotation-definition.hidden {
+  display: none;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+  document.querySelectorAll('.annotation-reference').forEach($ref => {
+    $ref.addEventListener('click', () => {
+      const on = $ref.classList.contains('active');
+
+      if (on) $ref.classList.remove('active');
+      else $ref.classList.add('active');
+
+      document.querySelectorAll('.annotation-definition').forEach($def => {
+        if ($def.dataset.name === $ref.dataset.refTo) {
+          if (on) $def.classList.add('hidden');
+          else $def.classList.remove('hidden');
+        }
+      });
+    });
+  });
+
+  // Don't make \def cause an extra newline
+  document.querySelectorAll('.annotation-definition').forEach($def => {
+    const t = $def.nextSibling;
+    if (t.textContent.startsWith('\\n')) t.textContent = t.textContent.slice(1);
+  });
+
+});
+</script>
+    `;
+
     return html;
   });
 
@@ -350,26 +439,29 @@ function mkNote(floc, source, graph) {
 
 }
 
-class JargonMatcher {
+class JargonMatcherJargonMatcher {
   constructor(jargs, exclude) {
-    this.jargs = [...jargs].sort((a, b) => b.length - a.length);
-    this.exclude = new Set([...exclude]);
-    this.M = Math.max(...this.jargs.map(j => j.length));
-
-    const anum_chars = new Set('abcdefghijklmnopqrstuvwxyz0123456789');
+    const anum_chars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
     this.is_anum = c => anum_chars.has(c);
-  }
-  normEq(s1, s2) {
-    const norm = s => [...s.toLowerCase()].filter(this.is_anum).join('');
-    return norm(s1) === norm(s2);
+    this.normalize = s => [...s.toLowerCase()].filter(this.is_anum).join('');
+      // ^ n.b. we assume that length(norm(s)) <= length(s)
+
+    this.jargs = (
+      [...jargs]
+      .sort((a, b) => b.length - a.length)
+      .map(j => [j, this.normalize(j)])
+    );
+    this.exclude = new Set([...exclude]);
+    this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
   }
 
   findMeAMatch(str, idx0) {
+    const deb = str.startsWith("Cayley's theorem", idx0);
     if (this.is_anum(str[idx0 - 1]) || !this.is_anum(str[idx0])) return null;
     for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
       if (this.is_anum(str[idxf]) || !this.is_anum(str[idxf - 1])) continue;
-      for (const jarg of this.jargs) {
-        if (this.normEq(str.slice(idx0, idxf), jarg)) {
+      for (const [jarg, njarg] of this.jargs) {
+        if (this.normalize(str.slice(idx0, idxf)) === njarg) {
           if (this.exclude.has(jarg)) return null;
           return [jarg, idxf - idx0];
         }
