@@ -89,9 +89,12 @@ function mkNote(floc, source, graph) {
     let buffer = null;
     const stack = [];
 
+    let currentIndent = 0;
+
     // Debug output
     const debug = false;
 
+    parsing:
     while (i <= note.source.length) {
 
       if (debug) console.log('{{{' + note.source.slice(i, i + 35) + '}}}');
@@ -100,6 +103,13 @@ function mkNote(floc, source, graph) {
 
       // Up isInitial
       isInitial = note.source[i - 1] === '\n' || isInitial && note.source[i - 1] === ' ';
+
+      // Up currentIndent
+      if (note.source[i - 1] === '\n') {
+        currentIndent = 0;
+      } else if (note.source[i - 1] === ' ') {
+        currentIndent++;
+      }
 
       // Escape a character
       if (note.source.startsWith('~', i)) {
@@ -120,15 +130,34 @@ function mkNote(floc, source, graph) {
               item.action();
               continue;
             }
-            break
+            break;
 
           case 'dedent':
-            if (note.source[i - 1] === '\n' && !' \n'.includes(note.source[i + 1])) {
-              stack.pop();
-              item.action();
-              continue;
+            if (note.source[i - 1] === '\n') {
+
+              if (note.source.startsWith(strRep(' ', item.marker.size), i)) {
+                i += item.marker.size; // skip indent
+                continue;
+              }
+
+              else {
+                // Terminate only if next indent is too small
+                let ind = 0;
+                for (let j = i; j <= note.source.length; j++) {
+                  if (note.source[j] === '\n') ind = 0;
+                  else if (note.source[j] === ' ') ind++;
+                  else {
+                    if (ind < item.marker.size) {
+                      stack.pop();
+                      item.action();
+                      continue parsing;
+                    } else break;
+                  }
+                }
+              }
+
             }
-            break
+            break;
 
           default:
             throw Error(`Unknown stack marker type "${item.marker.type}"`);
@@ -280,9 +309,17 @@ function mkNote(floc, source, graph) {
             const defName = flags.trim() ? flags.trim() : ('' + gensym);
             out.add(`<span class="annotation-definition hidden" data-name="${defName}">`);
             stack.push({
-              marker: { type: 'token', token: pairs[opener] },
+              marker: { type: 'dedent', size: currentIndent + 2 },
               action: () => out.add('</span>'),
             });
+
+            // On \cmd:<NEWLINE>, skip the blank line
+            if (opener === ':') {
+              let i2 = i;
+              while (note.source[i2] === ' ') i2++;
+              if (note.source[i2] === '\n') i = i2 + 1;
+            }
+
             break;
 
           case 'tikz':
@@ -290,7 +327,7 @@ function mkNote(floc, source, graph) {
           case 'katex':
             buffer = new StringBuilder();
             stack.push({
-              marker: { type: 'dedent' },
+              marker: { type: 'dedent', size: currentIndent + 2 },
               action: () => {
                 let tex = buffer.build();
                 buffer = null;
@@ -382,9 +419,16 @@ function mkNote(floc, source, graph) {
 {
   color: #c06;
   cursor: pointer;
+  opacity: 0.6;
 }
 .annotation-reference::before { content: '['; }
 .annotation-reference::after  { content: ']'; }
+
+.annotation-reference:hover,
+.annotation-reference.active
+{
+  opacity: 1;
+}
 
 .annotation-reference.active {
   font-weight: bold;
@@ -393,10 +437,11 @@ function mkNote(floc, source, graph) {
 .annotation-definition {
   display: block;
   padding: .5em 1em;
-  margin: .5em;
-  background-color: rgba(0, 0, 0, 0.05);
+  margin-top: 1em;
+  margin-bottom: 2em;
+  background-color: rgba(0, 0, 0, 0.02);
   border: 1px solid #c06;
-  border-radius: 5px;
+  border-radius: 3px;
 }
 .annotation-definition.hidden {
   display: none;
@@ -423,6 +468,7 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 
   // Don't make \def cause an extra newline
+  if (false)
   document.querySelectorAll('.annotation-definition').forEach($def => {
     const t = $def.nextSibling;
     if (t.textContent.startsWith('\\n')) t.textContent = t.textContent.slice(1);
@@ -505,4 +551,11 @@ export function renderTeX(tex) {
 
     });
   });
+}
+
+function strRep(c, n) {
+  let r = '';
+  for (let i = 0; i < n; i++)
+    r += c;
+  return r;
 }
