@@ -95,8 +95,10 @@ function main() {
   for (const note of graph.notes)
     note.referencedBy = new Set();
   for (const note of graph.notes) {
-    for (const refId of note.references)
+    for (const refId of note.references) {
+      if (!(refId in graph.notesById)) continue;  // can happen due to caching weirdness
       graph.notesById[refId].referencedBy.add(note.id);
+    }
   }
 
   for (const note of graph.notes)
@@ -192,6 +194,13 @@ function withTemplate(body) {
     hr {
       border: none;
       border-bottom: 1px dashed lightgrey;
+    }
+
+    code {
+      background-color: rgba(0, 0, 0, 0.05);
+      padding: 1px 4px;
+      border: 1px solid rgb(200, 200, 200);
+      border-radius: 3px;
     }
 
     </style>

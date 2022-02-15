@@ -515,7 +515,6 @@ class JargonMatcherJargonMatcher {
   }
 
   findMeAMatch(str, idx0) {
-    const deb = str.startsWith("Cayley's theorem", idx0);
     if (this.is_anum(str[idx0 - 1]) || !this.is_anum(str[idx0])) return null;
     for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
       if (this.is_anum(str[idxf]) || !this.is_anum(str[idxf - 1])) continue;
