@@ -5,7 +5,7 @@ import katex from 'katex';
 
 import { lazyAss, StringBuilder, cache, withTempDir } from './util.mjs';
 
-export default function * legacy(pwd, graph) {
+export default function * reprise(pwd, graph) {
 
   const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
@@ -83,6 +83,7 @@ function mkNote(floc, source, graph) {
     comp.references = new Set();
 
     let i = note.t.meta.continueIndex;
+    let inCode = false;  // in \c[] ?
     let gensym = 0;
     let isInitial = true;
       // ^ True on all chars from the start of a line up to (and including) the first non-whitespace
@@ -180,6 +181,34 @@ function mkNote(floc, source, graph) {
         continue;
       }
 
+      if (!inCode && ['"', "'"].includes(note.source[i])) {
+        const quots = {
+          'single-lone': "'",
+          'single-open': '‘',
+          'single-close': '’',
+          'double-lone': '"',
+          'double-open': '“',
+          'double-close': '”',
+        };
+
+        const quot = note.source[i];
+        const parity = { '"': 'double', "'": 'single' }[quot];
+
+        const notSpace = c => (!!c && !/\s/.test(c));
+        const before = notSpace(note.source[i - 1]);
+        const after = notSpace(note.source[i + 1]);
+        const position = {
+          'true, true': 'close',
+          'true, false': 'close',
+          'false, true': 'open',
+          'false, false': 'lone',
+        }[before + ', ' + after];
+
+        const outquot = quots[parity + '-' + position];
+        out.add(outquot);
+        i++;
+      }
+
       // Bullet marks
       if (isInitial && note.source.startsWith('- ', i)) {
         if (debug) console.log('->> bullet');
@@ -231,6 +260,8 @@ function mkNote(floc, source, graph) {
       if (note.source.startsWith('\\', i)) {
         if (debug) console.log('->> backslash');
 
+        const i0 = i;
+
         const pairs = {
           '[': ']',
           '(': ')',
@@ -272,9 +303,13 @@ function mkNote(floc, source, graph) {
               c: 'code',
             }[name];
             out.add(`<${tag}>`);
+            if (tag === 'code') inCode = true;
             stack.push({
               marker: { type: 'token', token: pairs[opener] },
-              action: () => out.add(`</${tag}>`),
+              action: () => {
+                out.add(`</${tag}>`);
+                if (tag === 'code') inCode = false;
+              },
             });
             break;
 
@@ -370,7 +405,8 @@ function mkNote(floc, source, graph) {
             break;
 
           default:
-            throw Error(`Bad backslash-command "${name}"`);
+            const ctx = note.source.slice(i0, indexOf(note.source, '\n', i0));
+            throw Error(`Bad backslash-command "${name}" around: ${ctx}`);
         }
 
         continue;
@@ -419,6 +455,14 @@ function mkNote(floc, source, graph) {
     display: inline-block;
     width: 100%;
   }
+
+  #the-div .katex-display {
+    margin: 0;
+    /* By defualt has top- and bottom-margins, which is typically a good
+       thing, but would be inconsistent with how we otherwise do rendering,
+       wherein no margins are added. */
+  }
+
 </style>
 <div id="the-div">${html}</div>
     `;
