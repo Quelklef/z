@@ -19,12 +19,12 @@ export default function * proper(pwd, graph) {
 
 }
 
+const scriptSrc = fs.readFileSync('./fmt-proper.mjs').toString();
 
 function mkNote(floc, source, graph) {
 
   const note = {};
 
-  const scriptSrc = fs.readFileSync('./fmt-proper.mjs').toString();
   note.cacheKeys = [floc, source, scriptSrc];
 
   note.id = plib.basename(floc, '.z');
@@ -149,6 +149,10 @@ function parse(text, doImplicitReferences, referencedBy, note, graph) {
 
 function p_main(s, done) {
 
+  // Strange caching, but can help some on longer notes
+  // Of course, the real solution is a better jargon algorithm (TODO
+  return cache.at([s.text.toString(), s.i.toString(), s.doImplicitReferences, scriptSrc], () => {
+
   done = done || (_ => false);
 
   const parsers = [
@@ -180,7 +184,7 @@ function p_main(s, done) {
 
     // Break out to caller
     if (done(s))
-      return html;
+      return html.toString();
 
     // Out of text but not yet done()
     if (s.i >= s.text.length)
@@ -190,6 +194,8 @@ function p_main(s, done) {
     html.addFromSource(s.i);
     s.i++;
   }
+
+  });
 
 }
 
@@ -831,7 +837,9 @@ class Cats {
 
   toString() {
     this._resolve();
-    return this.parts.map(c => c.toString()).join('');
+    const result = this.parts.map(c => c.toString()).join('');
+    this.parts = [result];
+    return result;
   }
 
 }
