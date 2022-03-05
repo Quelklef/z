@@ -35,7 +35,7 @@ function mkNote(floc, source, graph) {
 
   lazyAss(note[t], 'preparsed', () => {
     console.log(`Preparsing [${note.id}]`);
-    return parse(source, false);
+    return parse(source, false, graph);
   });
 
   lazyAss(note, 'defines', () => note[t].preparsed.defines);
@@ -96,11 +96,13 @@ function parse(text, resolveJargon, graph) {
     // Parent graph object
     graph,
 
-    // Global symbol state
-    // Use s.gensym++ to generate a new symbol
-    gensym: 0,
+    // Symbol generation
+    cursym: 0,
+    gensym() {
+      return 'gensym-' + (this.cursym++);
+    },
 
-    // annotation-specific state
+    // annotation-related state
     annotNameQueue: [],
 
     clone() {
@@ -336,14 +338,12 @@ const commands = {
 
   // Title
   title(s) {
-    const [body, _] = enclosed(p_main, s);
-    return Cats.of('<div style="border-bottom: 1px solid #C06">', body, '</div>');
+    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(p_main, s), '</div>');
   },
 
   // Section header
   sec(s) {
-    const [body, _] = enclosed(p_main, s);
-    return Cats.of('<div style="border-bottom: 1px dotted #C06">', body, '</div>');
+    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(p_main, s), '</div>');
   },
 
   // KaTeX
@@ -356,20 +356,17 @@ const commands = {
 
   // Italic
   i(s) {
-    const [body, _] = enclosed(p_main, s);
-    return Cats.of('<i>', body, '</i>');
+    return Cats.of('<i>', p_inline(p_main, s), '</i>');
   },
 
   // Bold
   b(s) {
-    const [body, _] = enclosed(p_main, s);
-    return Cats.of('<b>', body, '</b>');
+    return Cats.of('<b>', p_inline(p_main, s), '</b>');
   },
 
   // Underline
   u(s) {
-    const [body, _] = enclosed(p_main, s);
-    return Cats.of('<u>', body, '</u>');
+    return Cats.of('<u>', p_inline(p_main, s), '</u>');
   },
 
   // <code>
@@ -384,15 +381,13 @@ const commands = {
 
     let name = parseWord(s).toString();
     if (!name) {
-      name = '' + (s.gensym++);
+      name = s.gensym();
       s.annotNameQueue.push(name);
     }
 
     chompSpace(s);
 
-    const [body, _] = enclosed(p_main, s);
-
-    return Cats.of(`<span class="annotation-reference" data-refers-to="${name}">`, body, '</span>');
+    return Cats.of(`<span class="annotation-reference" data-refers-to="${name}">`, p_inline(p_main, s), '</span>');
   },
 
   // Annotation definition
@@ -410,9 +405,7 @@ const commands = {
       throw mkError(sx, "Unpaired \\adef!");
     }
 
-    const [body, _] = enclosed(p_main, s);
-
-    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, body, '</div>');
+    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(p_main, s), '</div>');
   },
 
   // TeX, TikZ
@@ -462,58 +455,66 @@ function parseWord(s) {
 }
 
 
-// TODO: probably this should be decoupled into
-//       block(), inline() and enclosed()
 function enclosed(parser, s) {
+  if (s.text[s.i] === ':') {
+    const r = p_block(parser, s);
+    return [r, 'block'];
+  } else {
+    const r = p_inline(parser, s);
+    return [r, 'inline'];
+  }
+}
+
+function p_block(parser, s) {
+  // \cmd:
+
+  if (s.text[s.i] !== ':')
+    throw mkError(s, "Expected colon");
+
+  s.i++;
+
+  const eol = indexOf(s.text, '\n', s.i);
+
+  // \cmd: <stuff>
+  if (s.text.slice(s.i + 1, eol).trim() !== '') {
+    if (s.text[s.i] === ' ') s.i++;
+    const done = s => ['\n', undefined].includes(s.text[s.i]);
+    const r = parser(s, done);
+    s.i++;  // skip newline
+    return r;
+
+  // \cmd:\n <stuff>
+  } else {
+    s.i = eol + 1;
+    let i = s.i;
+    while (s.text[i] === ' ') i++;
+    let column = i - s.i;
+    const r = indented(parser, column, false, s);
+    return r;
+  }
+}
+
+function p_inline(parser, s) {
+  // \cmd[], cmd{}, etc
+
   const open = s.text[s.i];
 
-  // \cmd:
-  if (open === ':') {
-
-    s.i++;
-
-    const eol = indexOf(s.text, '\n', s.i);
-
-    // \cmd: <stuff>
-    if (s.text.slice(s.i + 1, eol).trim() !== '') {
-      if (s.text[s.i] === ' ') s.i++;
-      const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const r = parser(s, done);
-      s.i++;  // skip newline
-      return [r, 'block'];
-
-    // \cmd:\n <stuff>
-    } else {
-      s.i = eol + 1;
-      let i = s.i;
-      while (s.text[i] === ' ') i++;
-      let column = i - s.i;
-      const r = indented(parser, column, false, s);
-      return [r, 'block'];
-    }
-
-
-  // \cmd[], cmd{}, etc
-  } else {
-
-    const pairs = {
-      '(': ')',
-      '[': ']',
-      '<': '>',
-      '{': '}',
-    }
-    const close = pairs[open];
-    if (!close)
-      throw mkError(s, "Expected opening character!");
-    s.i++;
-
-    const done = s => s.text.startsWith(close, s.i);
-    const r = parser(s, done)
-
-    s.i += close.length;
-    return [r, 'inline'];
-
+  const pairs = {
+    '(': ')',
+    '[': ']',
+    '<': '>',
+    '{': '}',
   }
+  const close = pairs[open];
+  if (!close)
+    throw mkError(s, "Expected opening character!");
+  s.i++;
+
+  const done = s => s.text.startsWith(close, s.i);
+  const r = parser(s, done)
+
+  s.i += close.length;
+  return r;
 }
 
 
@@ -565,7 +566,7 @@ cats = Cats.on(s)  // enables the following...
 cats.addFromSource(i)
   // is equivalent to cats.add(s[i]), except that
   //   cats.addFromSource(i); cats.addFromSource(i + 1)
-  // is faster than
+  // is more efficient than
   //   cats.add(s[i]); cats.add(s[i + 1])
 
 */
