@@ -44,6 +44,7 @@ function main() {
       // Initialize transient (non-cached) data
       Object.defineProperty(note, t, { enumerable: false, value: {} });
       note[t].isFromCache = !!cached;
+      note[t].format = format;
 
       graph.notes.push(note);
 
@@ -51,6 +52,17 @@ function main() {
   }
 
   console.log(`Found ${graph.notes.length} notes`);
+
+  // Log format counts
+  {
+    const counts = {};
+    for (const note of graph.notes)
+      counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
+    const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
+    console.log('Formats:');
+    for (const k of sorted)
+      console.log(' ', k, 'has', counts[k], 'notes');
+  }
 
   for (const note of graph.notes) {
     lazyAss(note, 'relativeLoc', () => 'n/' + note.id + '.html');

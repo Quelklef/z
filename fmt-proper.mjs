@@ -5,7 +5,7 @@ import katex from 'katex';
 
 import { lazyAss, cache, withTempDir } from './util.mjs';
 
-export default function * (pwd, graph) {
+export default function * proper(pwd, graph) {
 
   const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
   for (const fname of ls) {
@@ -35,14 +35,14 @@ function mkNote(floc, source, graph) {
 
   lazyAss(note[t], 'preparsed', () => {
     console.log(`Preparsing [${note.id}]`);
-    return parse(source, false, [], graph);
+    return parse(source, false, [], note, graph);
   });
 
   lazyAss(note, 'defines', () => note[t].preparsed.defines);
 
   lazyAss(note[t], 'parsed', () => {
     console.log(`Parsing [${note.id}]`);
-    return parse(source, true, note.referencedBy, graph);
+    return parse(source, true, note.referencedBy, note, graph);
   });
 
   lazyAss(note, 'references', () => note[t].parsed.defines);
@@ -73,10 +73,14 @@ Parsers fail by throwing.
 */
 
 
-function parse(text, resolveJargon, referencedBy, graph) {
+function parse(text, resolveJargon, referencedBy, note, graph) {
 
   // Initial parser state
   let s = {
+
+    // Note + graph references
+    graph,
+    note,
 
     // Source text
     text,
@@ -124,10 +128,11 @@ function parse(text, resolveJargon, referencedBy, graph) {
 
   html.add('<br /><br />');
   html.add('<hr />');
+  html.add('<p>Referenced by:</p>');
   html.add('<ul>');
   for (let refBy of referencedBy) {
     refBy = graph.notesById[refBy];
-    html.add(`<li><a href="${refBy.href}">${refBy.id}</a></li>`);
+    html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
   }
   html.add('</ul>');
 
@@ -417,6 +422,25 @@ const commands = {
     return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(p_main, s), '</div>');
   },
 
+  // Explicit note reference
+  ref(s) {
+    const sx = s.clone();
+
+    chompSpace(s);
+
+    const noteId = parseWord(s).toString();
+    if (!noteId) throw mkError(sx, "Missing note ID");
+
+    const ref = s.graph.notesById[noteId];
+    if (!ref) console.warn(`Bad reference to '${noteId}' in '${s.note.id}'!`);
+
+    chompSpace(s);
+    const body = p_inline(p_main, s);
+
+    const href = ref ? ref.href : '#';
+    return Cats.of(`<a href="${href}" class="reference explicit ${ref ? '' : 'invalid'}">`, body, '</a>');
+  },
+
   // TeX, TikZ
   tikz(s) { return commands.tex(s, true); },
   tex(s, tikz = false) {
@@ -567,7 +591,7 @@ function chompSpace(s) {
 
 function parseWord(s) {
   const word = Cats.on(s.text);
-  while (/\w/.test(s.text[s.i])) {
+  while (/[\w-]/.test(s.text[s.i])) {
     word.addFromSource(s.i);
     s.i++;
   }
@@ -782,6 +806,27 @@ code {
   padding: 0px 2px;
   background-color: rgb(240, 240, 240);
   border-radius: 2px;
+}
+
+hr {
+  border: none;
+  border-bottom: 1px dashed rgb(200, 200, 200);
+}
+
+/* Styling for references to other notes */
+.reference {
+  background-color: hsla(330, 75%, 85%, .25);
+  text-decoration: none;
+}
+.reference:hover {
+  background-color: hsla(330, 75%, 70%, .50);
+}
+.reference, .reference:visited { color: initial; }
+.reference.explicit {
+  border-bottom: 2px solid #C06;
+}
+.reference.invalid {
+  border: 1px dotted red;
 }
 
 </style>
