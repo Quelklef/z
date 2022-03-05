@@ -35,14 +35,14 @@ function mkNote(floc, source, graph) {
 
   lazyAss(note[t], 'preparsed', () => {
     console.log(`Preparsing [${note.id}]`);
-    return parse(source, false, graph);
+    return parse(source, false, [], graph);
   });
 
   lazyAss(note, 'defines', () => note[t].preparsed.defines);
 
   lazyAss(note[t], 'parsed', () => {
     console.log(`Parsing [${note.id}]`);
-    return parse(source, true, graph);
+    return parse(source, true, note.referencedBy, graph);
   });
 
   lazyAss(note, 'references', () => note[t].parsed.defines);
@@ -73,7 +73,7 @@ Parsers fail by throwing.
 */
 
 
-function parse(text, resolveJargon, graph) {
+function parse(text, resolveJargon, referencedBy, graph) {
 
   // Initial parser state
   let s = {
@@ -120,12 +120,21 @@ function parse(text, resolveJargon, graph) {
   if (s.text[s.i] === '\n') s.i++;
 
   const done = s => s.i >= s.text.length;
-  const html = p_main(s, done);
+  const html = Cats.of(p_main(s, done));
+
+  html.add('<br /><br />');
+  html.add('<hr />');
+  html.add('<ul>');
+  for (let refBy of referencedBy) {
+    refBy = graph.notesById[refBy];
+    html.add(`<li><a href="${refBy.href}">${refBy.id}</a></li>`);
+  }
+  html.add('</ul>');
 
   return {
     defines: s.defines,
     references: s.references,
-    html: withHtmlTemplate('' + html),
+    html: withHtmlTemplate(html.toString()),
   };
 
 }
@@ -437,8 +446,119 @@ ${tex}
     return html;
   },
 
+
+  // Jargon
+  jarg(s) {
+
+    let forms = new Set();
+    while (true) {
+      chompSpace(s);
+      if (!s.text.startsWith('<', s.i)) break;
+      const jargs = parseJargon(s);
+      forms = new Set([...forms, ...jargs]);
+    }
+    s.defines = new Set([...s.defines, ...forms]);
+
+    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, s), '</span>');
+  }
+
 };
 
+
+function parseJargon(s) {
+
+  if (!s.text.startsWith('<', s.i))
+    throw mkError(s, "Expected '<'");
+  s.i++;
+
+  const parts = [['']];
+  while (true) {
+    if (s.text.startsWith('>', s.i)) {
+      s.i++;
+      break;
+    }
+    parts.push(parseJargonAux(s));
+  }
+
+  let result = [''];
+  for (const part of parts)
+    result = result.flatMap(j => part.map(p => j + p));
+  return result;
+
+}
+
+function parseJargonAux(s) {
+
+  // Noun combinator -- N:noun
+  if (s.text.startsWith('N:', s.i)) {
+    s.i += 2;
+    return parseJargonAux(s).flatMap(j => {
+      j = j.toString();
+      if (j.endsWith('y'))
+        return [j, j.slice(0, j.length - 1) + 'ies'];
+      else if (j.endsWith('s'))
+        return [j];
+      else
+        return [j, j + 's'];
+    });
+  }
+
+  // Disjunctive combinator -- (this|that)
+  if (s.text.startsWith('(', s.i)) {
+    s.i++;
+    const choices = [];
+    while (true) {
+      const choice = parseJargonAux(s);
+      choices.push(choice);
+      if (s.text.startsWith(')', s.i)) {
+        s.i++;
+        break;
+      } else if (s.text.startsWith('|', s.i)) {
+        s.i++;
+      } else {
+        throw mkError(s, "Expected pipe");
+      }
+    }
+    return parseJargonAux(s).flatMap(suff => choices.flat().map(pre => pre + suff));
+  }
+
+  // Quoted syntax -- "word with some spaces"
+  else if (s.text.startsWith('"', s.i)) {
+    const word = Cats.on(s.text);
+    s.i++;
+    loop: while (true) {
+      switch (s.text[s.i]) {
+        case "\\":
+          word.addFromSource(s.i + 1);
+          s.i += 2;
+          break;
+
+        case "\"":
+          s.i ++;
+          break loop;
+
+        default:
+          word.addFromSource(s.i);
+          s.i++;
+          break;
+      }
+    }
+    return [word];
+  }
+
+  // Termination
+  else if ('|)>'.includes(s.text[s.i])) {
+    return [''];
+  }
+
+  // Plain syntax -- word
+  else {
+    const char = s.text[s.i];
+    s.i++;
+    return parseJargonAux(s).map(j => char + j);
+  }
+
+}
 
 function chompSpace(s) {
   while (s.text[s.i] === ' ') s.i++;
@@ -668,6 +788,8 @@ code {
 
 ${annotationsImplementation}
 
+${jargonImplementation}
+
 <main>${html}</main>
 
 </body>
@@ -748,6 +870,79 @@ document.addEventListener('DOMContentLoaded', () => {
 `;
 
 
+const jargonImplementation = String.raw`
+
+<style>
+
+.jargon {
+  text-decoration: underline;
+  cursor: help;
+
+  position: relative;
+}
+
+.jargon .jargon-tooltip {
+  position: absolute;
+  z-index: 10;
+  display: inline-block;
+  min-width: 150px;
+  top: 100%;
+  left: 50%;
+  transform: translate(0%, 5px);
+  display: none;
+
+  background: rgba(240, 240, 240);
+  border: 1px solid #C06;
+  border-radius: 3px;
+  text-align: center;
+  font-size: 0.8em;
+  padding: .5em 1em;
+  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+}
+.jargon .jargon-tooltip p {
+  margin: .5em 0;
+}
+
+.jargon:hover {
+  font-weight: bold;
+}
+
+.jargon:hover .jargon-tooltip {
+  font-weight: normal;
+  display: block;
+}
+
+</style>
+
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  for (const $jarg of document.querySelectorAll('.jargon')) {
+    $jarg.append(mkTooltip($jarg));
+  }
+
+  function mkTooltip($jarg) {
+    const words = $jarg.dataset.forms.split(';');
+
+    const $tt = document.createElement('div');
+    $tt.classList.add('jargon-tooltip');
+    for (const word of words) {
+      const $p = document.createElement('p');
+      $p.innerText = word;
+      $tt.append($p);
+    }
+    return $tt;
+  }
+
+});
+
+</script>
+
+`;
+
+
 // indexOf but on fail return str.length instead of -1
 function indexOf(str, sub, from = 0) {
   let result = str.indexOf(sub, from);
@@ -785,7 +980,11 @@ export function renderTeX(tex) {
   });
 }
 
-function ruled(s, pref='>|') {
+function ruled(str, pref='>|') {
   const bar = '------';
-  return [bar, ...s.toString().split('\n').map(l => pref + l.replace(/ /g, '.')), bar].join('\n');
+  return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
+}
+
+function sample(str, from = 0, linec = 5) {
+  return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
 }
