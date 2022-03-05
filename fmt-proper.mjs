@@ -58,23 +58,17 @@ function mkNote(floc, source, graph) {
 Quick prelude on parsing
 
 Parsers are expected to have the signature
-  [result, s1] = parser(...args, s)
+  r = parser(...args, s)
 
-That is, they take some arguments and the current state, and return a result
-alongside a new state.
+That is, they take some arguments and the current state s, and perform some
+parsing, mutating the state s, and producing a result r.
 
 For performance reasons, the returned state s1 will usually be the *same object*
 as the passed-in state s; mutation is allowed.
 
 If you want backtracking or lookahead, pass in s.clone().
 
-  TODO: if we're mutating anyway, why not *not* return s1 and then
-        lookahead is done via
-          const s1 = s.clone()
-          parser(...args, s1)
-        ?
-
-Parser fail by throwing.
+Parsers fail by throwing.
 
 */
 
@@ -124,8 +118,7 @@ function parse(text, resolveJargon, graph) {
   if (s.text[s.i] === '\n') s.i++;
 
   const done = s => s.i >= s.text.length;
-  let html;
-  [html, s] = p_main(s, done);
+  const html = p_main(s, done);
 
   return {
     defines: s.defines,
@@ -149,7 +142,7 @@ function p_main(s, done) {
 
   const html = Cats.on(s.text);
 
-  if (done(s)) return ['', s];
+  if (done(s)) return '';
 
   parsing:
   while (true) {
@@ -157,19 +150,17 @@ function p_main(s, done) {
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
-      const [h, s1] = parser(s);
-      s = s1;
+      const h = parser(s);
       if (h) html.add(h);
-      if (s.i !== i0) {
+      if (s.i !== i0)
         continue parsing;
-      }
     }
 
     // All parsers tried
 
     // Break out to caller
     if (done(s))
-      return [html, s];
+      return html;
 
     // Out of text but not yet done()
     if (s.i >= s.text.length)
@@ -198,18 +189,18 @@ function p_sigils(s) {
   for (const [key, val] of Object.entries(mapping)) {
     if (s.text.startsWith(key, s.i)) {
       s.i += key.length;
-      return [val, s];
+      return val;
     }
   }
 
-  return ['', s];
+  return '';
 
 }
 
 
 // Fancy quote marks
 function p_quotes(s) {
-  if (!`'"`.includes(s.text[s.i])) return ['', s];
+  if (!`'"`.includes(s.text[s.i])) return '';
 
   const nonblank = c => !(c || '').match(/\s/);
   const quot = s.text[s.i];
@@ -229,13 +220,13 @@ function p_quotes(s) {
 
   const fancy = mapping[before + ' ' + quot + ' ' + after];
   s.i++;
-  return [fancy, s];
+  return fancy;
 }
 
 
 // Handle indented blocks and lists
 function p_indented(s) {
-  if (![undefined, '\n'].includes(s.text[s.i - 1])) return ['', s];
+  if (![undefined, '\n'].includes(s.text[s.i - 1])) return '';
 
   // Calculate line column
   let i = s.i;
@@ -249,25 +240,23 @@ function p_indented(s) {
   // If line empty or not indented, bail
   if (!bulleted)
     if (column === 0 || ['\n', undefined].includes(s.text[i]) && !bulleted)
-      return ['', s];
+      return '';
 
   // Else, parse as indented block
-  const [body, s1] = indented(p_main, column, bulleted, s);
-  return [Cats.of(`<div style="margin-left: ${column}ch; display: ${bulleted ? 'list-item' : 'block'}">`, body, '</div>'), s1];
+  const body = indented(p_main, column, bulleted, s);
+  return Cats.of(`<div style="margin-left: ${column}ch; display: ${bulleted ? 'list-item' : 'block'}">`, body, '</div>');
 }
 
 
 function p_katex(s) {
-  if (s.text[s.i] !== '$') return ['', s];
+  if (s.text[s.i] !== '$') return '';
 
   s.i++;
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
-  let body;
-  [body, s] = p_verbatim(s, done);
+  const body = p_verbatim(s, done);
   s.i++;
 
-  const rendered = katex.renderToString('' + body, { displayMode: false });
-  return [rendered, s];
+  return katex.renderToString('' + body, { displayMode: false });
 }
 
 
@@ -304,35 +293,33 @@ function indented(parser, column, bulleted, s) {
   const block = lines.map(line => line.slice(column)).join('');
 
   // Invoke (TODO: this whole deal feels wrong. and it will fuck up error index numbers)
-  const sDown = {
+  const srec = {
     ...s.clone(),
     text: block,
     i: 0,
   };
   const done = s => s.i >= s.text.length;
-  const [r, sRet] = parser(sDown, done);
-  const sUp = {
-    ...sRet.clone(),
+  const r = parser(srec, done);
+  Object.assign(s, {
+    ...srec.clone(),
     text: s.text,
     i: s.i + lines.map(line => line.length).reduce((a, b) => a + b, 0),
-  };
-  return [r, sUp];
+  });
+  return r;
 
 }
 
 
 // Execute a backslash command
 function p_command(s) {
-  if (s.text[s.i] !== '\\') return ['', s];
+  if (s.text[s.i] !== '\\') return '';
 
   const sx = s.clone();
-
   s.i++;
-  s = chompSpace(s);
 
-  let name;
-  [name, s] = parseWord(s);
-  name = name.toString();
+  chompSpace(s);
+
+  const name = parseWord(s).toString();
 
   if (name === '')
     throw mkError(sx, "Expected command name to follow backslash!");
@@ -349,101 +336,90 @@ const commands = {
 
   // Title
   title(s) {
-    const [body, _, s1] = enclosed(p_main, s);
-    return [Cats.of('<div style="border-bottom: 1px solid #C06">', body, '</div>'), s1];
+    const [body, _] = enclosed(p_main, s);
+    return Cats.of('<div style="border-bottom: 1px solid #C06">', body, '</div>');
   },
 
   // Section header
   sec(s) {
-    const [body, _, s1] = enclosed(p_main, s);
-    return [Cats.of('<div style="border-bottom: 1px dotted #C06">', body, '</div>'), s1];
+    const [body, _] = enclosed(p_main, s);
+    return Cats.of('<div style="border-bottom: 1px dotted #C06">', body, '</div>');
   },
 
   // KaTeX
   katex(s) {
-    const [body, kind, s1] = enclosed(p_verbatim, s);
+    const [body, kind] = enclosed(p_verbatim, s);
     const displayMode = { block: true, inline: false }[kind];
     const rendered = katex.renderToString('' + body, { displayMode });
-    return [rendered, s1];
+    return rendered;
   },
 
   // Italic
   i(s) {
-    const [body, _, s1] = enclosed(p_main, s);
-    return [Cats.of('<i>', body, '</i>'), s1];
+    const [body, _] = enclosed(p_main, s);
+    return Cats.of('<i>', body, '</i>');
   },
 
   // Bold
   b(s) {
-    const [body, _, s1] = enclosed(p_main, s);
-    return [Cats.of('<b>', body, '</b>'), s1];
+    const [body, _] = enclosed(p_main, s);
+    return Cats.of('<b>', body, '</b>');
   },
 
   // Underline
   u(s) {
-    const [body, _, s1] = enclosed(p_main, s);
-    return [Cats.of('<u>', body, '</u>'), s1];
+    const [body, _] = enclosed(p_main, s);
+    return Cats.of('<u>', body, '</u>');
   },
 
   // <code>
   c(s) {
-    const [body, kind, s1] = enclosed(p_main, s);
-    return [Cats.of(`<code style="display: ${kind}">`, body, '</code>'), s1];
+    const [body, kind] = enclosed(p_main, s);
+    return Cats.of(`<code style="display: ${kind}">`, body, '</code>');
   },
 
   // Annotation reference
   aref(s) {
-    s = chompSpace(s);
+    chompSpace(s);
 
-    let name;
-    [name, s] = parseWord(s);
-    name = name.toString();
+    let name = parseWord(s).toString();
     if (!name) {
       name = '' + (s.gensym++);
       s.annotNameQueue.push(name);
     }
 
-    s = chompSpace(s);
+    chompSpace(s);
 
-    let body, _;
-    [body, _, s] = enclosed(p_main, s);
+    const [body, _] = enclosed(p_main, s);
 
-    return [
-      Cats.of(`<span class="annotation-reference" data-refers-to="${name}">`, body, '</span>'),
-      s,
-    ];
+    return Cats.of(`<span class="annotation-reference" data-refers-to="${name}">`, body, '</span>');
   },
 
   // Annotation definition
   adef(s) {
     const sx = s.clone();
 
-    s = chompSpace(s);
+    chompSpace(s);
 
-    let name;
-    [name, s] = parseWord(s);
-    name = name.toString();
+    let name = parseWord(s).toString();
     if (!name && s.annotNameQueue.length > 0) {
       name = s.annotNameQueue[0];
       s.annotNameQueue.splice(0, 1);
     }
-    if (!name)
+    if (!name) {
       throw mkError(sx, "Unpaired \\adef!");
+    }
 
-    let body, _;
-    [body, _, s] = enclosed(p_main, s);
+    const [body, _] = enclosed(p_main, s);
 
-    return [
-      Cats.of(`<div class="annotation-definition" data-name="${name}">`, body, '</div>'),
-      s,
-    ];
+    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, body, '</div>');
   },
 
   // TeX, TikZ
   tikz(s) { return commands.tex(s, true); },
   tex(s, tikz = false) {
-    let tex, kind, s1;
-    [tex, kind, s1] = enclosed(p_verbatim, s);
+    let tex, kind;
+    [tex, kind] = enclosed(p_verbatim, s);
 
     if (tikz) {
       tex = String.raw`
@@ -463,9 +439,9 @@ ${tex}
 \end{document}
 `;
 
-  let html = renderTeX(tex);
-  if (kind === 'block') html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
-  return [html, s1];
+    let html = renderTeX(tex);
+    if (kind === 'block') html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
+    return html;
   },
 
 };
@@ -482,7 +458,7 @@ function parseWord(s) {
     word.addFromSource(s.i);
     s.i++;
   }
-  return [word, s];
+  return word;
 }
 
 
@@ -502,9 +478,9 @@ function enclosed(parser, s) {
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
       const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const [r, s1] = parser(s, done);
-      s1.i++;  // skip newline
-      return [r, 'block', s1];
+      const r = parser(s, done);
+      s.i++;  // skip newline
+      return [r, 'block'];
 
     // \cmd:\n <stuff>
     } else {
@@ -512,8 +488,8 @@ function enclosed(parser, s) {
       let i = s.i;
       while (s.text[i] === ' ') i++;
       let column = i - s.i;
-      const [r, s1] = indented(parser, column, false, s);
-      return [r, 'block', s1];
+      const r = indented(parser, column, false, s);
+      return [r, 'block'];
     }
 
 
@@ -532,10 +508,10 @@ function enclosed(parser, s) {
     s.i++;
 
     const done = s => s.text.startsWith(close, s.i);
-    const [r, s1] = parser(s, done)
+    const r = parser(s, done)
 
-    s1.i += close.length;
-    return [r, 'inline', s1];
+    s.i += close.length;
+    return [r, 'inline'];
 
   }
 }
@@ -547,7 +523,7 @@ function p_verbatim(s, done) {
 
   const result = Cats.on(s.text);
 
-  if (done(s)) return ['', s];
+  if (done(s)) return '';
   result.addFromSource(s.i);
 
   while (true) {
@@ -555,7 +531,7 @@ function p_verbatim(s, done) {
     s.i++;
 
     if (done(s))
-      return [result, s];
+      return result;
 
     if (s.i > s.text.length)
       throw mkError(s, "Unexpected EOF!");
