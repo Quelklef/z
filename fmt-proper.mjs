@@ -73,7 +73,7 @@ Parsers fail by throwing.
 */
 
 
-function parse(text, resolveJargon, referencedBy, note, graph) {
+function parse(text, doImplicitReferences, referencedBy, note, graph) {
 
   // Initial parser state
   let s = {
@@ -95,7 +95,10 @@ function parse(text, resolveJargon, referencedBy, note, graph) {
     references: new Set(),
 
     // Should jargon be resolved?
-    resolveJargon,
+    doImplicitReferences,
+    jargonMatcher:
+      doImplicitReferences ? new JargonMatcherJargonMatcher(graph.jargonSet, note.defines)
+                    : null,
 
     // Parent graph object
     graph,
@@ -154,6 +157,7 @@ function p_main(s, done) {
     p_katex,
     p_indented,
     p_command,
+    p_implicitReference,
   ]
 
   const html = Cats.on(s.text);
@@ -435,10 +439,32 @@ const commands = {
     if (!ref) console.warn(`Bad reference to '${noteId}' in '${s.note.id}'!`);
 
     chompSpace(s);
-    const body = p_inline(p_main, s);
+
+    const sr = s.clone();
+    sr.doImplicitReferences = false;
+    const body = p_inline(p_main, sr);
+    Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
+      // ^ TODO: Technically, this is bugged!
+      //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
 
     const href = ref ? ref.href : '#';
     return Cats.of(`<a href="${href}" class="reference explicit ${ref ? '' : 'invalid'}">`, body, '</a>');
+  },
+
+  // External (hyper-)reference
+  href(s) {
+    chompSpace(s)
+    consume(s, '<');
+    const href = Cats.on(s.text);
+    while (s.i < s.text.length && s.text[s.i] !== '>') {
+      href.addFromSource(s.i);
+      s.i++;
+    }
+    consume(s, '>');
+    chompSpace(s)
+
+    const body = p_inline(p_main, s);
+    return Cats.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
   // TeX, TikZ
@@ -483,10 +509,38 @@ ${tex}
     }
     s.defines = new Set([...s.defines, ...forms]);
 
-    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, s), '</span>');
+    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_verbatim, s), '</span>');
   }
 
 };
+
+
+// Jargon-lead implicit references
+function p_implicitReference(s) {
+  if (!s.doImplicitReferences) return '';
+  const r = s.jargonMatcher.findMeAMatch(s.text, s.i);
+  if (r === null) return '';
+
+  const [jarg, stepAmt] = r;
+  const defNotes = s.graph.jargonToDefiningNoteSet[jarg];
+
+  let href;
+  let isValid;
+  if (defNotes && defNotes.size > 0) {
+    isValid = true;
+    const defNote = [...defNotes][0];  // TODO
+    href = defNote.href;
+    s.references.add(defNote.id);
+  } else {
+    isValid = false;
+    console.warn(`Bad jargon '${jarg}' in note '${s.note.id}'!`);
+    href = '#';
+  }
+
+  const body = s.text.slice(s.i, s.i + stepAmt);  // TODO: escapeHtml
+  s.i += stepAmt;
+  return `<a href="${href}" class="reference implicit ${isValid ? '' : 'invalid'}">${body}</a>`;;
+}
 
 
 function parseJargon(s) {
@@ -587,6 +641,12 @@ function parseJargonAux(s) {
 function chompSpace(s) {
   while (s.text[s.i] === ' ') s.i++;
   return s;
+}
+
+function consume(s, str) {
+  if (!s.text.startsWith(str, s.i))
+    throw mkError(s, `Expected '${str}'`);
+  s.i += str.length;
 }
 
 function parseWord(s) {
@@ -986,6 +1046,50 @@ document.addEventListener('DOMContentLoaded', () => {
 </script>
 
 `;
+
+
+class JargonMatcherJargonMatcher {
+  constructor(jargs, exclude) {
+    const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
+    this.isSignif = c => signifChars.has(c);
+    this.normalize = s => [...s.toLowerCase()].filter(c => this.isSignif(c) || c === '$').join('');
+      // ^ n.b. we assume that length(norm(s)) <= length(s)
+
+    this.jargs = (
+      [...jargs]
+      .sort((a, b) => b.length - a.length)
+      .map(j => [j, this.normalize(j)])
+    );
+    this.exclude = new Set([...exclude]);
+    this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
+
+    this.jargsOfNormLengthLeq = {};
+
+    {
+      const m = this.jargsOfNormLengthLeq;
+      for (let l = 1; l <= this.M; l++)
+        m[l] = [];
+      for (const [jarg, njarg] of this.jargs)
+        for (let l = 1; l <= njarg.length; l++)
+          m[l].push([jarg, njarg]);
+    }
+
+  }
+
+  findMeAMatch(str, idx0) {
+    if (this.isSignif(str[idx0 - 1]) || !this.isSignif(str[idx0])) return null;
+    for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
+      if (this.isSignif(str[idxf]) || !this.isSignif(str[idxf - 1])) continue;
+      for (const [jarg, njarg] of this.jargsOfNormLengthLeq[idxf - idx0]) {
+        if (this.normalize(str.slice(idx0, idxf)) === njarg) {
+          if (this.exclude.has(jarg)) return null;
+          return [jarg, idxf - idx0];
+        }
+      }
+    }
+    return null;
+  }
+}
 
 
 // indexOf but on fail return str.length instead of -1

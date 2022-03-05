@@ -594,11 +594,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
 }
 
+
 class JargonMatcherJargonMatcher {
   constructor(jargs, exclude) {
-    const anum_chars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
-    this.is_anum = c => anum_chars.has(c);
-    this.normalize = s => [...s.toLowerCase()].filter(this.is_anum).join('');
+    const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
+    this.isSignif = c => signifChars.has(c);
+    this.normalize = s => [...s.toLowerCase()].filter(c => this.isSignif(c) || c === '$').join('');
       // ^ n.b. we assume that length(norm(s)) <= length(s)
 
     this.jargs = (
@@ -608,13 +609,25 @@ class JargonMatcherJargonMatcher {
     );
     this.exclude = new Set([...exclude]);
     this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
+
+    this.jargsOfNormLengthLeq = {};
+
+    {
+      const m = this.jargsOfNormLengthLeq;
+      for (let l = 1; l <= this.M; l++)
+        m[l] = [];
+      for (const [jarg, njarg] of this.jargs)
+        for (let l = 1; l <= njarg.length; l++)
+          m[l].push([jarg, njarg]);
+    }
+
   }
 
   findMeAMatch(str, idx0) {
-    if (this.is_anum(str[idx0 - 1]) || !this.is_anum(str[idx0])) return null;
+    if (this.isSignif(str[idx0 - 1]) || !this.isSignif(str[idx0])) return null;
     for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
-      if (this.is_anum(str[idxf]) || !this.is_anum(str[idxf - 1])) continue;
-      for (const [jarg, njarg] of this.jargs) {
+      if (this.isSignif(str[idxf]) || !this.isSignif(str[idxf - 1])) continue;
+      for (const [jarg, njarg] of this.jargsOfNormLengthLeq[idxf - idx0]) {
         if (this.normalize(str.slice(idx0, idxf)) === njarg) {
           if (this.exclude.has(jarg)) return null;
           return [jarg, idxf - idx0];
@@ -624,6 +637,7 @@ class JargonMatcherJargonMatcher {
     return null;
   }
 }
+
 
 function indexOf(str, sub, from = 0) {
   let result = str.indexOf(sub, from);
