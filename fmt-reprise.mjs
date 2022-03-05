@@ -440,13 +440,20 @@ function mkNote(floc, source, graph) {
       html += `  &bull; <a href="${ref.href}">${ref.id}</a>\n`;
     }
 
-    html = `
+    html = String.raw`<!DOCTYPE HTML>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
+
+  body { margin: 0; }
 
   #the-div {
     font-family: 'Merriweather', serif;
     font-size: 14px;
+    line-height: 1.5em;
+    white-space: pre-wrap;
   }
 
   .section-header {
@@ -463,7 +470,42 @@ function mkNote(floc, source, graph) {
        wherein no margins are added. */
   }
 
+
+  // v Inherited from global styling
+
+  body {
+    padding: 4vh 50px;
+    max-width: 800px;
+    margin: 0 auto;
+
+    font-size: 14px;
+    font-family: monospace;
+    line-height: 1.5em;
+  }
+
+  a {
+    text-decoration: none;
+    color: black;
+    background-color: hsla(330, 75%, 85%, .25);
+  }
+  a:hover {
+    background-color: hsla(330, 75%, 70%, .50);
+  }
+
+  hr {
+    border: none;
+    border-bottom: 1px dashed lightgrey;
+  }
+
+  code {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 1px 4px;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 3px;
+  }
+
 </style>
+
 <div id="the-div">${html}</div>
     `;
 
@@ -503,6 +545,9 @@ function mkNote(floc, source, graph) {
 .annotation-definition.hidden {
   display: none;
 }
+
+
+
 </style>
 
 <script>

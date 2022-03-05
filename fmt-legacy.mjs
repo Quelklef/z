@@ -222,9 +222,71 @@ function mkNote(floc, source, graph) {
     let html;
     html = note.t.initialHtmlAndReferenceSet[0];
     html = html.build();
-    html += `
+    html = `
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+
+<style>
+  body { margin: 0; }
+
+  body {
+    font-family: 'Merriweather', serif;
+    font-size: 14px;
+    line-height: 1.5em;
+    white-space: pre-wrap;
+  }
+
+  .section-header {
+    color: #c06;
+    border-bottom: 1px dotted #c06;
+    display: inline-block;
+    width: 100%;
+  }
+
+  #the-div .katex-display {
+    margin: 0;
+    /* By defualt has top- and bottom-margins, which is typically a good
+       thing, but would be inconsistent with how we otherwise do rendering,
+       wherein no margins are added. */
+  }
 
 
+  // v Inherited from global styling
+
+  body {
+    padding: 4vh 50px;
+    max-width: 800px;
+    margin: 0 auto;
+
+    font-size: 14px;
+    font-family: monospace;
+    line-height: 1.5em;
+  }
+
+  a {
+    text-decoration: none;
+    color: black;
+    background-color: hsla(330, 75%, 85%, .25);
+  }
+  a:hover {
+    background-color: hsla(330, 75%, 70%, .50);
+  }
+
+  hr {
+    border: none;
+    border-bottom: 1px dashed lightgrey;
+  }
+
+  code {
+    background-color: rgba(0, 0, 0, 0.05);
+    padding: 1px 4px;
+    border: 1px solid rgb(200, 200, 200);
+    border-radius: 3px;
+  }
+</style>
+
+${html}
 
 
 

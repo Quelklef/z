@@ -2,7 +2,7 @@ import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
 
-import { lazyAss, cache } from './util.mjs';
+import { StringBuilder, lazyAss, cache } from './util.mjs';
 
 import fmt_legacy from './fmt-legacy.mjs';
 fmt_legacy.source = fs.readFileSync('./fmt-legacy.mjs').toString();
@@ -27,6 +27,7 @@ function main() {
     fs.mkdirSync(out);
   }
 
+  // Initialize cache
   cache.root = plib.resolve(out, '.cache');
 
   const graph = {};
@@ -41,7 +42,6 @@ function main() {
   for (const format of formats) {
     for (const note of format(pwd, graph)) {
       note.t.format = format;
-      // console.log(`Gathering [format=${format.name}] [${note.id}]`)
       graph.notes.push(note);
     }
   }
@@ -50,11 +50,11 @@ function main() {
   const getCacheKeys = note => [note.id, note.source, note.t.format.source];
 
   // Consult the cache
+  // TODO: should the responsibility of caching be on the formats?
   for (let i = 0; i < graph.notes.length; i++) {
     const note = graph.notes[i];
     const cached = cache.getOr(getCacheKeys(note), null);
     if (cached) {
-      // console.log(`Cached [${note.id}]`);
       graph.notes[i] = cached;
       graph.notes[i].t.isFromCache = true;
     } else {
@@ -106,12 +106,23 @@ function main() {
 
   fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
   if (!fs.existsSync(plib.resolve(out, 'n'))) fs.mkdirSync(plib.resolve(out, 'n'));
+  if (!fs.existsSync(plib.resolve(out, 'iframe'))) fs.mkdirSync(plib.resolve(out, 'iframe'));
+  if (!fs.existsSync(plib.resolve(out, 'iframe/n'))) fs.mkdirSync(plib.resolve(out, 'iframe/n'));
 
   for (const note of graph.notes) {
     // console.log(`Writing [${note.id}]`)
     fs.writeFileSync(
       plib.resolve(out, note.relativeOutLoc),
-      withTemplate(note.html),
+      withTemplate(`
+        <iframe
+          src="${'/iframe/' + note.relativeOutLoc}"
+          scrolling="no"
+          onload="this.style.height = (this.contentWindow.document.body.scrollHeight + 20) + 'px';"
+        ></iframe>`),
+    );
+    fs.writeFileSync(
+      plib.resolve(out, 'iframe', note.relativeOutLoc),
+      '<base target="_parent">\n' + note.html
     );
   }
 
@@ -152,16 +163,14 @@ function renderIndex(graph) {
   return html;
 }
 
-function withTemplate(body) {
-  return `
+function withTemplate(mainHtml) {
+  return String.raw`
     <!DOCTYPE HTML>
 
     <html>
     <head>
       <meta charset="utf-8">
       <title>ζ</title>
-
-      <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
     <style>
 
     body {
@@ -178,10 +187,6 @@ function withTemplate(body) {
       margin-bottom: 4em;
     }
 
-    main {
-      white-space: pre-wrap;
-    }
-
     a {
       text-decoration: none;
       color: black;
@@ -191,16 +196,10 @@ function withTemplate(body) {
       background-color: hsla(330, 75%, 70%, .50);
     }
 
-    hr {
+    iframe {
       border: none;
-      border-bottom: 1px dashed lightgrey;
-    }
-
-    code {
-      background-color: rgba(0, 0, 0, 0.05);
-      padding: 1px 4px;
-      border: 1px solid rgb(200, 200, 200);
-      border-radius: 3px;
+      width: 100%;
+      height: 80vh;
     }
 
     </style>
@@ -211,11 +210,45 @@ function withTemplate(body) {
 
     <nav>ζ &bull; <a href="/">index</a></nav>
 
-<main>${body}</main>
-
+<main id="main">${mainHtml}</main>
     </body>
     </html>
 `;
+}
+
+// Accept a string and a string which:
+// 1. Evaluates to that string
+// 2. Interpolates into HTML; does not contain '</'
+// TODO: optimize
+function unevalString(str) {
+  const out = new StringBuilder();
+
+  out.add('(String.raw`');
+
+  const banned = new Set(['`', '${', '</']);
+
+  let i = 0;
+  while (i < str.length) {
+
+    for (const b of banned) {
+      if (str.startsWith(b, i)) {
+        out.add("`+'" + b + "'+String.raw`");
+        i += b.length;
+        continue;
+      }
+    }
+
+    {
+      out.add(str[i]);
+      i++;
+      continue;
+    }
+
+  }
+
+  out.add('`)');
+
+  return out.build();
 }
 
 main();
