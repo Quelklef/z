@@ -1,3 +1,9 @@
+/*
+
+Legacy format, only exists for compatibility reasons.
+
+*/
+
 import * as plib from 'path';
 import * as child_process from 'child_process';
 import fs from 'fs';
@@ -12,20 +18,26 @@ export default function * legacy(pwd, graph) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
       const source = fs.readFileSync(floc).toString();
-      if (source.trim().split('\n')[0] !== 'format=reprise')
+      if (!source.trim().split('\n')[0].startsWith('format='))
         yield mkNote(floc, source, graph);
     }
   }
 
 }
 
+
+// Symbol for transient data on note
+const t = Symbol('fmt-legacy.t');
+
 function mkNote(floc, source, graph) {
 
-  const note = graph.newNote();
+  const note = {};
 
   note.floc = floc;
 
   note.source = source;
+
+  note.cacheKeys = [floc, source];
 
   note.defines = extract(note.source, '[:', ':]');
 
@@ -42,7 +54,9 @@ function mkNote(floc, source, graph) {
   //  .references (need graph.jargonSet)
   //  .html (need note.popularity)
 
-  lazyAss(note.t, 'initialHtmlAndReferenceSet', () => {
+  Object.defineProperty(note, t, { enumerable: false, value: {} });
+
+  lazyAss(note[t], 'initialHtmlAndReferenceSet', () => {
 
     console.log(`Rendering [${note.id}]`);
 
@@ -215,12 +229,12 @@ function mkNote(floc, source, graph) {
   });
 
   lazyAss(note, 'references', () => {
-    return note.t.initialHtmlAndReferenceSet[1];
+    return note[t].initialHtmlAndReferenceSet[1];
   });
 
   lazyAss(note, 'html', () => {
     let html;
-    html = note.t.initialHtmlAndReferenceSet[0];
+    html = note[t].initialHtmlAndReferenceSet[0];
     html = html.build();
     html = `
 

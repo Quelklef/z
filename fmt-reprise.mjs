@@ -19,16 +19,23 @@ export default function * reprise(pwd, graph) {
 
 }
 
+
+const t = Symbol('fmt-reprise.t');
+
 function mkNote(floc, source, graph) {
 
-  const note = graph.newNote();
+  const note = {};
 
   note.source = source;
 
+  note.cacheKeys = [floc, source];
+
   note.id = plib.basename(floc, '.z');
 
+  Object.defineProperty(note, t, { enumerable: false, value: {} });
+
   // Initial computations
-  lazyAss(note.t, 'meta', () => {
+  lazyAss(note[t], 'meta', () => {
 
     console.log(`Initializing [${note.id}]`);
 
@@ -69,10 +76,10 @@ function mkNote(floc, source, graph) {
 
   });
 
-  lazyAss(note, 'defines', () => note.t.meta.defines);
+  lazyAss(note, 'defines', () => note[t].meta.defines);
 
   // Most computations
-  lazyAss(note.t, 'comp', () => {
+  lazyAss(note[t], 'comp', () => {
 
     console.log(`Rendering [${note.id}]`);
 
@@ -82,7 +89,7 @@ function mkNote(floc, source, graph) {
     comp.html = new StringBuilder();
     comp.references = new Set();
 
-    let i = note.t.meta.continueIndex;
+    let i = note[t].meta.continueIndex;
     let inCode = false;  // in \c[] ?
     let gensym = 0;
     let isInitial = true;
@@ -425,11 +432,11 @@ function mkNote(floc, source, graph) {
 
   });
 
-  lazyAss(note, 'references', () => note.t.comp.references);
+  lazyAss(note, 'references', () => note[t].comp.references);
 
   lazyAss(note, 'html', () => {
     let html;
-    html = note.t.comp.html.build()
+    html = note[t].comp.html.build()
 
     html += '\n\n\n';
     html += '<hr />';

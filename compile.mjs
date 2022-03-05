@@ -10,15 +10,15 @@ import { lazyAss, cache } from './util.mjs';
 //      but we're using modules instead...
 
 import fmt_legacy from './fmt-legacy.mjs';
-fmt_legacy.source = fs.readFileSync('./fmt-legacy.mjs').toString();
-
 import fmt_reprise from './fmt-reprise.mjs';
-fmt_reprise.source = fs.readFileSync('./fmt-reprise.mjs').toString();
+import fmt_proper from './fmt-proper.mjs';
 
 const formats = [
   fmt_legacy,
   fmt_reprise,
+  fmt_proper,
 ];
+
 
 
 function main() {
@@ -33,35 +33,24 @@ function main() {
   const graph = {};
   graph.notes = [];
 
-  graph.newNote = () => {
-    const note = {};
-    note.t = {};  // Transient data, doesn't get cached
-    return note;
-  };
+  const t = Symbol('compile.t');
 
   for (const format of formats) {
-    for (const note of format(pwd, graph)) {
-      note.t.format = format;
+    for (let note of format(pwd, graph)) {
+
+      const cached = cache.getOr(note.cacheKeys, null);
+      if (cached) note = cached;
+
+      // Initialize transient (non-cached) data
+      Object.defineProperty(note, t, { enumerable: false, value: {} });
+      note[t].isFromCache = !!cached;
+
       graph.notes.push(note);
+
     }
   }
 
   console.log(`Found ${graph.notes.length} notes`);
-
-  const getCacheKeys = note => [note.id, note.source, note.t.format.source];
-
-  // Consult the cache
-  // TODO: should the responsibility of caching be on the formats?
-  for (let i = 0; i < graph.notes.length; i++) {
-    const note = graph.notes[i];
-    const cached = cache.getOr(getCacheKeys(note), null);
-    if (cached) {
-      graph.notes[i] = cached;
-      graph.notes[i].t.isFromCache = true;
-    } else {
-      note.t.isFromCache = false;
-    }
-  }
 
   for (const note of graph.notes) {
     lazyAss(note, 'relativeLoc', () => 'n/' + note.id + '.html');
@@ -130,11 +119,9 @@ function main() {
   }
 
   for (const note of graph.notes) {
-    if (note.t.isFromCache) continue;
+    if (note[t].isFromCache) continue;
     console.log(`Caching [${note.id}]`);
-    const cacheKeys = getCacheKeys(note);
-    note.t = {};
-    cache.put(cacheKeys, note);
+    cache.put(note.cacheKeys, note);
   }
 
   console.log('Done!');

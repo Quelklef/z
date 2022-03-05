@@ -7,6 +7,7 @@ import * as crypto from 'crypto';
 export class StringBuilder {
   constructor() {
     this.chunks = [];
+    this.pending = null;
   }
 
   add(s) {
@@ -21,7 +22,6 @@ export class StringBuilder {
 }
 
 
-// TODO: use "eff"
 export const cache = {
 
   // cache.root is a pseudo-constant set at program start
@@ -87,9 +87,6 @@ export const cache = {
 
 };
 
-
-
-// TODO: also use "eff"
 export function withTempDir(fun) {
   let path = '/tmp/z-';
   for (let i = 0; i < 20; i++)
