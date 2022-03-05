@@ -225,13 +225,12 @@ function mkNote(floc, source, graph) {
     html = `
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
 
 <style>
   body { margin: 0; }
 
   body {
-    font-family: 'Merriweather', serif;
+    font-family: monospace;
     font-size: 14px;
     line-height: 1.5em;
     white-space: pre-wrap;

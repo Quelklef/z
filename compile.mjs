@@ -2,7 +2,12 @@ import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
 
-import { StringBuilder, lazyAss, cache } from './util.mjs';
+import { lazyAss, cache } from './util.mjs';
+
+
+
+// n.b. I would love to dynamically load these with require(),
+//      but we're using modules instead...
 
 import fmt_legacy from './fmt-legacy.mjs';
 fmt_legacy.source = fs.readFileSync('./fmt-legacy.mjs').toString();
@@ -10,22 +15,17 @@ fmt_legacy.source = fs.readFileSync('./fmt-legacy.mjs').toString();
 import fmt_reprise from './fmt-reprise.mjs';
 fmt_reprise.source = fs.readFileSync('./fmt-reprise.mjs').toString();
 
-
-
-
-
 const formats = [
   fmt_legacy,
   fmt_reprise,
 ];
 
+
 function main() {
 
   const pwd = process.env.PWD;
   const out = plib.resolve(pwd, 'out');
-  if (!fs.existsSync(out)) {
-    fs.mkdirSync(out);
-  }
+  fs.mkdirSync(out, { recursive: true });
 
   // Initialize cache
   cache.root = plib.resolve(out, '.cache');
@@ -45,6 +45,7 @@ function main() {
       graph.notes.push(note);
     }
   }
+
   console.log(`Found ${graph.notes.length} notes`);
 
   const getCacheKeys = note => [note.id, note.source, note.t.format.source];
@@ -63,8 +64,8 @@ function main() {
   }
 
   for (const note of graph.notes) {
-    lazyAss(note, 'href', () => '/n/' + note.id + '.html');
-    lazyAss(note, 'relativeOutLoc', () => 'n/' + note.id + '.html');
+    lazyAss(note, 'relativeLoc', () => 'n/' + note.id + '.html');
+    lazyAss(note, 'href', () => '/' + note.relativeLoc);
   }
 
   graph.notesById = {};
@@ -104,39 +105,45 @@ function main() {
   for (const note of graph.notes)
     note.popularity = note.referencedBy.size;
 
-  fs.writeFileSync(plib.resolve(out, 'index.html'), renderIndex(graph));
-  if (!fs.existsSync(plib.resolve(out, 'n'))) fs.mkdirSync(plib.resolve(out, 'n'));
-  if (!fs.existsSync(plib.resolve(out, 'iframe'))) fs.mkdirSync(plib.resolve(out, 'iframe'));
-  if (!fs.existsSync(plib.resolve(out, 'iframe/n'))) fs.mkdirSync(plib.resolve(out, 'iframe/n'));
+  writeFile(plib.resolve(out, 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
-    // console.log(`Writing [${note.id}]`)
-    fs.writeFileSync(
-      plib.resolve(out, note.relativeOutLoc),
-      withTemplate(`
+
+    const html = (
+      '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
+      + note.html
+    );
+
+    writeFile(plib.resolve(out, 'raw', note.relativeLoc), html);
+
+    const wrapped =
+      withTemplate(String.raw`
         <iframe
-          src="${'/iframe/' + note.relativeOutLoc}"
+          src="${'/raw/' + note.relativeLoc}"
           scrolling="no"
           onload="this.style.height = (this.contentWindow.document.body.scrollHeight + 20) + 'px';"
-        ></iframe>`),
-    );
-    fs.writeFileSync(
-      plib.resolve(out, 'iframe', note.relativeOutLoc),
-      '<base target="_parent">\n' + note.html
-    );
+        ></iframe>
+    `);
+
+    writeFile(plib.resolve(out, note.relativeLoc), wrapped);
+
   }
 
   for (const note of graph.notes) {
-    if (!note.t.isFromCache) {
-      console.log(`Caching [${note.id}]`);
-      const cacheKeys = getCacheKeys(note);
-      note.t = {};
-      cache.put(cacheKeys, note);
-    }
+    if (note.t.isFromCache) continue;
+    console.log(`Caching [${note.id}]`);
+    const cacheKeys = getCacheKeys(note);
+    note.t = {};
+    cache.put(cacheKeys, note);
   }
 
   console.log('Done!');
 
+}
+
+function writeFile(loc, content) {
+  fs.mkdirSync(plib.dirname(loc), { recursive: true });
+  fs.writeFileSync(loc, content);
 }
 
 function renderIndex(graph) {
@@ -214,41 +221,6 @@ function withTemplate(mainHtml) {
     </body>
     </html>
 `;
-}
-
-// Accept a string and a string which:
-// 1. Evaluates to that string
-// 2. Interpolates into HTML; does not contain '</'
-// TODO: optimize
-function unevalString(str) {
-  const out = new StringBuilder();
-
-  out.add('(String.raw`');
-
-  const banned = new Set(['`', '${', '</']);
-
-  let i = 0;
-  while (i < str.length) {
-
-    for (const b of banned) {
-      if (str.startsWith(b, i)) {
-        out.add("`+'" + b + "'+String.raw`");
-        i += b.length;
-        continue;
-      }
-    }
-
-    {
-      out.add(str[i]);
-      i++;
-      continue;
-    }
-
-  }
-
-  out.add('`)');
-
-  return out.build();
 }
 
 main();
