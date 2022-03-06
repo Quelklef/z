@@ -2,6 +2,7 @@ import * as plib from 'path';
 import * as child_process from 'child_process';
 import * as util from './util.mjs';
 import fs from 'fs';
+import hljs from 'highlight.js';
 import katex from 'katex';
 
 import { lazyAss, cache, withTempDir } from './util.mjs';
@@ -389,10 +390,26 @@ const commands = {
     return Cats.of('<u>', p_inline(p_main, s), '</u>');
   },
 
-  // <code>
-  c(s) {
-    const [body, kind] = enclosed(p_main, s);
-    return Cats.of(`<code style="display: ${kind}">`, body, '</code>');
+  // Code
+  c(s) { return commands.code(s); },
+  code(s) {
+    chompSpace(s);
+    let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
+    chompSpace(s);
+
+    let [body, kind] = enclosed(p_verbatim, s);
+    body = body.toString();
+
+    const highlighted =
+      language !== null
+          ? hljs.highlight(body, { language })
+      : language === null && kind === 'inline'
+          ? hljs.highlight(body, { language: 'plaintext' })
+      : language === null && kind === 'block'
+          ? hljs.highlightAuto(body)
+      : null;
+
+    return Cats.of(`<code class="${kind}">`, highlighted.value, '</code>');
   },
 
   // Comment (REMark)
@@ -862,6 +879,7 @@ function withHtmlTemplate(html) {
 <html>
   <head>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
   </head>
 <body>
@@ -882,9 +900,16 @@ main {
 
 code {
   border: 1px solid rgb(200, 200, 200);
-  padding: 0px 2px;
-  background-color: rgb(240, 240, 240);
+  background-color: rgb(245, 245, 245);
   border-radius: 2px;
+}
+code.inline {
+  display: inline;
+  padding: 0px 2px;
+}
+code.block {
+  display: block;
+  padding: .35em .5em;
 }
 
 hr {

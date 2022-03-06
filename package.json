@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Quelklef/z#readme",
   "dependencies": {
+    "highlight.js": "^11.4.0",
     "katex": "^0.15.2"
   }
 }
