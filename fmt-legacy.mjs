@@ -359,7 +359,7 @@ function chompDelimited(text, i, open, close) {
 
 
 export function renderTeX(source) {
-  return cache.at([renderTeX, source], () => {
+  return cache.at('tex', [renderTeX, source], () => {
     return withTempDir(tmp => {
 
       console.log(`Rendering LaTeX [${source.length}]`);

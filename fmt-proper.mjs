@@ -1143,7 +1143,7 @@ function indexOf(str, sub, from = 0) {
 }
 
 export function renderTeX(tex) {
-  return cache.at([renderTeX, tex], () => {
+  return cache.at('tex', [renderTeX, tex], () => {
     return withTempDir(tmp => {
 
       console.log(`Rendering LaTeX [${tex.length}]`);

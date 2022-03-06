@@ -1,8 +1,9 @@
 import fs from 'fs';
 import katex from 'katex';
 import * as plib from 'path';
+import isMainModule from 'es-main';
 
-import { lazyAss, cache } from './util.mjs';
+import { lazyAss, cache, writeFile } from './util.mjs';
 
 
 
@@ -21,7 +22,7 @@ const formats = [
 
 
 
-function main() {
+export function main() {
 
   const pwd = process.env.PWD;
   const out = plib.resolve(pwd, 'out');
@@ -38,7 +39,7 @@ function main() {
   for (const format of formats) {
     for (let note of format(pwd, graph)) {
 
-      const cached = cache.getOr(note.cacheKeys, null);
+      const cached = cache.getOr('notes', note.cacheKeys, null);
       if (cached) note = cached;
 
       // Initialize transient (non-cached) data
@@ -51,7 +52,7 @@ function main() {
     }
   }
 
-  console.log(`Found ${graph.notes.length} notes`);
+  console.log('Found', graph.notes.length, 'notes');
 
   // Log format counts
   {
@@ -59,9 +60,7 @@ function main() {
     for (const note of graph.notes)
       counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
-    console.log('Formats:');
-    for (const k of sorted)
-      console.log(' ', k, 'has', counts[k], 'notes');
+    console.log(sorted.map(k => `format=${k}: ${counts[k]} notes`).join('; '))
   }
 
   for (const note of graph.notes) {
@@ -134,17 +133,13 @@ function main() {
   for (const note of graph.notes) {
     if (note[t].isFromCache) continue;
     console.log(`Caching [${note.id}]`);
-    cache.put(note.cacheKeys, note);
+    cache.put('notes', note.cacheKeys, note);
   }
 
   console.log('Done!');
 
 }
 
-function writeFile(loc, content) {
-  fs.mkdirSync(plib.dirname(loc), { recursive: true });
-  fs.writeFileSync(loc, content);
-}
 
 function renderIndex(graph) {
   let html;
@@ -231,4 +226,5 @@ function withTemplate(mainHtml) {
 `;
 }
 
-main();
+
+if (isMainModule(import.meta)) main();

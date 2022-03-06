@@ -39,53 +39,59 @@ export const cache = {
     return this._root;
   },
 
-  _mkPath(keys) {
+  _mkPath(namespace, keys) {
     let hash = crypto.createHash('md5');
     for (const key of keys)
       hash.update(key.toString())
     hash = hash.digest('hex');
-    return plib.resolve(this.root, hash);
+    return plib.resolve(this.root, namespace, hash);
   },
 
-  get(keys) {
-    const path = this._mkPath(keys);
+  get(namespace, keys) {
+    const path = this._mkPath(namespace, keys);
     const text = fs.readFileSync(path).toString();
     return deserialize(text);
   },
 
-  getOr(keys, fallback) {
+  getOr(namespace, keys, fallback) {
     try {
-      return this.get(keys);
+      return this.get(namespace, keys);
     } catch (e) {
       if (e.code === 'ENOENT') return fallback;
       else throw e;
     }
   },
 
-  has(keys) {
-    return fs.existsSync(this._mkPath(keys));
+  has(namespace, keys) {
+    return fs.existsSync(this._mkPath(namespace, keys));
   },
 
-  put(keys, value) {
-    const path = this._mkPath(keys);
+  put(namespace, keys, value) {
+    const path = this._mkPath(namespace, keys);
     const text = serialize(value);
-    fs.writeFileSync(path, text);
+    writeFile(path, text);
   },
 
-  at(keys, fun) {
+  at(namespace, keys, fun) {
     try {
-      return this.get(keys);
+      return this.get(namespace, keys);
     } catch (e) {
       if (e.code === 'ENOENT');  // file dne
       else throw e;
     }
 
     const result = fun();
-    this.put(keys, result);
+    this.put(namespace, keys, result);
     return result;
   },
 
 };
+
+
+export function writeFile(loc, content) {
+  fs.mkdirSync(plib.dirname(loc), { recursive: true });
+  fs.writeFileSync(loc, content);
+}
 
 
 export function * readdirRecursive(loc) {
