@@ -13,8 +13,8 @@ format=proper
     }
 
 - Linking
-  - \ref sample-note [Explicit, to other notes]
-  - Defining \jarg <N:jargon> <N:term(|inology)> [jargon], which turn into implicit references
+  - Defining \jarg <N:zeta (jargon|term(|inology))> [jargon], which turn into implicit references to other notes
+  - \ref sample-note-2 [Explicit references to other notes]
   - External, e.g. \href <https://google.com> [to Google]
 
 - Bulleted lists ...

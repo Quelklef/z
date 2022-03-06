@@ -53,8 +53,14 @@ function onEvent(ev, path) {
 }
 
 function recompile() {
-  console.log();
-  main();
+  // Clear screen...
+  for (let i = 0; i < 100; i++) process.stdout.write('\n');
+
+  try {
+    main();
+  } catch (e) {
+    console.error(e);
+  }
   console.log(`\nListening at localhost:${PORT}\nWatching for file changes or keypress...`);
   keyhelp();
 }

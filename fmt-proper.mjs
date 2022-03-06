@@ -542,7 +542,7 @@ ${tex}
     }
     s.defines = new Set([...s.defines, ...forms]);
 
-    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_verbatim, s), '</span>');
+    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, s), '</span>');
   }
 
 };
