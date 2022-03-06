@@ -154,7 +154,7 @@ function renderIndex(graph) {
 
   html += (
     [...graph.notes]
-      .sort((na, nb) => nb.popularity - na.popularity)
+      .sort((na, nb) => nb.referencedBy.size - na.referencedBy.size)
       .map(note =>
         [ '<tr>'
         , `<td><a href="${note.href}">${note.id}</a></td>`
