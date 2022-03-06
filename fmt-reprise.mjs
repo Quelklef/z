@@ -1,5 +1,6 @@
 import * as plib from 'path';
 import * as child_process from 'child_process';
+import * as util from './util.mjs';
 import fs from 'fs';
 import katex from 'katex';
 
@@ -7,7 +8,7 @@ import { lazyAss, StringBuilder, cache, withTempDir } from './util.mjs';
 
 export default function * reprise(pwd, graph) {
 
-  const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
+  const ls = util.readdirRecursive(plib.resolve(pwd, 'notes'));
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
@@ -610,15 +611,13 @@ class JargonMatcherJargonMatcher {
     this.exclude = new Set([...exclude]);
     this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
 
-    this.jargsOfNormLengthLeq = {};
+    this.jargsOfNormLengthEq = {};
 
     {
-      const m = this.jargsOfNormLengthLeq;
       for (let l = 1; l <= this.M; l++)
-        m[l] = [];
+        this.jargsOfNormLengthEq[l] = [];
       for (const [jarg, njarg] of this.jargs)
-        for (let l = 1; l <= njarg.length; l++)
-          m[l].push([jarg, njarg]);
+        this.jargsOfNormLengthEq[njarg.length].push([jarg, njarg]);
     }
 
   }
@@ -627,8 +626,9 @@ class JargonMatcherJargonMatcher {
     if (this.isSignif(str[idx0 - 1]) || !this.isSignif(str[idx0])) return null;
     for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
       if (this.isSignif(str[idxf]) || !this.isSignif(str[idxf - 1])) continue;
-      for (const [jarg, njarg] of this.jargsOfNormLengthLeq[idxf - idx0]) {
-        if (this.normalize(str.slice(idx0, idxf)) === njarg) {
+      const normed = this.normalize(str.slice(idx0, idxf));
+      for (const [jarg, njarg] of this.jargsOfNormLengthEq[normed.length]) {
+        if (normed === njarg) {
           if (this.exclude.has(jarg)) return null;
           return [jarg, idxf - idx0];
         }

@@ -6,6 +6,7 @@ Legacy format, only exists for compatibility reasons.
 
 import * as plib from 'path';
 import * as child_process from 'child_process';
+import * as util from './util.mjs';
 import fs from 'fs';
 import katex from 'katex';
 
@@ -13,7 +14,7 @@ import { lazyAss, StringBuilder, withTempDir, cache } from './util.mjs';
 
 export default function * legacy(pwd, graph) {
 
-  const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
+  const ls = util.readdirRecursive(plib.resolve(pwd, 'notes'));
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {

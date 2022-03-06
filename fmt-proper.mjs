@@ -1,5 +1,6 @@
 import * as plib from 'path';
 import * as child_process from 'child_process';
+import * as util from './util.mjs';
 import fs from 'fs';
 import katex from 'katex';
 
@@ -7,7 +8,7 @@ import { lazyAss, cache, withTempDir } from './util.mjs';
 
 export default function * proper(pwd, graph) {
 
-  const ls = fs.readdirSync(plib.resolve(pwd, 'notes'))
+  const ls = util.readdirRecursive(plib.resolve(pwd, 'notes'));
   for (const fname of ls) {
     const floc = plib.resolve(pwd, 'notes', fname);
     if (floc.endsWith('.z')) {
@@ -38,14 +39,16 @@ function mkNote(floc, source, graph) {
     return parse(source, false, [], note, graph);
   });
 
-  lazyAss(note, 'defines', () => note[t].preparsed.defines);
+  lazyAss(note, 'defines', () => {
+    return note[t].preparsed.defines;
+  });
 
   lazyAss(note[t], 'parsed', () => {
     console.log(`Parsing [${note.id}]`);
     return parse(source, true, note.referencedBy, note, graph);
   });
 
-  lazyAss(note, 'references', () => note[t].parsed.defines);
+  lazyAss(note, 'references', () => note[t].parsed.references);
 
   lazyAss(note, 'html', () => note[t].parsed.html);
 
@@ -99,9 +102,6 @@ function parse(text, doImplicitReferences, referencedBy, note, graph) {
     jargonMatcher:
       doImplicitReferences ? new JargonMatcherJargonMatcher(graph.jargonSet, note.defines)
                     : null,
-
-    // Parent graph object
-    graph,
 
     // Symbol generation
     cursym: 0,
@@ -289,7 +289,7 @@ function indented(parser, column, bulleted, s) {
 
     if (
       line.slice(0, column).trim() === ''
-        // ^ Accept indented lines and blank lines
+        // ^ Accept blank lines and non-blank indented lines
       || lines.length === 0 && bulleted && line.startsWith('- ')
         // ^ Or a leading bulleted line
     ) {
@@ -308,9 +308,13 @@ function indented(parser, column, bulleted, s) {
     lines.pop(lines.length - 1);
 
   // Build block of unindented code
-  const block = lines.map(line => line.slice(column)).join('');
+  const block = lines.map(line => {
+    const sl = line.slice(column);
+    if (sl === '') return '\n';
+    return sl;
+  }).join('');
 
-  // Invoke (TODO: this whole deal feels wrong. and it will fuck up error index numbers)
+  // Invoke given parser (TODO: this whole deal feels wrong. and it will fuck up error index numbers)
   const srec = {
     ...s.clone(),
     text: block,
@@ -394,7 +398,7 @@ const commands = {
   // Comment (REMark)
   rem(s) {
     chompSpace(s);
-    const comment = p_inline(p_verbatim, s);
+    const [comment, _] = enclosed(p_verbatim, s);
     return '';
   },
 
@@ -488,11 +492,18 @@ ${tex}
 
     tex = String.raw`
 \documentclass{standalone}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
 \usepackage{tikz}
 \usepackage{lmodern}
+
 \usepackage[T1]{fontenc}
+
 \begin{document}
+
 ${tex}
+
 \end{document}
 `;
 
@@ -866,6 +877,7 @@ main {
   white-space: pre-wrap;
   font-size: 14px;
   font-family: 'Merriweather', serif;
+  line-height: 1.5em;
 }
 
 code {
@@ -890,7 +902,7 @@ hr {
 }
 .reference, .reference:visited { color: initial; }
 .reference.explicit {
-  border-bottom: 2px solid #C06;
+  border-bottom: 1px solid #C06;
 }
 .reference.invalid {
   border: 1px dotted red;
@@ -1070,15 +1082,13 @@ class JargonMatcherJargonMatcher {
     this.exclude = new Set([...exclude]);
     this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
 
-    this.jargsOfNormLengthLeq = {};
+    this.jargsOfNormLengthEq = {};
 
     {
-      const m = this.jargsOfNormLengthLeq;
       for (let l = 1; l <= this.M; l++)
-        m[l] = [];
+        this.jargsOfNormLengthEq[l] = [];
       for (const [jarg, njarg] of this.jargs)
-        for (let l = 1; l <= njarg.length; l++)
-          m[l].push([jarg, njarg]);
+        this.jargsOfNormLengthEq[njarg.length].push([jarg, njarg]);
     }
 
   }
@@ -1087,8 +1097,9 @@ class JargonMatcherJargonMatcher {
     if (this.isSignif(str[idx0 - 1]) || !this.isSignif(str[idx0])) return null;
     for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
       if (this.isSignif(str[idxf]) || !this.isSignif(str[idxf - 1])) continue;
-      for (const [jarg, njarg] of this.jargsOfNormLengthLeq[idxf - idx0]) {
-        if (this.normalize(str.slice(idx0, idxf)) === njarg) {
+      const normed = this.normalize(str.slice(idx0, idxf));
+      for (const [jarg, njarg] of this.jargsOfNormLengthEq[normed.length]) {
+        if (normed === njarg) {
           if (this.exclude.has(jarg)) return null;
           return [jarg, idxf - idx0];
         }
@@ -1126,7 +1137,7 @@ export function renderTeX(tex) {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
         console.log(err.stderr.toString());  // meh
-        throw 'tikz render failed; see above!';
+        throw 'LaTeX render failed; see above!';
       }
 
       console.log(`Rendering LaTeX [done] [${tex.length}]`);

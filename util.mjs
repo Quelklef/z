@@ -87,6 +87,19 @@ export const cache = {
 
 };
 
+
+export function * readdirRecursive(loc) {
+  const ls = fs.readdirSync(loc, { withFileTypes: true });
+  for (const elem of ls) {
+    const eloc = plib.resolve(loc, elem.name);
+    if (elem.isDirectory())
+      yield * readdirRecursive(eloc)
+    else
+      yield eloc;
+  }
+}
+
+
 export function withTempDir(fun) {
   let path = '/tmp/z-';
   for (let i = 0; i < 20; i++)
