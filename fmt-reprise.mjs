@@ -6,18 +6,12 @@ import katex from 'katex';
 
 import { lazyAss, StringBuilder, cache, withTempDir } from './util.mjs';
 
-export default function * reprise(pwd, graph) {
-
-  const ls = util.readdirRecursive(plib.resolve(pwd, 'notes'));
-  for (const fname of ls) {
-    const floc = plib.resolve(pwd, 'notes', fname);
-    if (floc.endsWith('.z')) {
-      const source = fs.readFileSync(floc).toString();
-      if (source.trim().split('\n')[0] === 'format=reprise')
-        yield mkNote(floc, source, graph);
-    }
+export default function * reprise(files, _, graph) {
+  for (const floc of files) {
+    const source = fs.readFileSync(floc).toString();
+    if (source.startsWith('format=reprise\n'))
+      yield mkNote(floc, source, graph);
   }
-
 }
 
 

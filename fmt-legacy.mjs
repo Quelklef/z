@@ -12,18 +12,12 @@ import katex from 'katex';
 
 import { lazyAss, StringBuilder, withTempDir, cache } from './util.mjs';
 
-export default function * legacy(pwd, graph) {
-
-  const ls = util.readdirRecursive(plib.resolve(pwd, 'notes'));
-  for (const fname of ls) {
-    const floc = plib.resolve(pwd, 'notes', fname);
-    if (floc.endsWith('.z')) {
-      const source = fs.readFileSync(floc).toString();
-      if (!source.trim().split('\n')[0].startsWith('format='))
-        yield mkNote(floc, source, graph);
-    }
+export default function * legacy(files, _, graph) {
+  for (const floc of files) {
+    const source = fs.readFileSync(floc).toString();
+    if (floc.endsWith('.z') && !source.startsWith('format='))
+      yield mkNote(floc, source, graph);
   }
-
 }
 
 

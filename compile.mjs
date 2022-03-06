@@ -3,7 +3,7 @@ import katex from 'katex';
 import * as plib from 'path';
 import isMainModule from 'es-main';
 
-import { lazyAss, cache, writeFile } from './util.mjs';
+import { lazyAss, cache, writeFile, readdirRecursive } from './util.mjs';
 
 
 
@@ -21,6 +21,7 @@ const formats = [
 ];
 
 
+const t = Symbol('compile.t');
 
 export function main() {
 
@@ -34,10 +35,10 @@ export function main() {
   const graph = {};
   graph.notes = [];
 
-  const t = Symbol('compile.t');
-
+  const notesLoc = plib.resolve(pwd, 'notes');
   for (const format of formats) {
-    for (let note of format(pwd, graph)) {
+    const files = readdirRecursive(notesLoc);
+    for (let note of format(files, notesLoc, graph)) {
 
       const cached = cache.getOr('notes', note.cacheKeys, null);
       if (cached) note = cached;
@@ -102,9 +103,6 @@ export function main() {
     }
   }
 
-  for (const note of graph.notes)
-    note.popularity = note.referencedBy.size;
-
   writeFile(plib.resolve(out, 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
@@ -142,23 +140,34 @@ export function main() {
 
 
 function renderIndex(graph) {
-  let html;
+  let html = '';
 
-  html = (
+  html += '<table>';
+
+  html += '<tr>';
+  html += '<th>Note</th>';
+  html += '<th>Jargon</th>';
+  html += '<th>Format</th>';
+  html += '<th>Refs</th>';
+  html += '<th>Ref&nbsp;by</th>';
+  html += '</tr>';
+
+  html += (
     [...graph.notes]
       .sort((na, nb) => nb.popularity - na.popularity)
-      .map(note => `<p><a href="${note.href}">${note.id}</a></p>`)
+      .map(note =>
+        [ '<tr>'
+        , `<td><a href="${note.href}">${note.id}</a></td>`
+        , `<td><center>${[...note.defines].join(', ')}</center></td>`
+        , `<td><center>${note[t].format.name}</center></td>`
+        , `<td><center>${note.references.size}</center></td>`
+        , `<td><center>${note.referencedBy.size}</center></td>`
+        , '</tr>'
+        ].join(''))
       .join('')
   );
 
-  html += `
-    <style>
-      p {
-        line-height: 1.2em;
-        margin: .5em;
-      }
-    </style>
-  `;
+  html += '</table>'
 
   html = withTemplate(html);
 
@@ -167,62 +176,84 @@ function renderIndex(graph) {
 
 function withTemplate(mainHtml) {
   return String.raw`
-    <!DOCTYPE HTML>
+<!DOCTYPE HTML>
 
-    <html>
-    <head>
-      <meta charset="utf-8">
-      <title>ζ</title>
-      <script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.min.js"></script>
-    <style>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>ζ</title>
+  <script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.min.js"></script>
+<style>
 
-    body {
-      padding: 4vh 50px;
-      max-width: 800px;
-      margin: 0 auto;
+body {
+  padding: 4vh 50px;
+  padding-bottom: 25vh;
+  max-width: 800px;
+  margin: 0 auto;
 
-      font-size: 14px;
-      font-family: monospace;
-      line-height: 1.5em;
-    }
+  font-size: 18px;
+  font-family: sans serif;
+  line-height: 1.5em;
+}
 
-    nav {
-      margin-bottom: 4em;
-    }
+nav {
+  margin-bottom: 3em;
+}
 
-    a {
-      text-decoration: none;
-      color: black;
-      background-color: hsla(330, 75%, 85%, .25);
-    }
-    a:hover {
-      background-color: hsla(330, 75%, 70%, .50);
-    }
+a {
+  text-decoration: none;
+  color: black;
+  border-bottom: 1px solid #C06;
+}
 
-    iframe {
-      border: none;
-      width: 100%;
-    }
+a:hover {
+  border-bottom-width: 2px;
+}
 
-    </style>
+tr:not(:last-child) th {
+  border-bottom: 1px solid rgb(200, 200, 200);
+}
+tr:not(:last-child) td {
+  border-bottom: 1px dashed rgb(200, 200, 200);
+}
 
-    </head>
+th, td {
+  padding: .25em 1em;
+}
 
-    <body>
+table {
+  position: relative;
+}
+tr:first-child {
+  position: sticky;
+  top: 0;
+  background: white;
+}
 
-    <nav>ζ &bull; <a href="/">index</a></nav>
+iframe {
+  border: none;
+  width: 100%;
+}
 
-<main id="main">${mainHtml}</main>
+</style>
 
-    <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      const $iframe = document.getElementsByTagName('iframe')[0];
-      iFrameResize({ log: false }, $iframe);
-    });
-    </script>
+</head>
 
-    </body>
-    </html>
+<body>
+
+<nav>ζ&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="/">table</a></nav>
+
+<main>${mainHtml}</main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const $iframe = document.getElementsByTagName('iframe')[0];
+  iFrameResize({ log: false }, $iframe);
+});
+</script>
+
+</body>
+</html>
 `;
 }
 

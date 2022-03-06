@@ -4,8 +4,6 @@ import fs from 'fs';
 import * as plib from 'path';
 import StaticServer from 'static-server';
 
-import { main } from './compile.mjs';
-
 
 const PORT = '8000';
 
@@ -33,7 +31,7 @@ const watcher = chokidar
   });
 
 
-function onEvent(ev, path) {
+async function onEvent(ev, path) {
   const descs = {
     'add': 'New file',
     'change': 'File modified',
@@ -49,12 +47,15 @@ function onEvent(ev, path) {
   else
     console.log(`${descs[ev]} at ${path}; recompiling!`);
 
-  recompile();
+  await recompile();
 }
 
-function recompile() {
+async function recompile() {
   // Clear screen...
   for (let i = 0; i < 100; i++) process.stdout.write('\n');
+
+  // Import dynamically in case its source changes
+  const { main } = await importFresh('./compile.mjs');
 
   try {
     main();
@@ -89,14 +90,14 @@ keypress(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.resume();
 
-process.stdin.on('keypress', (ch, key) => {
+process.stdin.on('keypress', async (ch, key) => {
   if (ch === 'q') {
     process.exit(0);
   }
 
   if (ch === 'a') {
     fs.rmSync(cacheLoc, { recursive: true });
-    recompile();
+    await recompile();
     return;
   }
 
@@ -104,7 +105,7 @@ process.stdin.on('keypress', (ch, key) => {
   if (ch in nss) {
     const ns = nss[ch];
     fs.rmSync(ns.loc, { recursive: true });
-    recompile();
+    await recompile();
     return;
   }
 
@@ -113,3 +114,12 @@ process.stdin.on('keypress', (ch, key) => {
     keyhelp();
   }
 });
+
+
+
+// Import a module, bypassing the cache
+// This *will* leak memory when the file changes
+// Modified from https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
+async function importFresh(path) {
+  return await import(`${path}?update=${fs.statSync(path).mtime}`);
+}
