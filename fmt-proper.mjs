@@ -149,10 +149,6 @@ function parse(text, doImplicitReferences, referencedBy, note, graph) {
 
 function p_main(s, done) {
 
-  // Strange caching, but can help some on longer notes
-  // Of course, the real solution is a better jargon algorithm (TODO
-  return cache.at([s.text.toString(), s.i.toString(), s.doImplicitReferences, scriptSrc], () => {
-
   done = done || (_ => false);
 
   const parsers = [
@@ -174,14 +170,12 @@ function p_main(s, done) {
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
-      const h = parser(s);
-      if (h) html.add(h);
+      html.add(parser(s));
       if (s.i !== i0)
         continue parsing;
     }
 
     // All parsers tried
-
     // Break out to caller
     if (done(s))
       return html.toString();
@@ -194,8 +188,6 @@ function p_main(s, done) {
     html.addFromSource(s.i);
     s.i++;
   }
-
-  });
 
 }
 
@@ -399,6 +391,13 @@ const commands = {
     return Cats.of(`<code style="display: ${kind}">`, body, '</code>');
   },
 
+  // Comment (REMark)
+  rem(s) {
+    chompSpace(s);
+    const comment = p_inline(p_verbatim, s);
+    return '';
+  },
+
   // Annotation reference
   aref(s) {
     chompSpace(s);
@@ -441,10 +440,10 @@ const commands = {
     const noteId = parseWord(s).toString();
     if (!noteId) throw mkError(sx, "Missing note ID");
 
+    chompSpace(s);
+
     const ref = s.graph.notesById[noteId];
     if (!ref) console.warn(`Bad reference to '${noteId}' in '${s.note.id}'!`);
-
-    chompSpace(s);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -722,8 +721,8 @@ function p_inline(parser, s) {
 
   const done = s => s.text.startsWith(close, s.i);
   const r = parser(s, done)
-
   s.i += close.length;
+
   return r;
 }
 

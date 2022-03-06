@@ -112,6 +112,7 @@ function main() {
 
     const html = (
       '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
+      + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>'  // for <iframe> resizing
       + note.html
     );
 
@@ -177,6 +178,7 @@ function withTemplate(mainHtml) {
     <head>
       <meta charset="utf-8">
       <title>ζ</title>
+      <script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.min.js"></script>
     <style>
 
     body {
@@ -205,7 +207,6 @@ function withTemplate(mainHtml) {
     iframe {
       border: none;
       width: 100%;
-      height: 80vh;
     }
 
     </style>
@@ -217,6 +218,14 @@ function withTemplate(mainHtml) {
     <nav>ζ &bull; <a href="/">index</a></nav>
 
 <main id="main">${mainHtml}</main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      const $iframe = document.getElementsByTagName('iframe')[0];
+      iFrameResize({ log: false }, $iframe);
+    });
+    </script>
+
     </body>
     </html>
 `;
