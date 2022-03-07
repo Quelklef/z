@@ -1,21 +1,21 @@
 import * as plib from 'path';
 import * as child_process from 'child_process';
-import * as util from './util.mjs';
 import fs from 'fs';
 import hljs from 'highlight.js';
 import katex from 'katex';
 
-import { lazyAss, cache, withTempDir } from './util.mjs';
+import { lazyAss, cache, withTempDir } from '../util.mjs';
 
-export default function * proper(files, _, graph) {
+export default function * (files, _, graph) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
-    if (source.startsWith('format=proper\n'))
+    if (source.startsWith('format=flossy-2\n'))
       yield mkNote(floc, source, graph);
   }
 }
 
-const scriptSrc = fs.readFileSync('./fmt-proper.mjs').toString();
+const sloc = new URL(import.meta.url).pathname;
+const scriptSrc = fs.readFileSync(sloc).toString();
 
 function mkNote(floc, source, graph) {
 

@@ -7,18 +7,24 @@ import { lazyAss, cache, writeFile, readdirRecursive } from './util.mjs';
 
 
 
-// n.b. I would love to dynamically load these with require(),
-//      but we're using modules instead...
+// n.b.
+// Would prefer to dynamically discover and import the
+// formats, but that causes *really* weird slowdowns.
 
-import fmt_legacy from './fmt-legacy.mjs';
-import fmt_reprise from './fmt-reprise.mjs';
-import fmt_proper from './fmt-proper.mjs';
+import fmt_compat_1 from './fmt/compat-1.mjs';
+import fmt_flossy_1 from './fmt/flossy-1.mjs';
+import fmt_flossy_2 from './fmt/flossy-2.mjs';
 
 const formats = [
-  fmt_legacy,
-  fmt_reprise,
-  fmt_proper,
+  mkFmt(fmt_compat_1, 'compat-1'),
+  mkFmt(fmt_flossy_1, 'flossy-1'),
+  mkFmt(fmt_flossy_2, 'flossy-2'),
 ];
+
+function mkFmt(format, name) {
+  Object.defineProperty(format, 'name', { value: name });
+  return format;
+}
 
 
 const t = Symbol('compile.t');
@@ -34,6 +40,8 @@ export function main() {
 
   const graph = {};
   graph.notes = [];
+
+  console.log('Found', formats.length, 'formats:', formats.map(f => f.name).join(', '));
 
   const notesLoc = plib.resolve(pwd, 'notes');
   for (const format of formats) {
@@ -159,7 +167,7 @@ function renderIndex(graph) {
         [ '<tr>'
         , `<td><a href="${note.href}">${note.id}</a></td>`
         , `<td><center>${[...note.defines].join(', ')}</center></td>`
-        , `<td><center>${note[t].format.name}</center></td>`
+        , `<td><center style="white-space: nowrap">${note[t].format.name}</center></td>`
         , `<td><center>${note.references.size}</center></td>`
         , `<td><center>${note.referencedBy.size}</center></td>`
         , '</tr>'

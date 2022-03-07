@@ -6,16 +6,15 @@ Legacy format, only exists for compatibility reasons.
 
 import * as plib from 'path';
 import * as child_process from 'child_process';
-import * as util from './util.mjs';
 import fs from 'fs';
 import katex from 'katex';
 
-import { lazyAss, StringBuilder, withTempDir, cache } from './util.mjs';
+import { lazyAss, StringBuilder, withTempDir, cache } from '../util.mjs';
 
-export default function * legacy(files, _, graph) {
+export default function * (files, _, graph) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
-    if (floc.endsWith('.z') && !source.startsWith('format='))
+    if (source.startsWith('format=compat-1\n'))
       yield mkNote(floc, source, graph);
   }
 }
