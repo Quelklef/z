@@ -3,35 +3,26 @@ import katex from 'katex';
 import * as plib from 'path';
 import isMainModule from 'es-main';
 
-import { lazyAss, cache, writeFile, readdirRecursive } from './util.mjs';
+import { lazyAss, cache, writeFile, readdirRecursive, importFresh } from './util.mjs';
 
-
-
-// n.b.
-// Would prefer to dynamically discover and import the
-// formats, but that causes *really* weird slowdowns.
-
-import fmt_compat_1 from './fmt/compat-1.mjs';
-import fmt_flossy_1 from './fmt/flossy-1.mjs';
-import fmt_flossy_2 from './fmt/flossy-2.mjs';
-
-const formats = [
-  mkFmt(fmt_compat_1, 'compat-1'),
-  mkFmt(fmt_flossy_1, 'flossy-1'),
-  mkFmt(fmt_flossy_2, 'flossy-2'),
-];
-
-function mkFmt(format, name) {
-  Object.defineProperty(format, 'name', { value: name });
-  return format;
-}
 
 
 const t = Symbol('compile.t');
+const pwd = process.env.PWD;
 
-export function main() {
+export async function main() {
 
-  const pwd = process.env.PWD;
+  const formats = [];
+  for (const fname of fs.readdirSync('./fmt')) {
+    const floc = plib.resolve(pwd, 'fmt', fname);
+
+    const format = (await importFresh(floc)).default;
+    const name = fname.split('-')[0];
+    Object.defineProperty(format, 'name', { value: name });
+
+    formats.push(format);
+  }
+
   const out = plib.resolve(pwd, 'out');
   fs.mkdirSync(out, { recursive: true });
 
@@ -266,4 +257,5 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-if (isMainModule(import.meta)) main();
+if (isMainModule(import.meta))
+  main();

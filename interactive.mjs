@@ -4,6 +4,8 @@ import fs from 'fs';
 import * as plib from 'path';
 import StaticServer from 'static-server';
 
+import { importFresh } from './util.mjs';
+
 
 const PORT = '8000';
 
@@ -22,7 +24,7 @@ server.start();
 
 const watcher = chokidar
   .watch(
-    ['./notes', './**/*.mjs'],
+    ['./notes', './*.mjs', './fmt/*.mjs'],
     { cwd: '.' },
   )
   .on('ready', () => {
@@ -58,7 +60,7 @@ async function recompile() {
   const { main } = await importFresh('./compile.mjs');
 
   try {
-    main();
+    await main();
   } catch (e) {
     console.error(e);
   }
@@ -114,12 +116,3 @@ process.stdin.on('keypress', async (ch, key) => {
     keyhelp();
   }
 });
-
-
-
-// Import a module, bypassing the cache
-// This *will* leak memory when the file changes
-// Modified from https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
-async function importFresh(path) {
-  return await import(`${path}?update=${+fs.statSync(path).mtime}`);
-}
