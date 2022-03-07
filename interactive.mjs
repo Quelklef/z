@@ -121,5 +121,5 @@ process.stdin.on('keypress', async (ch, key) => {
 // This *will* leak memory when the file changes
 // Modified from https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
 async function importFresh(path) {
-  return await import(`${path}?update=${fs.statSync(path).mtime}`);
+  return await import(`${path}?update=${+fs.statSync(path).mtime}`);
 }
