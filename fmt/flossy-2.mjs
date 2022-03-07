@@ -21,6 +21,8 @@ function mkNote(floc, source, graph) {
 
   const note = {};
 
+  note.source = source;
+
   note.cacheKeys = [floc, source, scriptSrc];
 
   note.id = plib.basename(floc, '.z');
@@ -537,7 +539,24 @@ ${tex}
     s.defines = new Set([...s.defines, ...forms]);
 
     return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, s), '</span>');
-  }
+  },
+
+
+  // Experimenal execute command
+  x(s) {
+    console.warn(`Warn: Use of \\x in ${s.note.id}`);
+
+    const [body, kind] = enclosed(p_verbatim, s);
+
+    const code =
+      kind === 'inline'
+        ? body.toString()
+      : kind === 'block'
+        ? `(function(){\n${body}\n})()`
+      : null;
+
+    return eval(code) || '';
+  },
 
 };
 

@@ -22,7 +22,7 @@ server.start();
 
 const watcher = chokidar
   .watch(
-    ['./notes', './*.mjs'],
+    ['./notes', './**/*.mjs'],
     { cwd: '.' },
   )
   .on('ready', () => {
