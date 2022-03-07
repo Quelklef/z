@@ -63,9 +63,6 @@ Parsers are expected to have the signature
 That is, they take some arguments and the current state s, and perform some
 parsing, mutating the state s, and producing a result r.
 
-For performance reasons, the returned state s1 will usually be the *same object*
-as the passed-in state s; mutation is allowed.
-
 If you want backtracking or lookahead, pass in s.clone().
 
 Parsers fail by throwing.
