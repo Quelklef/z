@@ -6,6 +6,17 @@ const loadTimes = {};
 
 /*
 
+TODO:
+1. Rename to squire
+2. Expose a function which returns the transitive closure of the
+   deps of the given module, or the sources thereof.
+   Useful in combination with cacheKeys for automagic reload on
+   dependency change!
+
+*/
+
+/*
+
 Like require() but bypasses the cache if the file has changed
 
 Used to correctly reload modules when running interactive.js and
