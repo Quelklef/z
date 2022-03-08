@@ -32,6 +32,11 @@ function mkEnv(args) {
 
 class Cache {
 
+  // TODO:
+  // cache.clear()
+  // cache.getNamespaces()
+  // cache.clearNamespace(ns)
+
   constructor(root) {
     this.root = root;
   }
