@@ -1,91 +1,92 @@
 import fs from 'fs';
 import * as plib from 'path';
 import * as child_process from 'child_process';
-import * as crypto from 'crypto';
 
 
-export class StringBuilder {
+/*
+
+Souped-up string builder
+
+cats = new Cats()
+cats.add(s1, s2)  // add strings
+str = cats.toString()  // build
+
+cats = Cats.of(a, b, c)
+  // start with some strings
+  // a,b,c can be anything supporting .toString()
+
+cats = Cats.on(s)  // enables the following...
+cats.addFromSource(i)
+  // is equivalent to cats.add(s[i]), except that
+  //   cats.addFromSource(i); cats.addFromSource(i + 1)
+  // is more efficient than
+  //   cats.add(s[i]); cats.add(s[i + 1])
+
+*/
+export class Cats {
+
   constructor() {
-    this.chunks = [];
+    this.parts = [];
+    this.source = null;
     this.pending = null;
   }
 
-  add(s) {
-    this.chunks.push(s);
+  static of(...parts) {
+    const cats = new Cats();
+    cats.add(...parts);
+    return cats;
   }
 
-  build() {
-    const r = this.chunks.join('');
-    this.chunks = [r];
-    return r;
+  static on(source) {
+    const cats = new Cats();
+    cats.source = source;
+    return cats;
   }
-}
 
+  clone() {
+    const c = new Cats();
+    c.source = this.source;
+    c.parts = [...this.parts];
+    if (this.pending)
+      c.pending = [...this.pending];
+  }
 
-export const cache = {
-
-  // cache.root is a pseudo-constant set at program start
-  // This is bad code structure!
-  // I chose to do it this way because parameter-drilling is
-  // annoying and Javascript doesn't offer better solutions.
-  set root(root) {
-    root = plib.resolve(process.env.PWD, root);
-    if (!fs.existsSync(root))
-      fs.mkdirSync(root);
-    this._root = root;
-  },
-
-  get root() {
-    return this._root;
-  },
-
-  _mkPath(namespace, keys) {
-    let hash = crypto.createHash('md5');
-    for (const key of keys)
-      hash.update(key.toString())
-    hash = hash.digest('hex');
-    return plib.resolve(this.root, namespace, hash);
-  },
-
-  get(namespace, keys) {
-    const path = this._mkPath(namespace, keys);
-    const text = fs.readFileSync(path).toString();
-    return deserialize(text);
-  },
-
-  getOr(namespace, keys, fallback) {
-    try {
-      return this.get(namespace, keys);
-    } catch (e) {
-      if (e.code === 'ENOENT') return fallback;
-      else throw e;
+  add(...parts) {
+    this._resolve();
+    for (const part of parts) {
+      const str = part.toString();
+      if (str) this.parts.push(str);
     }
-  },
+  }
 
-  has(namespace, keys) {
-    return fs.existsSync(this._mkPath(namespace, keys));
-  },
-
-  put(namespace, keys, value) {
-    const path = this._mkPath(namespace, keys);
-    const text = serialize(value);
-    writeFile(path, text);
-  },
-
-  at(namespace, keys, fun) {
-    try {
-      return this.get(namespace, keys);
-    } catch (e) {
-      if (e.code === 'ENOENT');  // file dne
-      else throw e;
+  _resolve() {
+    if (this.pending) {
+      const [i, j] = this.pending;
+      this.parts.push(this.source.slice(i, j));
+      this.pending = null;
     }
+  }
 
-    const result = fun();
-    this.put(namespace, keys, result);
+  addFromSource(i) {
+    if (!this.source)
+      throw Error("Cannot addFromSource on Cats with no source")
+
+    if (this.pending && this.pending[1] + 1 === i) {
+      this.pending[1]++;
+    } else {
+      this._resolve();
+      this.pending = [i, i + 1];
+    }
+  }
+
+  toString() {
+    this._resolve();
+    const result = this.parts.map(c => c).join('');
+    this.parts = [result];
     return result;
-  },
+  }
 
-};
+}
 
 
 export function writeFile(loc, content) {

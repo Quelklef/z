@@ -3,21 +3,25 @@ import katex from 'katex';
 import * as plib from 'path';
 import isMainModule from 'es-main';
 
-import { lazyAss, cache, writeFile, readdirRecursive, importFresh } from './util.mjs';
+import { lazyAss, writeFile, readdirRecursive, importFresh, serialize, deserialize } from './util.mjs';
 
 
 
 const t = Symbol('compile.t');
 const pwd = process.env.PWD;
 
+
+
 export async function main() {
+
+  const { mkEnv } = await importFresh('./env.mjs');
 
   const formats = [];
   for (const fname of fs.readdirSync('./fmt')) {
     const floc = plib.resolve(pwd, 'fmt', fname);
 
     const format = (await importFresh(floc)).default;
-    const name = fname.split('-')[0];
+    const name = plib.basename(fname, plib.extname(fname));
     Object.defineProperty(format, 'name', { value: name });
 
     formats.push(format);
@@ -26,20 +30,23 @@ export async function main() {
   const out = plib.resolve(pwd, 'out');
   fs.mkdirSync(out, { recursive: true });
 
-  // Initialize cache
-  cache.root = plib.resolve(out, '.cache');
+  const env = mkEnv({
+    cacheRoot: plib.resolve(out, '.cache'),
+  });
+  fs.mkdirSync(plib.resolve(out, '.cache'), { recursive: true });
 
   const graph = {};
   graph.notes = [];
 
-  console.log('Found', formats.length, 'formats:', formats.map(f => f.name).join(', '));
+  env.log.info('Found', formats.length, 'formats:', formats.map(f => f.name).join(', '));
 
   const notesLoc = plib.resolve(pwd, 'notes');
   for (const format of formats) {
-    const files = readdirRecursive(notesLoc);
-    for (let note of format(files, notesLoc, graph)) {
 
-      const cached = cache.getOr('notes', note.cacheKeys, null);
+    const files = readdirRecursive(notesLoc);
+    for (let note of format(files, notesLoc, graph, env)) {
+
+      const cached = env.cache.getOr('notes', note.cacheKeys, null);
       if (cached) note = cached;
 
       // Initialize transient (non-cached) data
@@ -52,7 +59,7 @@ export async function main() {
     }
   }
 
-  console.log('Found', graph.notes.length, 'notes');
+  env.log.info('Found', graph.notes.length, 'notes');
 
   // Log format counts
   {
@@ -60,7 +67,7 @@ export async function main() {
     for (const note of graph.notes)
       counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
-    console.log(sorted.map(k => `format=${k}: ${counts[k]} notes`).join('; '))
+    env.log.info(sorted.map(k => `format=${k}: ${counts[k]} notes`).join('; '))
   }
 
   for (const note of graph.notes) {
@@ -90,7 +97,7 @@ export async function main() {
       if (!longest || jarg.length > longest.length)
         longest = jarg;
     if (longest)
-      console.log('Longest jargon at:', longest.length, 'is:', longest);
+      env.log.info('Longest jargon at:', longest.length, 'is:', longest);
   }
 
   for (const note of graph.notes)
@@ -129,11 +136,11 @@ export async function main() {
 
   for (const note of graph.notes) {
     if (note[t].isFromCache) continue;
-    console.log(`Caching [${note.id}]`);
-    cache.put('notes', note.cacheKeys, note);
+    env.log.info(`Caching: ${note.id}`);
+    env.cache.put('notes', note.cacheKeys, note);
   }
 
-  console.log('Done!');
+  env.log.info('Done!');
 
 }
 

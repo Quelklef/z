@@ -4,20 +4,25 @@ import fs from 'fs';
 import hljs from 'highlight.js';
 import katex from 'katex';
 
-import { lazyAss, cache, withTempDir } from '../util.mjs';
+import { lazyAss, Cats, withTempDir } from '../util.mjs';
 
-export default function * (files, _, graph) {
+export default function * (files, _, graph, env) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
     if (source.startsWith('format=flossy-2\n'))
-      yield mkNote(floc, source, graph);
+      yield mkNote(floc, source, graph, env);
   }
 }
 
 const sloc = new URL(import.meta.url).pathname;
 const scriptSrc = fs.readFileSync(sloc).toString();
 
-function mkNote(floc, source, graph) {
+function mkNote(floc, source, graph, env) {
+
+  const noteId = plib.basename(floc, '.z');
+
+  env = env.descend();
+  env.log.prefixes.push(noteId.toString());
 
   const note = {};
 
@@ -25,15 +30,19 @@ function mkNote(floc, source, graph) {
 
   note.cacheKeys = [floc, source, scriptSrc];
 
-  note.id = plib.basename(floc, '.z');
+  note.id = noteId;
 
   // note[t] holds transient (non-cached) data
   const t = Symbol('fmt-proper.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
   lazyAss(note[t], 'preparsed', () => {
-    console.log(`Preparsing [${note.id}]`);
-    return parse(source, false, [], note, graph);
+    env.parent.log.info('preparsing', note.id);
+    return parse({
+      text: source,
+      preparse: true,
+      note, graph, env
+    });
   });
 
   lazyAss(note, 'defines', () => {
@@ -41,8 +50,12 @@ function mkNote(floc, source, graph) {
   });
 
   lazyAss(note[t], 'parsed', () => {
-    console.log(`Parsing [${note.id}]`);
-    return parse(source, true, note.referencedBy, note, graph);
+    env.parent.log.info('parsing', note.id);
+    return parse({
+      text: source,
+      preparse: false,
+      note, graph, env
+    });
   });
 
   lazyAss(note, 'references', () => note[t].parsed.references);
@@ -70,14 +83,13 @@ Parsers fail by throwing.
 */
 
 
-function parse(text, doImplicitReferences, referencedBy, note, graph) {
+function parse({ text, preparse, note, graph, env }) {
 
   // Initial parser state
   let s = {
 
-    // Note + graph references
-    graph,
-    note,
+    // Environmental references
+    graph, note, env,
 
     // Source text
     text,
@@ -91,11 +103,11 @@ function parse(text, doImplicitReferences, referencedBy, note, graph) {
     // Set of notes this note references, as their IDs
     references: new Set(),
 
-    // Should jargon be resolved?
-    doImplicitReferences,
-    jargonMatcher:
-      doImplicitReferences ? new JargonMatcherJargonMatcher(graph.jargonSet, note.defines)
-                    : null,
+    // preparse=true disables implicit references
+    preparse,
+
+    doImplicitReferences: !preparse,
+    jargonMatcher: !preparse && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
 
     // Symbol generation
     cursym: 0,
@@ -123,15 +135,17 @@ function parse(text, doImplicitReferences, referencedBy, note, graph) {
   const done = s => s.i >= s.text.length;
   const html = Cats.of(p_main(s, done));
 
-  html.add('<br /><br />');
-  html.add('<hr />');
-  html.add('<p>Referenced by:</p>');
-  html.add('<ul>');
-  for (let refBy of referencedBy) {
-    refBy = graph.notesById[refBy];
-    html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
+  if (!preparse) {
+    html.add('<br /><br />');
+    html.add('<hr />');
+    html.add('<p>Referenced by:</p>');
+    html.add('<ul>');
+    for (let refBy of note.referencedBy) {
+      refBy = graph.notesById[refBy];
+      html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
+    }
+    html.add('</ul>');
   }
-  html.add('</ul>');
 
   return {
     defines: s.defines,
@@ -457,7 +471,7 @@ const commands = {
     chompSpace(s);
 
     const ref = s.graph.notesById[noteId];
-    if (!ref) console.warn(`Bad reference to '${noteId}' in '${s.note.id}'!`);
+    if (!ref) env.log.warn(`bad reference to '${noteId}''!`);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -517,7 +531,7 @@ ${tex}
 \end{document}
 `;
 
-    let html = renderTeX(tex);
+    let html = renderTeX(tex, s.env);
     if (kind === 'block') html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
     return html;
   },
@@ -541,7 +555,7 @@ ${tex}
 
   // Experimenal execute command
   x(s) {
-    console.warn(`Warn: Use of \\x in ${s.note.id}`);
+    s.env.log.warn(`use of \\x`);
 
     const [body, kind] = enclosed(p_verbatim, s);
 
@@ -551,6 +565,21 @@ ${tex}
       : kind === 'block'
         ? `(function(){\n${body}\n})()`
       : null;
+
+    // Set up eval() environment
+    // TODO: both this codeblock and p_indented do some wack recursion shit that should be reified
+    const parse = str => {
+      const srec = s.clone();
+      srec.text = str;
+      srec.i = 0;
+      const result = p_main(srec, s => s.i >= s.text.length);
+      Object.assign(s, {
+          ...srec,
+          text: s.text,
+          i: s.i,
+      });
+      return result;
+    };
 
     return eval(code) || '';
   },
@@ -796,90 +825,6 @@ function mkError(s, err) {
   return Error(err + ' Around: ' + s.text.slice(s.i, s.i + 25));
 }
 
-
-/*
-
-Souped-up string builder
-
-cats = new Cats()
-cats.add(s)  // add a string
-str = cats.toString()  // build
-
-cats = Cats.of(a, b, c)
-  // start with some strings
-  // a,b,c can be anything supporting .toString()
-
-cats = Cats.on(s)  // enables the following...
-cats.addFromSource(i)
-  // is equivalent to cats.add(s[i]), except that
-  //   cats.addFromSource(i); cats.addFromSource(i + 1)
-  // is more efficient than
-  //   cats.add(s[i]); cats.add(s[i + 1])
-
-*/
-class Cats {
-
-  constructor() {
-    this.parts = [];
-    this.source = null;
-    this.pending = null;
-  }
-
-  static of(...parts) {
-    const cats = new Cats();
-    cats.parts = parts;
-    return cats;
-  }
-
-  static on(source) {
-    const cats = new Cats();
-    cats.source = source;
-    return cats;
-  }
-
-  clone() {
-    const c = new Cats();
-    c.source = this.source;
-    c.parts = [...this.parts];
-    if (this.pending)
-      c.pending = [...this.pending];
-  }
-
-  add(...ss) {
-    this._resolve();
-    for (const s of ss)
-      if (s)
-        this.parts.push(s);
-  }
-
-  _resolve() {
-    if (this.pending) {
-      const [i, j] = this.pending;
-      this.parts.push(this.source.slice(i, j));
-      this.pending = null;
-    }
-  }
-
-  addFromSource(i) {
-    if (!this.source)
-      throw Error("Cannot addFromSource on Cats with no source")
-
-    if (this.pending && this.pending[1] + 1 === i) {
-      this.pending[1]++;
-    } else {
-      this._resolve();
-      this.pending = [i, i + 1];
-    }
-  }
-
-  toString() {
-    this._resolve();
-    const result = this.parts.map(c => c.toString()).join('');
-    this.parts = [result];
-    return result;
-  }
-
-}
 
 
 function withHtmlTemplate(html) {
@@ -1152,11 +1097,11 @@ function indexOf(str, sub, from = 0) {
   return result;
 }
 
-export function renderTeX(tex) {
-  return cache.at('tex', [renderTeX, tex], () => {
+export function renderTeX(tex, env) {
+  return env.cache.at('tex', [renderTeX, tex], () => {
     return withTempDir(tmp => {
 
-      console.log(`Rendering LaTeX [${tex.length}]`);
+      env.log.info(`Rendering LaTeX [${tex.length}]`);
 
       fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
 
@@ -1171,11 +1116,11 @@ export function renderTeX(tex) {
       try {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
-        console.log(err.stderr.toString());  // meh
+        env.log.info(err.stderr.toString());  // meh
         throw 'LaTeX render failed; see above!';
       }
 
-      console.log(`Rendering LaTeX [done] [${tex.length}]`);
+      env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
       return result;
 
     });

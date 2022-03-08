@@ -9,13 +9,13 @@ import * as child_process from 'child_process';
 import fs from 'fs';
 import katex from 'katex';
 
-import { lazyAss, StringBuilder, withTempDir, cache } from '../util.mjs';
+import { lazyAss, Cats, withTempDir } from '../util.mjs';
 
-export default function * (files, _, graph) {
+export default function * (files, _, graph, env) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
     if (source.startsWith('format=compat-1\n'))
-      yield mkNote(floc, source, graph);
+      yield mkNote(floc, source, graph, env);
   }
 }
 
@@ -23,26 +23,29 @@ export default function * (files, _, graph) {
 // Symbol for transient data on note
 const t = Symbol('fmt-legacy.t');
 
-function mkNote(floc, source, graph) {
+function mkNote(floc, source, graph, env) {
 
   const note = {};
 
   note.floc = floc;
 
-  note.source = source;
-
-  note.cacheKeys = [floc, source];
-
-  note.defines = extract(note.source, '[:', ':]');
-
   // Is it a Roam Research export?
   note.isRoam = /\/[0-9]{20}r.z$/.test(note.floc);
+
+  note.source = source;
+
+  note.defines = extract(note.source, '[:', ':]');
 
   if (note.isRoam && note.defines.size > 0) {
     note.id = [...note.defines][0];
   } else {
     note.id = plib.basename(note.floc, '.z');
   }
+
+  env = env.descend();
+  env.log.prefixes.push(note.id.toString());
+
+  note.cacheKeys = [floc, source];
 
   // lazy attrs:
   //  .references (need graph.jargonSet)
@@ -52,7 +55,7 @@ function mkNote(floc, source, graph) {
 
   lazyAss(note[t], 'initialHtmlAndReferenceSet', () => {
 
-    console.log(`Rendering [${note.id}]`);
+    env.parent.log.info(`rendering`, note.id);
 
     let jtrie;
     jtrie = setMinus(graph.jargonSet, note.defines)
@@ -62,7 +65,7 @@ function mkNote(floc, source, graph) {
     const referenceSet = new Set();
 
     let i = 0;
-    const html = new StringBuilder();
+    const html = new Cats();
 
     loop:
     while (i < note.source.length) {
@@ -229,7 +232,7 @@ function mkNote(floc, source, graph) {
   lazyAss(note, 'html', () => {
     let html;
     html = note[t].initialHtmlAndReferenceSet[0];
-    html = html.build();
+    html = html.toString();
     html = `
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
@@ -351,11 +354,11 @@ function chompDelimited(text, i, open, close) {
 }
 
 
-export function renderTeX(source) {
+export function renderTeX(source, env) {
   return cache.at('tex', [renderTeX, source], () => {
     return withTempDir(tmp => {
 
-      console.log(`Rendering LaTeX [${source.length}]`);
+      env.log.info(`Rendering LaTeX [${source.length}]`);
 
       const tex = String.raw`
         \documentclass{standalone}
@@ -381,11 +384,11 @@ export function renderTeX(source) {
       try {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
-        console.log(err.stderr.toString());  // meh
+        env.log.info(err.stderr.toString());  // meh
         throw 'tikz render failed; see above!';
       }
 
-      console.log(`Rendering LaTeX [done] [${source.length}]`);
+      env.log.info(`Rendering LaTeX [done] [${source.length}]`);
       return result;
 
     });

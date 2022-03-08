@@ -3,20 +3,25 @@ import * as child_process from 'child_process';
 import fs from 'fs';
 import katex from 'katex';
 
-import { lazyAss, StringBuilder, cache, withTempDir } from '../util.mjs';
+import { lazyAss, Cats, withTempDir } from '../util.mjs';
 
-export default function * (files, _, graph) {
+export default function * (files, _, graph, env) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
     if (source.startsWith('format=flossy-1\n'))
-      yield mkNote(floc, source, graph);
+      yield mkNote(floc, source, graph, env);
   }
 }
 
 
 const t = Symbol('fmt-reprise.t');
 
-function mkNote(floc, source, graph) {
+function mkNote(floc, source, graph, env) {
+
+  const noteId = plib.basename(floc, '.z');
+
+  env = env.descend();
+  env.log.prefixes.push(noteId.toString());
 
   const note = {};
 
@@ -24,14 +29,14 @@ function mkNote(floc, source, graph) {
 
   note.cacheKeys = [floc, source];
 
-  note.id = plib.basename(floc, '.z');
+  note.id = noteId;
 
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
   // Initial computations
   lazyAss(note[t], 'meta', () => {
 
-    console.log(`Initializing [${note.id}]`);
+    env.parent.log.info(`initializing`, note.id);
 
     const meta = {};
     meta.defines = new Set();
@@ -75,12 +80,12 @@ function mkNote(floc, source, graph) {
   // Most computations
   lazyAss(note[t], 'comp', () => {
 
-    console.log(`Rendering [${note.id}]`);
+    env.parent.log.info(`rendering`, note.id);
 
     const jmatcher = new JargonMatcherJargonMatcher(graph.jargonSet, note.defines);
 
     const comp = {};
-    comp.html = new StringBuilder();
+    comp.html = new Cats();
     comp.references = new Set();
 
     let i = note[t].meta.continueIndex;
@@ -99,7 +104,7 @@ function mkNote(floc, source, graph) {
     parsing:
     while (i <= note.source.length) {
 
-      if (debug) console.log('{{{' + note.source.slice(i, i + 35) + '}}}');
+      if (debug) env.log.info('{{{' + note.source.slice(i, i + 35) + '}}}');
 
       const out = buffer || comp.html;
 
@@ -115,7 +120,7 @@ function mkNote(floc, source, graph) {
 
       // Escape a character
       if (note.source.startsWith('~', i)) {
-        if (debug) console.log('->> escape');
+        if (debug) env.log.info('->> escape');
         out.add(note.source[i + 1]);
         i += 2;
         continue;
@@ -168,7 +173,7 @@ function mkNote(floc, source, graph) {
 
       // Buffering
       if (buffer !== null) {
-        if (debug) console.log('->> buffer');
+        if (debug) env.log.info('->> buffer');
         out.add(note.source[i]);
         i += 1;
         continue;
@@ -176,7 +181,7 @@ function mkNote(floc, source, graph) {
 
       // Em dash
       if (note.source.startsWith('--', i)) {
-        if (debug) console.log('->> emdash');
+        if (debug) env.log.info('->> emdash');
         out.add('&#8212;');
         i += 2;
         continue;
@@ -212,7 +217,7 @@ function mkNote(floc, source, graph) {
 
       // Bullet marks
       if (isInitial && note.source.startsWith('- ', i)) {
-        if (debug) console.log('->> bullet');
+        if (debug) env.log.info('->> bullet');
         out.add('<span style="margin-right:0.75ch">&bull;</span>');
         i += 2;
         continue;
@@ -220,7 +225,7 @@ function mkNote(floc, source, graph) {
 
       // Wider indents
       if (isInitial && note.source[i] === ' ') {
-        if (debug) console.log('->> indent');
+        if (debug) env.log.info('->> indent');
         out.add('<span style="display:inline-block;width:1ch;white-space:pre;"></span>');
         i++;
         continue;
@@ -229,7 +234,7 @@ function mkNote(floc, source, graph) {
       // Implicit references
       const r = jmatcher.findMeAMatch(note.source, i);
       if (r !== null) {
-        if (debug) console.log('->> jargon:', r[0]);
+        if (debug) env.log.info('->> jargon:', r[0]);
         const [jarg, stepAmt] = r;
         const refNotes = graph.jargonToDefiningNoteSet[jarg];
         let href;
@@ -238,7 +243,7 @@ function mkNote(floc, source, graph) {
           href = note.href;  // hmm
           comp.references.add(note.id);
         } else {
-          console.warn(`warn: bad jargon ${jarg}`);
+          env.log.warn(`bad jargon ${jarg}`);
           href = '#';
         }
         out.add(`<a href="${href}">${note.source.slice(i, i + stepAmt)}</a>`);
@@ -248,7 +253,7 @@ function mkNote(floc, source, graph) {
 
       // Inline LaTeX
       if (note.source.startsWith('$', i)) {
-        if (debug) console.log('->> inline latex');
+        if (debug) env.log.info('->> inline latex');
         const j = note.source.indexOf('$', i + 1);
         if (j === -1) throw Error("Unclosed inline LaTeX");
         const latex = note.source.slice(i + 1, j);
@@ -259,7 +264,7 @@ function mkNote(floc, source, graph) {
 
       // Backslash commands
       if (note.source.startsWith('\\', i)) {
-        if (debug) console.log('->> backslash');
+        if (debug) env.log.info('->> backslash');
 
         const i0 = i;
 
@@ -374,11 +379,11 @@ function mkNote(floc, source, graph) {
           case 'tikz':
           case 'tex':
           case 'katex':
-            buffer = new StringBuilder();
+            buffer = new Cats();
             stack.push({
               marker: { type: 'dedent', size: currentIndent + 2 },
               action: () => {
-                let tex = buffer.build();
+                let tex = buffer.toString();
                 buffer = null;
 
                 if (name === 'katex') {
@@ -399,7 +404,7 @@ function mkNote(floc, source, graph) {
                     ${tex}
                     \end{document}
                   `;
-                  out.add('<center>' + renderTeX(tex) + '</center>');
+                  out.add('<center>' + renderTeX(tex, env) + '</center>');
                 }
               },
             });
@@ -414,8 +419,8 @@ function mkNote(floc, source, graph) {
       }
 
       else {
-        if (debug) console.log('->> default');
-        out.add(note.source[i]);
+        if (debug) env.log.info('->> default');
+        out.add(note.source[i] || '');
         i++;
         continue;
       }
@@ -430,7 +435,7 @@ function mkNote(floc, source, graph) {
 
   lazyAss(note, 'html', () => {
     let html;
-    html = note[t].comp.html.build()
+    html = note[t].comp.html.toString()
 
     html += '\n\n\n';
     html += '<hr />';
@@ -638,11 +643,11 @@ function indexOf(str, sub, from = 0) {
   return result;
 }
 
-export function renderTeX(tex) {
-  return cache.at('tex', [renderTeX, tex], () => {
+export function renderTeX(tex, env) {
+  return env.cache.at('tex', [renderTeX, tex], () => {
     return withTempDir(tmp => {
 
-      console.log(`Rendering LaTeX [${tex.length}]`);
+      env.log.info(`Rendering LaTeX [${tex.length}]`);
 
       fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
 
@@ -657,11 +662,11 @@ export function renderTeX(tex) {
       try {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
-        console.log(err.stderr.toString());  // meh
+        env.log.info(err.stderr.toString());  // meh
         throw 'tikz render failed; see above!';
       }
 
-      console.log(`Rendering LaTeX [done] [${tex.length}]`);
+      env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
       return result;
 
     });
