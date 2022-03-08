@@ -22,6 +22,7 @@ function * (files, _, graph, env) {
   }
 }
 
+const scriptSrc = fss.read(__filename).toString();
 
 // Symbol for transient data on note
 const t = Symbol('fmt-legacy.t');
@@ -48,7 +49,7 @@ function mkNote(floc, source, graph, env) {
   env = env.descend();
   env.log.prefixes.push(note.id.toString());
 
-  note.cacheKeys = [floc, source];
+  note.cacheKeys = [floc, source, scriptSrc];
 
   // lazy attrs:
   //  .references (need graph.jargonSet)

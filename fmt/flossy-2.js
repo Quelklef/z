@@ -1,6 +1,5 @@
 const plib = require('path');
 const child_process = require('child_process');
-const fs = require('fs');
 
 const hljs = require('highlight.js');
 const katex = require('katex');
@@ -18,7 +17,7 @@ function * (files, _, graph, env) {
   }
 }
 
-const scriptSrc = fs.readFileSync(__filename).toString();
+const scriptSrc = fss.read(__filename).toString();
 
 function mkNote(floc, source, graph, env) {
 
