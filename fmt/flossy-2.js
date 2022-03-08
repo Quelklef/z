@@ -334,7 +334,7 @@ function indented(parser, column, bulleted, s) {
   const done = s => s.i >= s.text.length;
   const r = parser(srec, done);
   Object.assign(s, {
-    ...srec.clone(),
+    ...srec,
     text: s.text,
     i: s.i + lines.map(line => line.length).reduce((a, b) => a + b, 0),
   });
@@ -433,8 +433,10 @@ const commands = {
   aref(s) {
     chompSpace(s);
 
-    let name = parseWord(s).toString();
-    if (!name) {
+    let name;
+    if (!"[{(<:".includes(s.text[s.i])) {
+      name = parseWord(s).toString();
+    } else {
       name = s.gensym();
       s.annotNameQueue.push(name);
     }
@@ -450,13 +452,14 @@ const commands = {
 
     chompSpace(s);
 
-    let name = parseWord(s).toString();
-    if (!name && s.annotNameQueue.length > 0) {
+    let name;
+    if (!"[{(<:".includes(s.text[s.i])) {
+      name = parseWord(s);
+    } else {
+      if (s.annotNameQueue.length === 0)
+        throw mkError(sx, "Unpaired \\adef");
       name = s.annotNameQueue[0];
       s.annotNameQueue.splice(0, 1);
-    }
-    if (!name) {
-      throw mkError(sx, "Unpaired \\adef");
     }
 
     return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(p_main, s), '</div>');
@@ -475,6 +478,7 @@ const commands = {
 
     const ref = s.graph.notesById[noteId];
     if (!ref) s.env.log.warn(`Reference to nonexistent note '${noteId}'`);
+    else s.references.add(ref.id);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -552,7 +556,12 @@ ${tex}
     }
     s.defines = new Set([...s.defines, ...forms]);
 
-    return Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, s), '</span>');
+    // TODO: more reucurrence happening here!
+    const doImplicitReferences = s.doImplicitReferences;
+    const srec = { ...s.clone(), doImplicitReferences: false };
+    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, srec), '</span>');
+    Object.assign(s, { ...srec, doImplicitReferences });
+    return result;
   },
 
 
@@ -644,6 +653,7 @@ function parseJargonAux(s) {
 
   // Noun combinator -- N:noun
   if (s.text.startsWith('N:', s.i)) {
+    s.env.log.warn('use of deprecated N: combinator in jargon');
     s.i += 2;
     return parseJargonAux(s).flatMap(j => {
       j = j.toString();
@@ -725,11 +735,14 @@ function consume(s, str) {
 }
 
 function parseWord(s) {
-  const word = Cats.on(s.text);
+  let word = Cats.on(s.text);
   while (/[\w-]/.test(s.text[s.i])) {
     word.addFromSource(s.i);
     s.i++;
   }
+  word = word.toString();
+  if (!word)
+    throw mkError(s, "Expected word");
   return word;
 }
 
@@ -1172,7 +1185,7 @@ function indexOf(str, sub, from = 0) {
 
 function renderTeX(tex, env) {
   return env.cache.at('tex', [renderTeX, tex], () => {
-    return withTempDir(tmp => {
+    return fss.withTempDir(tmp => {
 
       env.log.info(`Rendering LaTeX [${tex.length}]`);
 

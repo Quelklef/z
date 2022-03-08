@@ -66,13 +66,17 @@ async function recompile() {
     .forEach((ns, i) => nss[i + 1] = ns);
 
   console.log(
-    '[q]uit; clear cache: [a]ll'
-    + Object.entries(nss).map(([i, ns]) => ` [${i}] ${ns}`).join('')
+    '[q]uit; force [r]ecompile; clear cache: [a]ll'
+    + Object.entries(nss).map(([i, ns]) => ` [${i}]${ns}`).join('')
   );
 
   withUserInput(ch => {
     if (ch === 'q') {
       process.exit(0)
+    }
+    else if (ch === 'r') {
+      recompile();
+      return true;
     }
     else if (ch === 'a') {
       env.cache.clear();
@@ -103,6 +107,6 @@ function withUserInput(func) {
   handlers.push(ch => {
     const done = func(ch)
     if (done) handlers.pop();
-    else console.log("Don't understand");
+    else console.log("?");
   });
 }

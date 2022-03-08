@@ -10,6 +10,7 @@ const fss = quire('./fss.js');
 
 const t = Symbol('compile.t');
 
+const main =
 exports.main =
 function main() {
 
@@ -225,6 +226,7 @@ tr:first-child {
 iframe {
   border: none;
   width: 100%;
+  min-height: 80vh;
 }
 
 </style>
