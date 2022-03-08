@@ -5,7 +5,7 @@ const chokidar = require('chokidar');
 const keypress = require('keypress');
 const StaticServer = require('static-server');
 
-const { importFresh } = require('./util.js');
+const { quire } = require('./quire.js');
 
 
 const PORT = '8000';
@@ -59,7 +59,7 @@ async function recompile() {
   // Clear screen...
   for (let i = 0; i < 100; i++) process.stdout.write('\n');
 
-  const { main } = importFresh('./compile.js');
+  const { main } = quire('./compile.js');
 
   try {
     main();

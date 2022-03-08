@@ -2,7 +2,6 @@ const fs = require('fs');
 const plib = require('path');
 const child_process = require('child_process');
 
-
 /*
 
 Souped-up string builder.
@@ -140,10 +139,4 @@ function lazyAss(obj, key, lz) {
       return val;
     }
   });
-}
-
-exports.importFresh =
-function importFresh(path) {
-  delete require.cache[require.resolve(path)];
-  return require(path);
 }

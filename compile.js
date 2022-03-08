@@ -2,7 +2,9 @@ const fs = require('fs');
 const { katex } = require('katex');
 const plib = require('path');
 
-const { lazyAss, writeFile, readdirRecursive, importFresh } = require('./util.js');
+const { quire } = require('./quire.js');
+const { lazyAss, writeFile, readdirRecursive } = quire('./util.js');
+const { mkEnv } = quire('./env.js');
 
 
 
@@ -13,13 +15,11 @@ const pwd = process.env.PWD;
 exports.main =
 function main() {
 
-  const { mkEnv } = require('./env.js');
-
   const formats = [];
   for (const fname of fs.readdirSync('./fmt')) {
     const floc = plib.resolve(pwd, 'fmt', fname);
 
-    const format = importFresh(floc).default;
+    const format = quire(floc).default;
     const name = plib.basename(fname, plib.extname(fname));
     Object.defineProperty(format, 'name', { value: name });
 
