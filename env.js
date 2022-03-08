@@ -8,16 +8,21 @@ const { writeFile } = require('./util.js');
 exports.mkEnv =
 function mkEnv(args) {
 
+  args.root;
   args.cacheRoot;
   args.logPrefixes ||= [];
 
   const env = {};
   env.parent = null;
+
+  env.root = args.root;
+
   env.cache = new Cache(args.cacheRoot);
   env.log = new Logger(args.logPrefixes);
 
   env.descend = function() {
     const child = mkEnv({
+      root: args.root,
       cacheRoot: args.cacheRoot,
       logPrefixes: [...args.logPrefixes],
     });
@@ -32,59 +37,70 @@ function mkEnv(args) {
 
 class Cache {
 
-  // TODO:
-  // cache.clear()
-  // cache.getNamespaces()
-  // cache.clearNamespace(ns)
-
   constructor(root) {
-    this.root = root;
+    this.root = plib.resolve(root);
+    fs.mkdirSync(this.root, { recursive: true });
   }
 
-  _mkPath(namespace, keys) {
+  _mkPath(ns, keys) {
     let hash = crypto.createHash('md5');
     for (const key of keys)
       hash.update(key.toString())
     hash = hash.digest('hex');
-    return plib.resolve(this.root, namespace, hash);
+    return plib.resolve(this.root, ns, hash);
   }
 
-  get(namespace, keys) {
-    const path = this._mkPath(namespace, keys);
+  get(ns, keys) {
+    const path = this._mkPath(ns, keys);
     const text = fs.readFileSync(path).toString();
     return deserialize(text);
   }
 
-  getOr(namespace, keys, fallback) {
+  getOr(ns, keys, fallback) {
     try {
-      return this.get(namespace, keys);
+      return this.get(ns, keys);
     } catch (e) {
       if (e.code === 'ENOENT') return fallback;
       else throw e;
     }
   }
 
-  has(namespace, keys) {
-    return fs.existsSync(this._mkPath(namespace, keys));
+  has(ns, keys) {
+    return fs.existsSync(this._mkPath(ns, keys));
   }
 
-  put(namespace, keys, value) {
-    const path = this._mkPath(namespace, keys);
+  put(ns, keys, value) {
+    const path = this._mkPath(ns, keys);
     const text = serialize(value);
     writeFile(path, text);
   }
 
-  at(namespace, keys, fun) {
+  at(ns, keys, fun) {
     try {
-      return this.get(namespace, keys);
+      return this.get(ns, keys);
     } catch (e) {
       if (e.code === 'ENOENT');  // file dne
       else throw e;
     }
 
     const result = fun();
-    this.put(namespace, keys, result);
+    this.put(ns, keys, result);
     return result;
+  }
+
+  clear() {
+    fs.rmSync(this.root, { recursive: true });
+    fs.mkdirSync(this.root);
+  }
+
+  getNamespaces() {
+    return fs.readdirSync(this.root);
+  }
+
+  clearNamespace(ns) {
+    const nsLoc = plib.resolve(this.root, ns);
+    if (fs.existsSync(nsLoc))
+      fs.rmSync(nsLoc, { recursive: true });
   }
 
 }

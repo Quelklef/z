@@ -3,21 +3,25 @@ const { katex } = require('katex');
 const plib = require('path');
 
 const { quire } = require('./quire.js');
-const { lazyAss, writeFile, readdirRecursive } = quire('./util.js');
+const { lazyAss, writeFile, readdirRecursive, Cats } = quire('./util.js');
 const { mkEnv } = quire('./env.js');
 
 
 
 const t = Symbol('compile.t');
-const pwd = process.env.PWD;
-
 
 exports.main =
 function main() {
 
+  fs.mkdirSync(plib.resolve(process.env.PWD, 'out'), { recursive: true });
+  const env = mkEnv({
+    root: process.env.PWD,
+    cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
+  });
+
   const formats = [];
   for (const fname of fs.readdirSync('./fmt')) {
-    const floc = plib.resolve(pwd, 'fmt', fname);
+    const floc = plib.resolve(env.root, 'fmt', fname);
 
     const format = quire(floc).default;
     const name = plib.basename(fname, plib.extname(fname));
@@ -26,20 +30,10 @@ function main() {
     formats.push(format);
   }
 
-  const out = plib.resolve(pwd, 'out');
-  fs.mkdirSync(out, { recursive: true });
-
-  const env = mkEnv({
-    cacheRoot: plib.resolve(out, '.cache'),
-  });
-  fs.mkdirSync(plib.resolve(out, '.cache'), { recursive: true });
-
   const graph = {};
   graph.notes = [];
 
-  env.log.info('Found', formats.length, 'formats:', formats.map(f => f.name).join(', '));
-
-  const notesLoc = plib.resolve(pwd, 'notes');
+  const notesLoc = plib.resolve(env.root, 'notes');
   for (const format of formats) {
 
     const files = readdirRecursive(notesLoc);
@@ -58,7 +52,7 @@ function main() {
     }
   }
 
-  env.log.info('Found', graph.notes.length, 'notes');
+  env.log.info(`Found ${graph.notes.length} notes`);
 
   // Log format counts
   {
@@ -66,12 +60,15 @@ function main() {
     for (const note of graph.notes)
       counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
-    env.log.info(sorted.map(k => `format=${k}: ${counts[k]} notes`).join('; '))
+    env.log.info(
+      `Found ${formats.length} formats: `
+       + sorted.map(k => `${k} (×${counts[k]})`).join(', ')
+    );
   }
 
   for (const note of graph.notes) {
-    lazyAss(note, 'relativeLoc', () => 'n/' + note.id + '.html');
-    lazyAss(note, 'href', () => '/' + note.relativeLoc);
+    note.relativeLoc = `n/${note.id}.html`;
+    note.href = '/' + note.relativeLoc;
   }
 
   graph.notesById = {};
@@ -96,7 +93,7 @@ function main() {
       if (!longest || jarg.length > longest.length)
         longest = jarg;
     if (longest)
-      env.log.info('Longest jargon at:', longest.length, 'is:', longest);
+      env.log.info(`Longest jargon at: ${longest.length} is [${longest}]`);
   }
 
   for (const note of graph.notes)
@@ -108,28 +105,21 @@ function main() {
     }
   }
 
-  writeFile(plib.resolve(out, 'index.html'), renderIndex(graph));
+  writeFile(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
 
-    const html = (
+    writeFile(
+      plib.resolve(env.root, 'out', 'raw', note.relativeLoc),
       '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
-      + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>'  // for <iframe> resizing
+      + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'  // for <iframe> resizing
       + note.html
     );
 
-    writeFile(plib.resolve(out, 'raw', note.relativeLoc), html);
-
-    const wrapped =
-      withTemplate(String.raw`
-        <iframe
-          src="${'/raw/' + note.relativeLoc}"
-          scrolling="no"
-          onload="this.style.height = (this.contentWindow.document.body.scrollHeight + 20) + 'px';"
-        ></iframe>
-    `);
-
-    writeFile(plib.resolve(out, note.relativeLoc), wrapped);
+    writeFile(
+      plib.resolve(env.root, 'out', note.relativeLoc),
+      withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`),
+    );
 
   }
 
@@ -145,38 +135,35 @@ function main() {
 
 
 function renderIndex(graph) {
-  let html = '';
+  const html = new Cats();
 
-  html += '<table>';
+  html.add('<table>');
 
-  html += '<tr>';
-  html += '<th>Note</th>';
-  html += '<th>Jargon</th>';
-  html += '<th>Format</th>';
-  html += '<th>Refs</th>';
-  html += '<th>Ref&nbsp;by</th>';
-  html += '</tr>';
+  html.add('<tr>');
+  html.add('<th>Note</th>');
+  html.add('<th>Jargon</th>');
+  html.add('<th>Format</th>');
+  html.add('<th>Refs</th>');
+  html.add('<th>Ref&nbsp;by</th>');
+  html.add('</tr>');
 
-  html += (
-    [...graph.notes]
-      .sort((na, nb) => nb.referencedBy.size - na.referencedBy.size)
-      .map(note =>
-        [ '<tr>'
-        , `<td><a href="${note.href}">${note.id}</a></td>`
-        , `<td><center>${[...note.defines].join(', ')}</center></td>`
-        , `<td><center style="white-space: nowrap">${note[t].format.name}</center></td>`
-        , `<td><center>${note.references.size}</center></td>`
-        , `<td><center>${note.referencedBy.size}</center></td>`
-        , '</tr>'
-        ].join(''))
-      .join('')
-  );
+  for (
+    const note of
+      [...graph.notes]
+        .sort((na, nb) => nb.referencedBy.size - na.referencedBy.size)
+  ) {
+    html.add('<tr>');
+    html.add(`<td><a href="${note.href}">${note.id}</a></td>`);
+    html.add(`<td><center>${[...note.defines].join(', ')}</center></td>`);
+    html.add(`<td><center style="white-space: nowrap">${note[t].format.name}</center></td>`);
+    html.add(`<td><center>${note.references.size}</center></td>`);
+    html.add(`<td><center>${note.referencedBy.size}</center></td>`);
+    html.add('</tr>');
+  }
 
-  html += '</table>'
+  html.add('</table>');
 
-  html = withTemplate(html);
-
-  return html;
+  return withTemplate(html);
 }
 
 function withTemplate(mainHtml) {
