@@ -1,6 +1,9 @@
-const fs = require('fs');
 const plib = require('path');
 const child_process = require('child_process');
+
+const { quire } = require('./quire.js');
+const fss = quire('./fss.js');
+
 
 /*
 
@@ -92,40 +95,6 @@ class Cats {
 
 }
 
-
-exports.writeFile =
-function writeFile(loc, content) {
-  fs.mkdirSync(plib.dirname(loc), { recursive: true });
-  fs.writeFileSync(loc, content);
-}
-
-
-exports.readdirRecursive =
-function * readdirRecursive(loc) {
-  const ls = fs.readdirSync(loc, { withFileTypes: true });
-  for (const elem of ls) {
-    const eloc = plib.resolve(loc, elem.name);
-    if (elem.isDirectory())
-      yield * readdirRecursive(eloc)
-    else
-      yield eloc;
-  }
-}
-
-
-exports.withTempDir =
-function withTempDir(fun) {
-  let path = '/tmp/z-';
-  for (let i = 0; i < 20; i++)
-    path += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
-
-  fs.mkdirSync(path);
-  try {
-    return fun(path);
-  } finally {
-    fs.rmSync(path, { recursive: true });
-  }
-}
 
 // Lazy assignment
 exports.lazyAss =

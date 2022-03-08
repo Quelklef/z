@@ -1,8 +1,9 @@
 const crypto = require('crypto');
 const plib = require('path');
-const fs = require('fs');
 
-const { writeFile } = require('./util.js');
+const { quire } = require('./quire.js');
+const { writeFile } = quire('./util.js');
+const fss = quire('./fss.js');
 
 
 exports.mkEnv =
@@ -39,7 +40,7 @@ class Cache {
 
   constructor(root) {
     this.root = plib.resolve(root);
-    fs.mkdirSync(this.root, { recursive: true });
+    fss.mkdir(this.root);
   }
 
   _mkPath(ns, keys) {
@@ -52,7 +53,7 @@ class Cache {
 
   get(ns, keys) {
     const path = this._mkPath(ns, keys);
-    const text = fs.readFileSync(path).toString();
+    const text = fss.read(path);
     return deserialize(text);
   }
 
@@ -66,13 +67,13 @@ class Cache {
   }
 
   has(ns, keys) {
-    return fs.existsSync(this._mkPath(ns, keys));
+    return fss.exists(this._mkPath(ns, keys));
   }
 
   put(ns, keys, value) {
     const path = this._mkPath(ns, keys);
     const text = serialize(value);
-    writeFile(path, text);
+    fss.write(path, text);
   }
 
   at(ns, keys, fun) {
@@ -89,18 +90,18 @@ class Cache {
   }
 
   clear() {
-    fs.rmSync(this.root, { recursive: true });
-    fs.mkdirSync(this.root);
+    fss.remove(this.root);
+    fss.mkdir(this.root);
   }
 
   getNamespaces() {
-    return fs.readdirSync(this.root);
+    return [...fss.list(this.root, { type: 'd' })].map(loc => plib.relative(this.root, loc));
   }
 
   clearNamespace(ns) {
     const nsLoc = plib.resolve(this.root, ns);
-    if (fs.existsSync(nsLoc))
-      fs.rmSync(nsLoc, { recursive: true });
+    if (fss.exists(nsLoc))
+      fss.remove(nsLoc);
   }
 
 }

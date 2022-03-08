@@ -1,5 +1,5 @@
 const fs = require('fs');
-
+const plib = require('path');
 
 const doQuire = true;
 const loadTimes = {};
@@ -16,6 +16,9 @@ exports.quire =
 function quire(path) {
   if (!doQuire) return require(path);
 
+  // Don't do this at home, kids
+  const caller = new Error().stack.split('\n')[2].match(/^[^\/]*(.+):.+:/)[1];
+  path = plib.resolve(plib.dirname(caller), path);
   path = require.resolve(path);
 
   const loadt = loadTimes[path];

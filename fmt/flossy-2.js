@@ -5,12 +5,14 @@ const fs = require('fs');
 const hljs = require('highlight.js');
 const katex = require('katex');
 
-const { lazyAss, Cats, withTempDir } = require('../util.js');
+const { quire } = require('../quire.js');
+const { lazyAss, Cats, withTempDir } = quire('../util.js');
+const fss = quire('../fss.js');
 
 exports.default =
 function * (files, _, graph, env) {
   for (const floc of files) {
-    const source = fs.readFileSync(floc).toString();
+    const source = fss.read(floc);
     if (source.startsWith('format=flossy-2\n'))
       yield mkNote(floc, source, graph, env);
   }

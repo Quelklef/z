@@ -6,16 +6,17 @@ Legacy format, only exists for compatibility reasons.
 
 const plib = require('path');
 const child_process = require('child_process');
-const fs = require('fs');
 
 const katex = require('katex');
 
-const { lazyAss, Cats, withTempDir } = require('../util.js');
+const { quire } = require('../quire.js');
+const { lazyAss, Cats } = quire('../util.js');
+const fss = quire('../fss.js');
 
 exports.default =
 function * (files, _, graph, env) {
   for (const floc of files) {
-    const source = fs.readFileSync(floc).toString();
+    const source = fss.read(floc);
     if (source.startsWith('format=compat-1\n'))
       yield mkNote(floc, source, graph, env);
   }
@@ -358,7 +359,7 @@ function chompDelimited(text, i, open, close) {
 
 function renderTeX(source, env) {
   return cache.at('tex', [renderTeX, source], () => {
-    return withTempDir(tmp => {
+    return fss.withTempDir(tmp => {
 
       env.log.info(`Rendering LaTeX [${source.length}]`);
 
@@ -373,7 +374,7 @@ function renderTeX(source, env) {
 
         \end{document}
       `;
-      fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
+      fss.write(plib.resolve(tmp, 'it.tex'), tex);
 
       const cmd = String.raw`
         cd ${tmp} \

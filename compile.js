@@ -1,10 +1,10 @@
-const fs = require('fs');
 const { katex } = require('katex');
 const plib = require('path');
 
 const { quire } = require('./quire.js');
-const { lazyAss, writeFile, readdirRecursive, Cats } = quire('./util.js');
+const { lazyAss, Cats } = quire('./util.js');
 const { mkEnv } = quire('./env.js');
+const fss = quire('./fss.js');
 
 
 
@@ -13,14 +13,14 @@ const t = Symbol('compile.t');
 exports.main =
 function main() {
 
-  fs.mkdirSync(plib.resolve(process.env.PWD, 'out'), { recursive: true });
+  fss.mkdir(plib.resolve(process.env.PWD, 'out'));
   const env = mkEnv({
     root: process.env.PWD,
     cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
   });
 
   const formats = [];
-  for (const fname of fs.readdirSync('./fmt')) {
+  for (const fname of fss.list('./fmt', { type: 'f' })) {
     const floc = plib.resolve(env.root, 'fmt', fname);
 
     const format = quire(floc).default;
@@ -36,7 +36,7 @@ function main() {
   const notesLoc = plib.resolve(env.root, 'notes');
   for (const format of formats) {
 
-    const files = readdirRecursive(notesLoc);
+    const files = fss.list(notesLoc, { type: 'f', recursive: true });
     for (let note of format(files, notesLoc, graph, env)) {
 
       const cached = env.cache.getOr('notes', note.cacheKeys, null);
@@ -105,18 +105,18 @@ function main() {
     }
   }
 
-  writeFile(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
+  fss.write(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
 
   for (const note of graph.notes) {
 
-    writeFile(
+    fss.write(
       plib.resolve(env.root, 'out', 'raw', note.relativeLoc),
       '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
       + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'  // for <iframe> resizing
       + note.html
     );
 
-    writeFile(
+    fss.write(
       plib.resolve(env.root, 'out', note.relativeLoc),
       withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`),
     );
