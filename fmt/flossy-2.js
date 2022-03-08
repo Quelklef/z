@@ -948,6 +948,8 @@ const annotationsImplementation = String.raw`
 
 <style>
 
+* { box-sizing: border-box; }
+
 .annotation-reference:before { content: '['; }
 .annotation-reference:after { content: ']'; }
 
@@ -967,11 +969,13 @@ const annotationsImplementation = String.raw`
 }
 
 .annotation-definition {
-  background: rgba(200, 200, 200, 0.2);
-  padding: .5em 1em;
-  margin: .5em 0;
+  background: rgba(250, 250, 250);
+  box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15);
   border: 1px solid #C06;
   border-radius: 3px;
+
+  padding: .5em 1em;
+  margin: .5em 0;
 }
 
 .annotation-definition:not(.revealed) {
@@ -1031,22 +1035,28 @@ const jargonImplementation = String.raw`
   position: absolute;
   z-index: 10;
   display: inline-block;
-  min-width: 150px;
-  top: 100%;
+  width: auto;
+  top: calc(100% + 5px);
   left: 50%;
-  transform: translate(0%, 5px);
+  transform: translate(-50%);
   display: none;
 
-  background: rgba(240, 240, 240);
+  background: rgba(250, 250, 250);
+  box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.35);
   border: 1px solid #C06;
   border-radius: 3px;
+
   text-align: center;
   font-size: 0.8em;
-  padding: .5em 1em;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+  padding: .5em 2em;
+  line-height: 1.2em;
 }
 .jargon .jargon-tooltip p {
   margin: .5em 0;
+  white-space: nowrap;
+}
+.jargon .jargon-tooltip hr {
+  margin: .75em 0;
 }
 
 .jargon:hover {
@@ -1074,11 +1084,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     const $tt = document.createElement('div');
     $tt.classList.add('jargon-tooltip');
+
+    const $p0 = document.createElement('p');
+    $p0.innerHTML = 'Synonyms'
+    $tt.append($p0);
+
+    $tt.append(document.createElement('hr'));
+
     for (const word of words) {
       const $p = document.createElement('p');
       $p.innerText = word;
       $tt.append($p);
     }
+
+    // Keep tooltip on-screen
+    $jarg.addEventListener('mouseenter', () => {
+      const margin = 10;
+
+      const leftEdge = $jarg.offsetLeft + $jarg.offsetWidth / 2 - $tt.offsetWidth / 2;
+      if (leftEdge < 10)
+        $tt.style.marginLeft = -leftEdge + margin + 'px';
+
+      const rightEdge = $jarg.offsetLeft + $jarg.offsetWidth / 2 + $tt.offsetWidth / 2;
+      if (rightEdge > document.body.offsetWidth - margin)
+        $tt.style.marginRight = -rightEdge + margin + 'px';
+    });
+
     return $tt;
   }
 

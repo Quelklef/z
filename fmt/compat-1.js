@@ -70,6 +70,10 @@ function mkNote(floc, source, graph, env) {
     let i = 0;
     const html = new Cats();
 
+    // Skip format header and optional newline
+    i += 'format=compat-1\n'.length;
+    if (note.source[i] === '\n') i++;
+
     loop:
     while (i < note.source.length) {
 
