@@ -3,7 +3,7 @@ import katex from 'katex';
 import * as plib from 'path';
 import isMainModule from 'es-main';
 
-import { lazyAss, writeFile, readdirRecursive, importFresh, serialize, deserialize } from './util.mjs';
+import { lazyAss, writeFile, readdirRecursive, importFresh } from './util.mjs';
 
 
 

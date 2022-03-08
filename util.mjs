@@ -5,7 +5,7 @@ import * as child_process from 'child_process';
 
 /*
 
-Souped-up string builder
+Souped-up string builder.
 
 cats = new Cats()
 cats.add(s1, s2)  // add strings
@@ -21,6 +21,10 @@ cats.addFromSource(i)
   //   cats.addFromSource(i); cats.addFromSource(i + 1)
   // is more efficient than
   //   cats.add(s[i]); cats.add(s[i + 1])
+
+The name 'Cats' stands for 'concatenations', coming
+from the fact that instances are internally
+represented by an array of items to concatenate.
 
 */
 export class Cats {
@@ -117,63 +121,6 @@ export function withTempDir(fun) {
     return fun(path);
   } finally {
     fs.rmSync(path, { recursive: true });
-  }
-}
-
-export function serialize(obj) {
-  return JSON.stringify(toJson(obj));
-
-  function toJson(obj) {
-    if (obj === null || ['number', 'string', 'null', 'boolean'].includes(typeof obj))
-      return obj;
-
-    if (Array.isArray(obj))
-      return obj.map(toJson);
-
-    if (typeof obj === 'undefined')
-      return { _type: 'undefined' };
-
-    if (obj instanceof Set) {
-      return toJson({
-        _type: 'set',
-        values: toJson([...obj]),
-      });
-    }
-
-    if (Object.getPrototypeOf(obj) === Object.getPrototypeOf({})) {
-      const json = {};
-      for (const k in obj) {
-        json[k] = toJson(obj[k]);
-      }
-      return json;
-    }
-
-    throw Error(`Cannot serialize a ${typeof obj} // ${Object.getPrototypeOf(obj).constructor.name}`);
-  }
-}
-
-export function deserialize(str) {
-  return fromJson(JSON.parse(str));
-
-  function fromJson(json) {
-    if (['number', 'string', 'null', 'boolean'].includes(typeof json))
-      return json;
-
-    if (Array.isArray(json))
-      return json.map(fromJson);
-
-    if (json._type === 'undefined')
-      return undefined;
-
-    if (json._type === 'set') {
-      const items = fromJson(json.values);
-      return new Set(items);
-    }
-
-    const obj = {};
-    for (const k in json)
-      obj[k] = fromJson(json[k]);
-    return obj;
   }
 }
 

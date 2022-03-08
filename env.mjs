@@ -2,7 +2,32 @@ import * as crypto from 'crypto';
 import * as plib from 'path';
 import * as fs from 'fs';
 
-import { writeFile, serialize, deserialize } from './util.mjs';
+import { writeFile } from './util.mjs';
+
+
+export function mkEnv(args) {
+
+  args.cacheRoot;
+  args.logPrefixes ||= [];
+
+  const env = {};
+  env.parent = null;
+  env.cache = new Cache(args.cacheRoot);
+  env.log = new Logger(args.logPrefixes);
+
+  env.descend = function() {
+    const child = mkEnv({
+      cacheRoot: args.cacheRoot,
+      logPrefixes: [...args.logPrefixes],
+    });
+    child.parent = this;
+    return child;
+  }
+
+  return env;
+
+}
+
 
 class Cache {
 
@@ -58,6 +83,7 @@ class Cache {
 
 }
 
+
 class Logger {
 
   constructor(prefixes) {
@@ -78,25 +104,61 @@ class Logger {
 
 }
 
-export function mkEnv(args) {
 
-  args.cacheRoot;
-  args.logPrefixes ||= [];
+export function serialize(obj) {
+  return JSON.stringify(toJson(obj));
 
-  const env = {};
-  env.parent = null;
-  env.cache = new Cache(args.cacheRoot);
-  env.log = new Logger(args.logPrefixes);
+  function toJson(obj) {
+    if (obj === null || ['number', 'string', 'null', 'boolean'].includes(typeof obj))
+      return obj;
 
-  env.descend = function() {
-    const child = mkEnv({
-      cacheRoot: args.cacheRoot,
-      logPrefixes: [...args.logPrefixes],
-    });
-    child.parent = this;
-    return child;
+    if (Array.isArray(obj))
+      return obj.map(toJson);
+
+    if (typeof obj === 'undefined')
+      return { _type: 'undefined' };
+
+    if (obj instanceof Set) {
+      return toJson({
+        _type: 'set',
+        values: toJson([...obj]),
+      });
+    }
+
+    if (Object.getPrototypeOf(obj) === Object.getPrototypeOf({})) {
+      const json = {};
+      for (const k in obj) {
+        json[k] = toJson(obj[k]);
+      }
+      return json;
+    }
+
+    throw Error(`Cannot serialize a ${typeof obj} // ${Object.getPrototypeOf(obj).constructor.name}`);
   }
+}
 
-  return env;
 
+export function deserialize(str) {
+  return fromJson(JSON.parse(str));
+
+  function fromJson(json) {
+    if (['number', 'string', 'null', 'boolean'].includes(typeof json))
+      return json;
+
+    if (Array.isArray(json))
+      return json.map(fromJson);
+
+    if (json._type === 'undefined')
+      return undefined;
+
+    if (json._type === 'set') {
+      const items = fromJson(json.values);
+      return new Set(items);
+    }
+
+    const obj = {};
+    for (const k in json)
+      obj[k] = fromJson(json[k]);
+    return obj;
+  }
 }
