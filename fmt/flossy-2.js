@@ -355,11 +355,11 @@ function p_command(s) {
   const name = parseWord(s).toString();
 
   if (name === '')
-    throw mkError(sx, "Expected command name to follow backslash!");
+    throw mkError(sx, "Expected command name");
 
   const command = commands[name];
   if (!command)
-    throw mkError(sx, `No command named '${name}'!`);
+    throw mkError(sx, `No command '${name}'!`);
 
   return command(s);
 }
@@ -456,7 +456,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
     if (!name) {
-      throw mkError(sx, "Unpaired \\adef!");
+      throw mkError(sx, "Unpaired \\adef");
     }
 
     return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(p_main, s), '</div>');
@@ -474,7 +474,7 @@ const commands = {
     chompSpace(s);
 
     const ref = s.graph.notesById[noteId];
-    if (!ref) env.log.warn(`bad reference to '${noteId}''!`);
+    if (!ref) s.env.log.warn(`Reference to nonexistent note '${noteId}'`);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -786,7 +786,7 @@ function p_inline(parser, s) {
   }
   const close = pairs[open];
   if (!close)
-    throw mkError(s, "Expected opening character!");
+    throw mkError(s, "Expected group: [], (), {}, or <>");
   s.i++;
 
   const done = s => s.text.startsWith(close, s.i);
@@ -814,7 +814,7 @@ function p_verbatim(s, done) {
       return result;
 
     if (s.i > s.text.length)
-      throw mkError(s, "Unexpected EOF!");
+      throw mkError(s, "Unexpected EOF");
 
     if (s.i !== s.text.length)
       result.addFromSource(s.i);
@@ -824,8 +824,47 @@ function p_verbatim(s, done) {
 }
 
 
+
 function mkError(s, err) {
-  return Error(err + ' Around: ' + s.text.slice(s.i, s.i + 25));
+
+  const linesAround = 2;
+  let i0 = s.i, iF = s.i;
+  for (let lines = 0; i0 >= 0            && lines <= linesAround; i0--) lines += s.text[i0 - 1] === '\n';
+  for (let lines = 0; iF < s.text.length && lines <= linesAround; iF++) lines += s.text[iF + 1] === '\n';
+  const block = s.text.slice(i0 + 1, iF);
+
+  let lineno = s.text.slice(0, i0 + 1).split('\n').length + 1;
+
+  const lines = block.split('\n');
+  const linenoStrLen = (lineno + lines.length + '').length;
+
+  const msg = new Cats();
+  msg.add(' ─', strRep('─', linenoStrLen), '─┬─╴')
+  msg.add('  Error! ', err, '\n');
+  lines.forEach((line, lidx) => {
+    const start = i0 + 1 + lines.slice(0, lidx).map(ln => (ln + '\n').length).reduce((a, b) => a + b, 0);
+    const end = start + line.length;
+    const isTheLine = start <= s.i && s.i <= end;
+    const marker = isTheLine ? '▶' : ' ';
+
+    const linenoStr = (lineno + '').padStart(linenoStrLen, ' ');
+
+    msg.add(' ' + marker + ' ' + linenoStr + '│ ' + line + '\n');
+    if (isTheLine) {
+      const column = s.i % start;
+      msg.add(strRep(' ', 1 + '▶'.length + 1 + linenoStrLen), '│ ', strRep(' ', column), '▲', '\n');
+    }
+    lineno++;
+  });
+  msg.add(' ─', strRep('─', linenoStrLen), '─┴─╴')
+
+  return Error('\n' + msg.toString());
+
+
+  function strRep(s, n) {
+    let r = ''; while (n--) r += s; return r;
+  }
+
 }
 
 
