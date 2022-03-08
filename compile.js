@@ -1,9 +1,8 @@
-import fs from 'fs';
-import katex from 'katex';
-import * as plib from 'path';
-import isMainModule from 'es-main';
+const fs = require('fs');
+const { katex } = require('katex');
+const plib = require('path');
 
-import { lazyAss, writeFile, readdirRecursive, importFresh } from './util.mjs';
+const { lazyAss, writeFile, readdirRecursive, importFresh } = require('./util.js');
 
 
 
@@ -11,16 +10,16 @@ const t = Symbol('compile.t');
 const pwd = process.env.PWD;
 
 
+exports.main =
+function main() {
 
-export async function main() {
-
-  const { mkEnv } = await importFresh('./env.mjs');
+  const { mkEnv } = require('./env.js');
 
   const formats = [];
   for (const fname of fs.readdirSync('./fmt')) {
     const floc = plib.resolve(pwd, 'fmt', fname);
 
-    const format = (await importFresh(floc)).default;
+    const format = importFresh(floc).default;
     const name = plib.basename(fname, plib.extname(fname));
     Object.defineProperty(format, 'name', { value: name });
 
@@ -264,5 +263,5 @@ document.addEventListener('DOMContentLoaded', () => {
 }
 
 
-if (isMainModule(import.meta))
+if (require.main === module)
   main();

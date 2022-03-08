@@ -1,11 +1,13 @@
-import * as plib from 'path';
-import * as child_process from 'child_process';
-import fs from 'fs';
-import katex from 'katex';
+const plib = require('path');
+const child_process = require('child_process');
+const fs = require('fs');
 
-import { lazyAss, Cats, withTempDir } from '../util.mjs';
+const katex = require('katex');
 
-export default function * (files, _, graph, env) {
+const { lazyAss, Cats, withTempDir } = require('../util.js');
+
+exports.default =
+function * (files, _, graph, env) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
     if (source.startsWith('format=flossy-1\n'))
@@ -643,7 +645,7 @@ function indexOf(str, sub, from = 0) {
   return result;
 }
 
-export function renderTeX(tex, env) {
+function renderTeX(tex, env) {
   return env.cache.at('tex', [renderTeX, tex], () => {
     return withTempDir(tmp => {
 

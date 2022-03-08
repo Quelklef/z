@@ -4,14 +4,16 @@ Legacy format, only exists for compatibility reasons.
 
 */
 
-import * as plib from 'path';
-import * as child_process from 'child_process';
-import fs from 'fs';
-import katex from 'katex';
+const plib = require('path');
+const child_process = require('child_process');
+const fs = require('fs');
 
-import { lazyAss, Cats, withTempDir } from '../util.mjs';
+const katex = require('katex');
 
-export default function * (files, _, graph, env) {
+const { lazyAss, Cats, withTempDir } = require('../util.js');
+
+exports.default =
+function * (files, _, graph, env) {
   for (const floc of files) {
     const source = fs.readFileSync(floc).toString();
     if (source.startsWith('format=compat-1\n'))
@@ -354,7 +356,7 @@ function chompDelimited(text, i, open, close) {
 }
 
 
-export function renderTeX(source, env) {
+function renderTeX(source, env) {
   return cache.at('tex', [renderTeX, source], () => {
     return withTempDir(tmp => {
 
@@ -395,7 +397,7 @@ export function renderTeX(source, env) {
   });
 }
 
-export class Trie {
+class Trie {
   constructor(strings) {
     this.isElement = Symbol("isElement");
 

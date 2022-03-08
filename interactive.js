@@ -1,10 +1,11 @@
-import chokidar from 'chokidar';
-import keypress from 'keypress';
-import fs from 'fs';
-import * as plib from 'path';
-import StaticServer from 'static-server';
+const fs = require('fs');
+const plib = require('path');
 
-import { importFresh } from './util.mjs';
+const chokidar = require('chokidar');
+const keypress = require('keypress');
+const StaticServer = require('static-server');
+
+const { importFresh } = require('./util.js');
 
 
 const PORT = '8000';
@@ -24,7 +25,7 @@ server.start();
 
 const watcher = chokidar
   .watch(
-    ['./notes', './*.mjs', './fmt/*.mjs'],
+    ['./notes', './*.js', './fmt/*.js'],
     { cwd: '.' },
   )
   .on('ready', () => {
@@ -42,6 +43,8 @@ async function onEvent(ev, path) {
     'unlinkDir': 'Directory deleted',
   };
 
+  console.log(ev);
+
   if (ev !== 'ready' && !(ev in descs)) return;
 
   if (ev === 'ready')
@@ -56,11 +59,10 @@ async function recompile() {
   // Clear screen...
   for (let i = 0; i < 100; i++) process.stdout.write('\n');
 
-  // Import dynamically in case its source changes
-  const { main } = await importFresh('./compile.mjs');
+  const { main } = importFresh('./compile.js');
 
   try {
-    await main();
+    main();
   } catch (e) {
     console.error(e);
   }

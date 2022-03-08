@@ -1,11 +1,12 @@
-import * as crypto from 'crypto';
-import * as plib from 'path';
-import * as fs from 'fs';
+const crypto = require('crypto');
+const plib = require('path');
+const fs = require('fs');
 
-import { writeFile } from './util.mjs';
+const { writeFile } = require('./util.js');
 
 
-export function mkEnv(args) {
+exports.mkEnv =
+function mkEnv(args) {
 
   args.cacheRoot;
   args.logPrefixes ||= [];
@@ -105,7 +106,7 @@ class Logger {
 }
 
 
-export function serialize(obj) {
+function serialize(obj) {
   return JSON.stringify(toJson(obj));
 
   function toJson(obj) {
@@ -138,7 +139,7 @@ export function serialize(obj) {
 }
 
 
-export function deserialize(str) {
+function deserialize(str) {
   return fromJson(JSON.parse(str));
 
   function fromJson(json) {

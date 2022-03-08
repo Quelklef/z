@@ -1,2 +1,2 @@
-node interactive.mjs
+node interactive.js
 

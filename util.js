@@ -1,6 +1,6 @@
-import fs from 'fs';
-import * as plib from 'path';
-import * as child_process from 'child_process';
+const fs = require('fs');
+const plib = require('path');
+const child_process = require('child_process');
 
 
 /*
@@ -27,7 +27,8 @@ from the fact that instances are internally
 represented by an array of items to concatenate.
 
 */
-export class Cats {
+exports.Cats =
+class Cats {
 
   constructor() {
     this.parts = [];
@@ -93,13 +94,15 @@ export class Cats {
 }
 
 
-export function writeFile(loc, content) {
+exports.writeFile =
+function writeFile(loc, content) {
   fs.mkdirSync(plib.dirname(loc), { recursive: true });
   fs.writeFileSync(loc, content);
 }
 
 
-export function * readdirRecursive(loc) {
+exports.readdirRecursive =
+function * readdirRecursive(loc) {
   const ls = fs.readdirSync(loc, { withFileTypes: true });
   for (const elem of ls) {
     const eloc = plib.resolve(loc, elem.name);
@@ -111,7 +114,8 @@ export function * readdirRecursive(loc) {
 }
 
 
-export function withTempDir(fun) {
+exports.withTempDir =
+function withTempDir(fun) {
   let path = '/tmp/z-';
   for (let i = 0; i < 20; i++)
     path += 'abcdefghijklmnopqrstuvwxyz'[Math.floor(Math.random() * 26)];
@@ -125,7 +129,8 @@ export function withTempDir(fun) {
 }
 
 // Lazy assignment
-export function lazyAss(obj, key, lz) {
+exports.lazyAss =
+function lazyAss(obj, key, lz) {
   Object.defineProperty(obj, key, {
     configurable: true,
     enumerable: true,
@@ -137,9 +142,8 @@ export function lazyAss(obj, key, lz) {
   });
 }
 
-// Import a module, bypassing the cache
-// This *will* leak memory when the file changes
-// Modified from https://ar.al/2021/02/22/cache-busting-in-node.js-dynamic-esm-imports/
-export async function importFresh(path) {
-  return await import(`${path}?update=${+fs.statSync(path).mtime}`);
+exports.importFresh =
+function importFresh(path) {
+  delete require.cache[require.resolve(path)];
+  return require(path);
 }
