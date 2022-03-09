@@ -87,16 +87,6 @@ function main() {
     }
   }
 
-  // Log longest jargon
-  {
-    let longest;
-    for (const jarg of graph.jargonSet)
-      if (!longest || jarg.length > longest.length)
-        longest = jarg;
-    if (longest)
-      env.log.info(`Longest jargon at: ${longest.length} is [${longest}]`);
-  }
-
   for (const note of graph.notes)
     note.referencedBy = new Set();
   for (const note of graph.notes) {
@@ -243,6 +233,10 @@ iframe {
 document.addEventListener('DOMContentLoaded', () => {
   const $iframe = document.getElementsByTagName('iframe')[0];
   iFrameResize({ log: false }, $iframe);
+
+  // Refresh iframe on websocket message
+  const ws = new WebSocket('ws://localhost:8001');
+  ws.addEventListener('message', () => $iframe.src = $iframe.src);
 });
 </script>
 

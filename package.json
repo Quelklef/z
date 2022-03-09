@@ -21,6 +21,7 @@
     "highlight.js": "^11.4.0",
     "katex": "^0.15.2",
     "keypress": "^0.2.1",
-    "static-server": "^2.2.1"
+    "static-server": "^2.2.1",
+    "ws": "^8.5.0"
   }
 }

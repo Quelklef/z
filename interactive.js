@@ -3,6 +3,7 @@ const plib = require('path');
 const chokidar = require('chokidar');
 const keypress = require('keypress');
 const StaticServer = require('static-server');
+const WebSocket = require('ws');
 
 const { quire } = require('./quire.js');
 const { mkEnv } = quire('./env.js');
@@ -42,6 +43,21 @@ const watcher = chokidar
   });
 
 
+const clients = [];
+
+const ws = new WebSocket.Server({ port: '8001' });
+
+ws.on('connection', client => {
+  clients.push(client);
+  client.on('close', () => clients.splice(clients.indexOf(client), 1));
+});
+
+function notify() {
+  for (const client of clients)
+    client.send('reload');
+}
+
+
 async function recompile() {
 
   // Clear screen...
@@ -54,6 +70,8 @@ async function recompile() {
   } catch (e) {
     console.error(e);
   }
+
+  notify();
 
   console.log(
     `\nListening at localhost:${PORT}`

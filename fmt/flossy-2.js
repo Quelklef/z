@@ -38,31 +38,47 @@ function mkNote(floc, source, graph, env) {
   const t = Symbol('fmt-proper.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
-  lazyAss(note[t], 'preparsed', () => {
-    env.parent.log.info('preparsing', note.id);
+  lazyAss(note[t], 'phase1', () => {
+    env.parent.log.info('phase-1 parsing', note.id);
     return parse({
       text: source,
-      preparse: true,
-      note, graph, env
+      note, graph, env,
+      doImplicitReferences: false,
+      needOutputHtml: false,
     });
   });
 
   lazyAss(note, 'defines', () => {
-    return note[t].preparsed.defines;
+    return note[t].phase1.defines;
   });
 
-  lazyAss(note[t], 'parsed', () => {
-    env.parent.log.info('parsing', note.id);
+  lazyAss(note[t], 'phase2', () => {
+    env.parent.log.info('phase-2 parsing', note.id);
     return parse({
       text: source,
-      preparse: false,
-      note, graph, env
+      note, graph, env,
+      doImplicitReferences: true,
+      needOutputHtml: false,
     });
   });
 
-  lazyAss(note, 'references', () => note[t].parsed.references);
+  lazyAss(note, 'references', () => {
+    return note[t].phase2.references;
+  });
 
-  lazyAss(note, 'html', () => note[t].parsed.html);
+  lazyAss(note[t], 'phase3', () => {
+    env.parent.log.info('phase-3 parsing', note.id);
+    return parse({
+      text: source,
+      note, graph, env,
+      doImplicitReferences: true,
+      needOutputHtml: true,
+    });
+  });
+
+  lazyAss(note, 'html', () => {
+    return note[t].phase3.html;
+  });
 
   return note;
 }
@@ -85,7 +101,7 @@ Parsers fail by throwing.
 */
 
 
-function parse({ text, preparse, note, graph, env }) {
+function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml }) {
 
   // Initial parser state
   let s = {
@@ -105,11 +121,11 @@ function parse({ text, preparse, note, graph, env }) {
     // Set of notes this note references, as their IDs
     references: new Set(),
 
-    // preparse=true disables implicit references
-    preparse,
+    doImplicitReferences,
+    jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
 
-    doImplicitReferences: !preparse,
-    jargonMatcher: !preparse && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
+    // If false, denotes that the parser may choose not to generate html
+    needOutputHtml,
 
     // Symbol generation
     cursym: 0,
@@ -120,11 +136,15 @@ function parse({ text, preparse, note, graph, env }) {
     // annotation-related state
     annotNameQueue: [],
 
+    // katex-related state
+    katexPrefix: new Cats(),
+
     clone() {
       const c = { ...this };
       c.defines = new Set(c.defines);
       c.references = new Set(c.references);
       c.annotNameQueue = [...c.annotNameQueue];
+      c.katexPrefix = c.katexPrefix.clone();
       return c;
     },
 
@@ -137,7 +157,7 @@ function parse({ text, preparse, note, graph, env }) {
   const done = s => s.i >= s.text.length;
   const html = Cats.of(p_main(s, done));
 
-  if (!preparse) {
+  if (s.note.referencedBy) {
     html.add('<br /><br />');
     html.add('<hr />');
     html.add('<p>Referenced by:</p>');
@@ -280,11 +300,19 @@ function p_katex(s) {
   if (s.text[s.i] !== '$') return '';
 
   s.i++;
+  const sx = s.clone();
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
   const body = p_verbatim(s, done);
   s.i++;
 
-  return katex.renderToString('' + body, { displayMode: false });
+  try {
+    const full = s.katexPrefix + '' + body;
+    return renderKaTeX(full, false, s)
+  } catch (e) {
+    let text = e.toString();
+    text = text.split('\n')[0];
+    throw mkError(sx, text);
+  }
 }
 
 
@@ -378,10 +406,25 @@ const commands = {
 
   // KaTeX
   katex(s) {
+    chompSpace(s);
+
+    let append = s.text.startsWith('pre', s.i);
+    if (append) {
+      consume(s, 'pre');
+      chompSpace(s);
+    }
+
     const [body, kind] = enclosed(p_verbatim, s);
-    const displayMode = { block: true, inline: false }[kind];
-    const rendered = katex.renderToString('' + body, { displayMode });
-    return rendered;
+
+    if (append) {
+      s.katexPrefix.add(body);
+      return '';
+    } else {
+      const displayMode = { block: true, inline: false }[kind];
+      const full = s.katexPrefix + '' + body;
+      const rendered = renderKaTeX(full, displayMode, s);
+      return rendered;
+    }
   },
 
   // Italic
@@ -452,7 +495,7 @@ const commands = {
     chompSpace(s);
 
     let name;
-    if (!"[{(<:".includes(s.text[s.i])) {
+    if (!"[{(<:=".includes(s.text[s.i])) {
       name = parseWord(s);
     } else {
       if (s.annotNameQueue.length === 0)
@@ -486,8 +529,11 @@ const commands = {
       // ^ TODO: Technically, this is bugged!
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
 
-    const href = ref ? ref.href : '#';
-    return Cats.of(`<a href="${href}" class="reference explicit ${ref ? '' : 'invalid'}">`, body, '</a>');
+    const href = ref ? ref.href : '';
+    if (ref)
+      return Cats.of(`<a href="${ref.href}" class="reference explicit">`, body, '</a>');
+    else
+      return Cats.of(`<a class="reference explicit invalid">`, body, '</a>');
   },
 
   // External (hyper-)reference
@@ -537,7 +583,7 @@ ${tex}
 \end{document}
 `;
 
-    let html = renderTeX(tex, s.env);
+    let html = renderTeX(tex, s);
     if (kind === 'block') html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
     return html;
   },
@@ -747,7 +793,7 @@ function parseWord(s) {
 
 
 function enclosed(parser, s) {
-  if (s.text[s.i] === ':') {
+  if (s.text[s.i] === ':' || s.text.startsWith('==', s.i)) {
     const r = p_block(parser, s);
     return [r, 'block'];
   } else {
@@ -757,32 +803,54 @@ function enclosed(parser, s) {
 }
 
 function p_block(parser, s) {
-  // \cmd:
 
-  if (s.text[s.i] !== ':')
-    throw mkError(s, "Expected colon");
+  if (s.text[s.i] === ':') {
+    s.i++;
 
-  s.i++;
+    const eol = indexOf(s.text, '\n', s.i);
 
-  const eol = indexOf(s.text, '\n', s.i);
+    // \cmd: <stuff>
+    if (s.text.slice(s.i + 1, eol).trim() !== '') {
+      if (s.text[s.i] === ' ') s.i++;
+      const done = s => ['\n', undefined].includes(s.text[s.i]);
+      const r = parser(s, done);
+      s.i++;  // skip newline
+      return r;
 
-  // \cmd: <stuff>
-  if (s.text.slice(s.i + 1, eol).trim() !== '') {
-    if (s.text[s.i] === ' ') s.i++;
-    const done = s => ['\n', undefined].includes(s.text[s.i]);
-    const r = parser(s, done);
-    s.i++;  // skip newline
-    return r;
-
-  // \cmd:\n <stuff>
-  } else {
-    s.i = eol + 1;
-    let i = s.i;
-    while (s.text[i] === ' ') i++;
-    let column = i - s.i;
-    const r = indented(parser, column, false, s);
-    return r;
+    // \cmd:\n <stuff>
+    } else {
+      s.i = eol + 1;
+      let i = s.i;
+      while (s.text[i] === ' ') i++;
+      let column = i - s.i;
+      const r = indented(parser, column, false, s);
+      return r;
+    }
   }
+
+  else if (s.text.startsWith('==', s.i)) {
+    consume(s, '==');
+
+    let sentinel = Cats.on(s.text);
+    while (!s.text.startsWith('==', s.i)) {
+      sentinel.addFromSource(s.i);
+      s.i++;
+    }
+
+    consume(s, '==');
+    chompSpace(s);
+    consume(s, '\n');
+
+    const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
+    const result = p_main(s, done);
+    consume(s, `==/${sentinel}==\n`);
+    return result;
+  }
+
+  else {
+    throw mkError(s, 'Expected colon or double-equals');
+  }
+
 }
 
 function p_inline(parser, s) {
@@ -926,12 +994,16 @@ hr {
   border-bottom: 1px dashed rgb(200, 200, 200);
 }
 
+.katex-display {
+  margin: 0;
+}
+
 /* Styling for references to other notes */
 .reference {
   background-color: hsla(330, 75%, 85%, .25);
   text-decoration: none;
 }
-.reference:hover {
+.reference:not(.invalid):hover {
   background-color: hsla(330, 75%, 70%, .50);
 }
 .reference, .reference:visited { color: initial; }
@@ -939,7 +1011,8 @@ hr {
   border-bottom: 1px solid #C06;
 }
 .reference.invalid {
-  border: 1px dotted red;
+  color: red;
+  cursor: not-allowed;
 }
 
 </style>
@@ -1182,13 +1255,14 @@ function indexOf(str, sub, from = 0) {
   return result;
 }
 
-function renderTeX(tex, env) {
-  return env.cache.at('tex', [renderTeX, tex], () => {
+function renderTeX(tex, s) {
+  if (!s.needOutputHtml) return '';
+  return s.env.cache.at('tex', [renderTeX, tex], () => {
     return fss.withTempDir(tmp => {
 
-      env.log.info(`Rendering LaTeX [${tex.length}]`);
+      s.env.log.info(`Rendering LaTeX [${tex.length}]`);
 
-      fs.writeFileSync(plib.resolve(tmp, 'it.tex'), tex);
+      fss.write(plib.resolve(tmp, 'it.tex'), tex);
 
       const cmd = String.raw`
         cd ${tmp} \
@@ -1201,14 +1275,21 @@ function renderTeX(tex, env) {
       try {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
-        env.log.info(err.stderr.toString());  // meh
+        s.env.log.info(err.stderr.toString());  // meh
         throw 'LaTeX render failed; see above!';
       }
 
-      env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
+      s.env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
       return result;
 
     });
+  });
+}
+
+function renderKaTeX(tex, displayMode, s) {
+  if (!s.needOutputHtml) return '';
+  return s.env.cache.at('katex', [renderKaTeX, tex, displayMode], () => {
+    return katex.renderToString(tex, { displayMode });
   });
 }
 

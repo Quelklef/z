@@ -56,6 +56,7 @@ class Cats {
     c.parts = [...this.parts];
     if (this.pending)
       c.pending = [...this.pending];
+    return c;
   }
 
   add(...parts) {
