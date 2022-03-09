@@ -485,7 +485,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Cats.of(`<span class="annotation-reference" data-refers-to="${name}">`, p_inline(p_main, s), '</span>');
+    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(p_main, s), '</span>');
   },
 
   // Annotation definition
@@ -1073,30 +1073,53 @@ const annotationsImplementation = String.raw`
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const $defs = {};
-  for (const $def of document.querySelectorAll('.annotation-definition')) {
-    $defs[$def.dataset.name] = $def;
+  // id set of expanded \aref nodes
+  let expandedRefs = new Set();
+
+  function urlToState() {
+    const url = new URL(window.location.href);
+    expandedRefs = new Set(url.searchParams.get('expanded-refs')?.split(';') || []);
+  }
+
+  function stateToUrl() {
+    const url0 = new URL(window.location.href);
+    url0.searchParams.set('expanded-refs', [...expandedRefs].join(';'));
+    window.history.pushState(null, '', url0.toString());
+  }
+
+  function stateToDom() {
+    for (const $ref of document.querySelectorAll('.annotation-reference')) {
+      const isExpanded = expandedRefs.has($ref.id);
+
+      const $def = document.querySelector('.annotation-definition[data-name="' + $ref.dataset.refersTo + '"]');
+      if (!$def) {
+        console.warn("Unable to find annotation definition with name: '" + name + "'", 'due to reference', $ref);
+        return;
+      }
+
+      if (isExpanded) {
+        $def.classList.add('revealed');
+        $ref.classList.add('active');
+      } else {
+        $def.classList.remove('revealed');
+        $ref.classList.remove('active');
+      }
+    }
   }
 
   for (const $ref of document.querySelectorAll('.annotation-reference')) {
     $ref.addEventListener('click', () => {
-      const name = $ref.dataset.refersTo;
-      const $def = $defs[name];
+      const isExpanded = expandedRefs.has($ref.id);
+      if (isExpanded) expandedRefs.delete($ref.id);
+      else expandedRefs.add($ref.id);
 
-      if (!$def) {
-        console.warn('Unable to find annotation definition with name', name);
-        return;
-      }
-
-      if ($def.classList.contains('revealed')) {
-        $def.classList.remove('revealed');
-        $ref.classList.remove('active');
-      } else {
-        $def.classList.add('revealed');
-        $ref.classList.add('active');
-      }
+      stateToDom();
+      stateToUrl();
     });
   }
+
+  urlToState();
+  stateToDom();
 
 });
 

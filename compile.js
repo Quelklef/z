@@ -236,7 +236,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Refresh iframe on websocket message
   const ws = new WebSocket('ws://localhost:8001');
-  ws.addEventListener('message', () => $iframe.src = $iframe.src);
+  ws.addEventListener('message', () => $iframe.contentWindow.location.reload());
 });
 </script>
 
