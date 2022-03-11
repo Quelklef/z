@@ -18,6 +18,7 @@
   "homepage": "https://github.com/Quelklef/z#readme",
   "dependencies": {
     "chokidar": "^3.5.3",
+    "cli-color": "^2.0.1",
     "highlight.js": "^11.4.0",
     "katex": "^0.15.2",
     "keypress": "^0.2.1",

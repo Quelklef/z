@@ -120,7 +120,7 @@ function main() {
     env.cache.put('notes', note.cacheKeys, note);
   }
 
-  env.log.info('Done!');
+  env.log.success('Done!');
 
 }
 

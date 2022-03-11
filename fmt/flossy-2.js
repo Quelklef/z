@@ -45,7 +45,6 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: false,
-      needOutputHtml: false,
     });
   });
 
@@ -59,7 +58,6 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: true,
-      needOutputHtml: false,
     });
   });
 
@@ -73,12 +71,11 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: true,
-      needOutputHtml: true,
     });
   });
 
   lazyAss(note, 'html', () => {
-    return note[t].phase3.html;
+    return note[t].phase3.html.toString();
   });
 
   return note;
@@ -102,7 +99,7 @@ Parsers fail by throwing.
 */
 
 
-function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml }) {
+function parse({ text, note, graph, env, doImplicitReferences }) {
 
   // Initial parser state
   let s = {
@@ -127,9 +124,6 @@ function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml })
 
     doImplicitReferences,
     jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
-
-    // If false, denotes that the parser may choose not to generate html
-    needOutputHtml,
 
     // Symbol generation
     cursym: 0,
@@ -246,7 +240,7 @@ function p_main(s, args) {
     s.i++;
   }
 
-  return html.toString();  // TODO: no .toString() ?
+  return html;
 
 }
 
@@ -306,21 +300,24 @@ function p_sigils(s) {
 }
 
 
+const htmlEscapes = {
+  '<': '&lt;',
+  '>': '&gt;',
+  '&': '&amp;',
+};
+
 function p_escapes(s) {
-  const mapping = {
-    '<': '&lt;',
-    '>': '&gt;',
-    '&': '&amp;',
-  };
-
-  for (const [key, val] of Object.entries(mapping)) {
-    if (s.text.startsWith(key, s.i)) {
-      s.i += key.length;
-      return val;
-    }
+  const c = s.text[s.i];
+  if (c in htmlEscapes) {
+    s.i++;
+    return htmlEscapes[c];
+  } else {
+    return '';
   }
+}
 
-  return '';
+function escapeHtml(s) {
+  return [...s].map(c => htmlEscapes[c] || c).join('');
 }
 
 
@@ -723,7 +720,7 @@ function p_implicitReference(s) {
     href = '#';
   }
 
-  const body = s.text.slice(s.i, s.i + stepAmt);  // TODO: escapeHtml
+  const body = escapeHtml(s.text.slice(s.i, s.i + stepAmt));
   s.i += stepAmt;
   return `<a href="${href}" class="reference implicit ${isValid ? '' : 'invalid'}">${body}</a>`;;
 }
@@ -1317,7 +1314,6 @@ function indexOf(str, sub, from = 0) {
 }
 
 function renderTeX(tex, s) {
-  if (!s.needOutputHtml) return '';
   return s.env.cache.at('tex', [renderTeX, tex], () => {
     return fss.withTempDir(tmp => {
 
@@ -1348,7 +1344,6 @@ function renderTeX(tex, s) {
 }
 
 function renderKaTeX(s, tex, displayMode) {
-  if (!s.needOutputHtml) return '';
   return s.env.cache.at('katex', [renderKaTeX, tex, displayMode], () => {
     return katex.renderToString(tex, { displayMode });
   });

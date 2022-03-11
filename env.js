@@ -1,6 +1,8 @@
 const crypto = require('crypto');
 const plib = require('path');
 
+const clc = require('cli-color');
+
 const { quire } = require('./quire.js');
 const { writeFile } = quire('./util.js');
 const fss = quire('./fss.js');
@@ -113,16 +115,25 @@ class Logger {
     this.prefixes = prefixes;
   }
 
-  mkPrefix(fst) {
-    return [].concat([fst], this.prefixes.map(p => `(${p})`)).join(' ');
+  generic(color, fst, ...args) {
+    const prefix = [color(fst)].concat(this.prefixes.map(p => `(${p})`)).join(' ');
+    console.log(prefix, ...args);
   }
 
   info(...a) {
-    console.log(this.mkPrefix('[info]'), ...a);
+    this.generic(clc.blue, 'info', ...a);
+  }
+
+  success(...a) {
+    this.generic(clc.green, 'succ', ...a);
   }
 
   warn(...a) {
-    console.log(this.mkPrefix('[WARN]'), ...a);
+    this.generic(clc.bold.yellow, 'WARN', ...a);
+  }
+
+  error(...a) {
+    this.generic(clc.red.yellow, 'ERR ', ...a);
   }
 
 }
