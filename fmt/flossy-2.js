@@ -416,27 +416,27 @@ const commands = {
 
   // Title
   title(s) {
-    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_main), '</div>');
+    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_main), '</div>');
+    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s), '</div>');
   },
 
   // Italic
   i(s) {
-    return Cats.of('<i>', p_inline(s, p_main), '</i>');
+    return Cats.of('<i>', p_inline(s), '</i>');
   },
 
   // Bold
   b(s) {
-    return Cats.of('<b>', p_inline(s, p_main), '</b>');
+    return Cats.of('<b>', p_inline(s), '</b>');
   },
 
   // Underline
   u(s) {
-    return Cats.of('<u>', p_inline(s, p_main), '</u>');
+    return Cats.of('<u>', p_inline(s), '</u>');
   },
 
   // Code
@@ -446,7 +446,7 @@ const commands = {
     let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
     chompSpace(s);
 
-    let [body, kind] = p_enclosed(s, p_verbatim);
+    let [body, kind] = p_enclosed(s, { verbatim: true });
     body = body.toString();
 
     const highlighted =
@@ -464,7 +464,7 @@ const commands = {
   // Comment (REMark)
   rem(s) {
     chompSpace(s);
-    const [comment, _] = p_enclosed(s, p_verbatim);
+    const [comment, _] = p_enclosed(s, { verbatim: true });
     return '';
   },
 
@@ -482,7 +482,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_main), '</span>');
+    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s), '</span>');
   },
 
   // Annotation definition
@@ -502,7 +502,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_main), '</div>');
+    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s), '</div>');
   },
 
   // Explicit note reference
@@ -522,7 +522,7 @@ const commands = {
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
-    const body = p_inline(sr, p_main);
+    const body = p_inline(sr);
     Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
       // ^ TODO: Technically, this is bugged!
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
@@ -546,7 +546,7 @@ const commands = {
     consume(s, '>');
     chompSpace(s)
 
-    const body = p_inline(s, p_main);
+    const body = p_inline(s);
     return Cats.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
@@ -560,7 +560,7 @@ const commands = {
       chompSpace(s);
     }
 
-    const [body, kind] = p_enclosed(s, p_verbatim);
+    const [body, kind] = p_enclosed(s, { verbatim: true });
 
     if (append) {
       s.katexPrefix.add(body);
@@ -585,7 +585,7 @@ const commands = {
     }
 
     let tex, kind;
-    [tex, kind] = p_enclosed(s, p_verbatim);
+    [tex, kind] = p_enclosed(s, { verbatim: true });
 
     if (append) {
       s.texPrefix.add(tex);
@@ -640,7 +640,7 @@ ${tex}
     // TODO: more reucurrence happening here!
     const doImplicitReferences = s.doImplicitReferences;
     const srec = { ...s.clone(), doImplicitReferences: false };
-    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec, p_main), '</span>');
+    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec), '</span>');
     Object.assign(s, { ...srec, doImplicitReferences });
     return result;
   },
@@ -650,7 +650,7 @@ ${tex}
   x(s) {
     s.env.log.warn(`use of \\x`);
 
-    const [body, kind] = p_enclosed(s, p_verbatim);
+    const [body, kind] = p_enclosed(s, { verbatim: true });
 
     const code =
       kind === 'inline'
@@ -829,17 +829,17 @@ function parseWord(s) {
 
 
 // Parse block or inline
-function p_enclosed(s, parser) {
+function p_enclosed(s, p_main_args) {
   if (s.text[s.i] === ':' || s.text.startsWith('==', s.i)) {
-    const r = p_block(s, parser);
+    const r = p_block(s, p_main_args);
     return [r, 'block'];
   } else {
-    const r = p_inline(s, parser);
+    const r = p_inline(s, p_main_args);
     return [r, 'inline'];
   }
 }
 
-function p_block(s, parser) {
+function p_block(s, p_main_args = {}) {
 
   if (s.text[s.i] === ':') {
     s.i++;
@@ -850,7 +850,7 @@ function p_block(s, parser) {
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
       const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const r = parser(s, { done });
+      const r = p_main(s, { ...p_main_args, done });
       s.i++;  // skip newline
       return r;
 
@@ -865,7 +865,7 @@ function p_block(s, parser) {
         throw mkError(s, "Expected indent after colon");
 
       s.indents.push(nnelIndent);
-      const result = parser(s);
+      const result = p_main(s, { ...p_main_args });
       s.indents.pop();
       return result;
     }
@@ -886,7 +886,7 @@ function p_block(s, parser) {
 
     const srec = { ...s.clone(), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
-    const result = p_main(srec, { done });
+    const result = p_main(srec, { ...p_main_args, done });
     consume(srec, `==/${sentinel}==\n`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
@@ -898,7 +898,7 @@ function p_block(s, parser) {
 
 }
 
-function p_inline(s, parser) {
+function p_inline(s, p_main_args = {}) {
   // \cmd[], cmd{}, etc
 
   const open = s.text[s.i];
@@ -915,7 +915,7 @@ function p_inline(s, parser) {
   s.i++;
 
   const done = s => s.text.startsWith(close, s.i);
-  const r = parser(s, { done })
+  const r = p_main(s, { ...p_main_args, done })
   consume(s, close);
 
   return r;
