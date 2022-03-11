@@ -18,12 +18,12 @@ format=flossy-2
   - External, e.g. \href <https://google.com> [to Google]
 
 - Bulleted lists ...
-  - ... which nest
-  - ... and properly line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap line line line wrap wrap
+  - ... which nest!
 
 - Inline footnotes \aref [click me!]
   \adef:
-    Pretty cool!
+    Pretty cool! \aref [they nest, too]
+    \adef: amazing =)
 
 
 \sec: Math-specific features

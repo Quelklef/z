@@ -29,6 +29,7 @@ function mkNote(floc, source, graph, env) {
   const note = {};
 
   note.source = source;
+  note.source += '\n';  // allows parsers to assume lines end with \n
 
   note.cacheKeys = [floc, source, scriptSrc];
 
@@ -89,7 +90,7 @@ function mkNote(floc, source, graph, env) {
 Quick prelude on parsing
 
 Parsers are expected to have the signature
-  r = parser(...args, s)
+  r = parser(s, ...args)
 
 That is, they take some arguments and the current state s, and perform some
 parsing, mutating the state s, and producing a result r.
@@ -115,6 +116,9 @@ function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml })
     // Index in text
     i: 0,
 
+    // Indentation stack
+    indents: [],
+
     // Set of terms this note defines
     defines: new Set(),
 
@@ -136,15 +140,18 @@ function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml })
     // annotation-related state
     annotNameQueue: [],
 
-    // katex-related state
+    // tex-related state
     katexPrefix: new Cats(),
+    texPrefix: new Cats(),
 
     clone() {
       const c = { ...this };
+      c.indents = [...c.indents];
       c.defines = new Set(c.defines);
       c.references = new Set(c.references);
       c.annotNameQueue = [...c.annotNameQueue];
       c.katexPrefix = c.katexPrefix.clone();
+      c.texPrefix = c.texPrefix.clone();
       return c;
     },
 
@@ -154,8 +161,10 @@ function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml })
   s.i = indexOf(s.text, '\n', s.i) + 1;
   if (s.text[s.i] === '\n') s.i++;
 
+  const html = new Cats();
+
   const done = s => s.i >= s.text.length;
-  const html = Cats.of(p_main(s, done));
+  html.add(p_main(s, { done }));
 
   if (s.note.referencedBy) {
     html.add('<br /><br />');
@@ -177,18 +186,31 @@ function parse({ text, note, graph, env, doImplicitReferences, needOutputHtml })
 
 }
 
-function p_main(s, done) {
+function p_verbatim(s, args) {
+  return p_main(s, { ...args, verbatim: true });
+}
 
-  done = done || (_ => false);
+// Top-level parser
+function p_main(s, args) {
 
-  const parsers = [
-    p_sigils,
-    p_quotes,
-    p_katex,
-    p_indented,
-    p_command,
-    p_implicitReference,
-  ]
+  args ||= {};
+  args.done ||= (_ => false);
+  args.verbatim ||= false;
+
+  const { done, verbatim } = args;
+
+  const parsers = (
+    verbatim
+      ? []
+      : [
+          p_sigils,
+          p_quotes,
+          p_katex,
+          p_indent,
+          p_command,
+          p_implicitReference,
+        ]
+  );
 
   const html = Cats.on(s.text);
 
@@ -196,6 +218,10 @@ function p_main(s, done) {
 
   parsing:
   while (true) {
+
+    const [blockOver, advanceBy] = checkIndent(s);
+    if (blockOver) break parsing;
+    else s.i += advanceBy;
 
     // Try each parser
     for (const parser of parsers) {
@@ -208,7 +234,7 @@ function p_main(s, done) {
     // All parsers tried
     // Break out to caller
     if (done(s))
-      return html.toString();
+      break parsing;
 
     // Out of text but not yet done()
     if (s.i >= s.text.length)
@@ -219,6 +245,41 @@ function p_main(s, done) {
     s.i++;
   }
 
+  return html.toString();  // TODO: no .toString() ?
+
+}
+
+function checkIndent(s) {
+  const isLeftmost = [undefined, '\n'].includes(s.text[s.i - 1]);
+  if (!isLeftmost) return [false, 0];
+
+  const nextNonemptyLine = getNextNonemptyLine(s.text, s.i);
+
+  if (nextNonemptyLine === null)
+    return [true, null];
+
+  const expectedIndent = s.indents[s.indents.length - 1] || 0;
+  const actualIndent = nextNonemptyLine.length - nextNonemptyLine.trimLeft().length;
+
+  if (actualIndent < expectedIndent) {
+    return [true, null];
+  } else {
+    const thisLine = s.text.slice(s.i, indexOf(s.text, '\n', s.i));
+    const thisLineIndent = thisLine.length - thisLine.trimLeft().length;
+    const advanceBy = Math.min(expectedIndent, thisLineIndent);
+    return [false, advanceBy];
+  }
+}
+
+// Returns *without* the newline
+function getNextNonemptyLine(text, i0 = 0) {
+  for (let sol = i0; sol < text.length; sol = indexOf(text, '\n', sol) + 1) {
+    const eol = indexOf(text, '\n', sol);
+    const line = text.slice(sol, eol);
+    if (line.trim() !== '')
+      return line;
+  }
+  return null;
 }
 
 
@@ -226,6 +287,9 @@ function p_main(s, done) {
 function p_sigils(s) {
 
   const mapping = {
+    '---\n': '<hr />',
+    '***\n': '<hr />',
+
     '--': '&mdash;',
 
     // Sanitization
@@ -272,27 +336,36 @@ function p_quotes(s) {
 }
 
 
-// Handle indented blocks and lists
-function p_indented(s) {
-  if (![undefined, '\n'].includes(s.text[s.i - 1])) return '';
+// Lists and indented blocks
+function p_indent(s) {
+  const curIndent = s.indents[s.indents.length - 1] || 0;
+  const isStartOfLine = (
+    [undefined, '\n'].includes(s.text[s.i - curIndent - 1])
+    && s.text.slice(s.i - curIndent - 1, s.i).trim() === ''
+  )
+  if (!isStartOfLine) return '';
 
   // Calculate line column
   let i = s.i;
   while (s.text[i] === ' ') i++;
-  let column = i - s.i;
+  let dIndent = i - s.i;
 
   const bulleted = s.text.startsWith('- ', s.i);
   if (bulleted)
-    column += 2;
+    dIndent += 2;
 
-  // If line empty or not indented, bail
-  if (!bulleted)
-    if (column === 0 || ['\n', undefined].includes(s.text[i]) && !bulleted)
-      return '';
+  // If line not further indented, bail
+  if (dIndent <= 0)
+    return '';
 
-  // Else, parse as indented block
-  const body = indented(p_main, column, bulleted, s);
-  return Cats.of(`<div style="margin-left: ${column}ch; display: ${bulleted ? 'list-item' : 'block'}">`, body, '</div>');
+  const newIndent = curIndent + dIndent;
+  // Parse as indented block
+  s.i += newIndent - curIndent;
+  s.indents.push(newIndent);
+  const body = p_main(s);
+  s.indents.pop();
+
+  return Cats.of(`<div style="margin-left: ${dIndent}ch; display: ${bulleted ? 'list-item' : 'block'}">`, body, '</div>');
 }
 
 
@@ -302,12 +375,12 @@ function p_katex(s) {
   s.i++;
   const sx = s.clone();
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
-  const body = p_verbatim(s, done);
+  const body = p_verbatim(s, { done });
   s.i++;
 
   try {
     const full = s.katexPrefix + '' + body;
-    return renderKaTeX(full, false, s)
+    return renderKaTeX(s, full, false)
   } catch (e) {
     let text = e.toString();
     text = text.split('\n')[0];
@@ -315,59 +388,6 @@ function p_katex(s) {
   }
 }
 
-
-function indented(parser, column, bulleted, s) {
-
-  // Gather indented lines
-  const lines = [];
-  let start = s.i;
-  while (start < s.text.length) {
-    const end = indexOf(s.text, '\n', start);
-    const line = s.text.slice(start, end + 1);
-
-    if (
-      line.slice(0, column).trim() === ''
-        // ^ Accept blank lines and non-blank indented lines
-      || lines.length === 0 && bulleted && line.startsWith('- ')
-        // ^ Or a leading bulleted line
-    ) {
-      lines.push(line);
-      start = end + 1;
-    } else {
-      break;
-    }
-  }
-
-  // Remove trailing whitespace lines
-  while (
-    lines.length > 0
-    && lines[lines.length - 1].trim() === ''
-  )
-    lines.pop(lines.length - 1);
-
-  // Build block of unindented code
-  const block = lines.map(line => {
-    const sl = line.slice(column);
-    if (sl === '') return '\n';
-    return sl;
-  }).join('');
-
-  // Invoke given parser (TODO: this whole deal feels wrong. and it will fuck up error index numbers)
-  const srec = {
-    ...s.clone(),
-    text: block,
-    i: 0,
-  };
-  const done = s => s.i >= s.text.length;
-  const r = parser(srec, done);
-  Object.assign(s, {
-    ...srec,
-    text: s.text,
-    i: s.i + lines.map(line => line.length).reduce((a, b) => a + b, 0),
-  });
-  return r;
-
-}
 
 
 // Execute a backslash command
@@ -396,50 +416,27 @@ const commands = {
 
   // Title
   title(s) {
-    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(p_main, s), '</div>');
+    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_main), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(p_main, s), '</div>');
-  },
-
-  // KaTeX
-  katex(s) {
-    chompSpace(s);
-
-    let append = s.text.startsWith('pre', s.i);
-    if (append) {
-      consume(s, 'pre');
-      chompSpace(s);
-    }
-
-    const [body, kind] = enclosed(p_verbatim, s);
-
-    if (append) {
-      s.katexPrefix.add(body);
-      return '';
-    } else {
-      const displayMode = { block: true, inline: false }[kind];
-      const full = s.katexPrefix + '' + body;
-      const rendered = renderKaTeX(full, displayMode, s);
-      return rendered;
-    }
+    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_main), '</div>');
   },
 
   // Italic
   i(s) {
-    return Cats.of('<i>', p_inline(p_main, s), '</i>');
+    return Cats.of('<i>', p_inline(s, p_main), '</i>');
   },
 
   // Bold
   b(s) {
-    return Cats.of('<b>', p_inline(p_main, s), '</b>');
+    return Cats.of('<b>', p_inline(s, p_main), '</b>');
   },
 
   // Underline
   u(s) {
-    return Cats.of('<u>', p_inline(p_main, s), '</u>');
+    return Cats.of('<u>', p_inline(s, p_main), '</u>');
   },
 
   // Code
@@ -449,7 +446,7 @@ const commands = {
     let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
     chompSpace(s);
 
-    let [body, kind] = enclosed(p_verbatim, s);
+    let [body, kind] = p_enclosed(s, p_verbatim);
     body = body.toString();
 
     const highlighted =
@@ -467,7 +464,7 @@ const commands = {
   // Comment (REMark)
   rem(s) {
     chompSpace(s);
-    const [comment, _] = enclosed(p_verbatim, s);
+    const [comment, _] = p_enclosed(s, p_verbatim);
     return '';
   },
 
@@ -485,7 +482,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(p_main, s), '</span>');
+    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_main), '</span>');
   },
 
   // Annotation definition
@@ -497,6 +494,7 @@ const commands = {
     let name;
     if (!"[{(<:=".includes(s.text[s.i])) {
       name = parseWord(s);
+      chompSpace(s);
     } else {
       if (s.annotNameQueue.length === 0)
         throw mkError(sx, "Unpaired \\adef");
@@ -504,7 +502,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(p_main, s), '</div>');
+    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_main), '</div>');
   },
 
   // Explicit note reference
@@ -524,7 +522,7 @@ const commands = {
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
-    const body = p_inline(p_main, sr);
+    const body = p_inline(sr, p_main);
     Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
       // ^ TODO: Technically, this is bugged!
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
@@ -548,15 +546,53 @@ const commands = {
     consume(s, '>');
     chompSpace(s)
 
-    const body = p_inline(p_main, s);
+    const body = p_inline(s, p_main);
     return Cats.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+  },
+
+  // KaTeX
+  katex(s) {
+    chompSpace(s);
+
+    let append = s.text.startsWith('pre', s.i);
+    if (append) {
+      consume(s, 'pre');
+      chompSpace(s);
+    }
+
+    const [body, kind] = p_enclosed(s, p_verbatim);
+
+    if (append) {
+      s.katexPrefix.add(body);
+      return '';
+    }
+
+    const displayMode = { block: true, inline: false }[kind];
+    const full = s.katexPrefix + '' + body;
+    const rendered = renderKaTeX(s, full, displayMode);
+    return rendered;
   },
 
   // TeX, TikZ
   tikz(s) { return commands.tex(s, true); },
   tex(s, tikz = false) {
+    chompSpace(s);
+
+    let append = s.text.startsWith('pre', s.i);
+    if (append) {
+      consume(s, 'pre');
+      chompSpace(s);
+    }
+
     let tex, kind;
-    [tex, kind] = enclosed(p_verbatim, s);
+    [tex, kind] = p_enclosed(s, p_verbatim);
+
+    if (append) {
+      s.texPrefix.add(tex);
+      return '';
+    }
+
+    tex = s.texPrefix + tex;
 
     if (tikz) {
       tex = String.raw`
@@ -604,7 +640,7 @@ ${tex}
     // TODO: more reucurrence happening here!
     const doImplicitReferences = s.doImplicitReferences;
     const srec = { ...s.clone(), doImplicitReferences: false };
-    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(p_main, srec), '</span>');
+    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec, p_main), '</span>');
     Object.assign(s, { ...srec, doImplicitReferences });
     return result;
   },
@@ -614,7 +650,7 @@ ${tex}
   x(s) {
     s.env.log.warn(`use of \\x`);
 
-    const [body, kind] = enclosed(p_verbatim, s);
+    const [body, kind] = p_enclosed(s, p_verbatim);
 
     const code =
       kind === 'inline'
@@ -624,7 +660,7 @@ ${tex}
       : null;
 
     // Set up eval() environment
-    // TODO: both this codeblock and p_indented do some wack recursion shit that should be reified
+    // TODO: both this codeblock and p_indent do some wack recursion shit that should be reified
     const parse = str => {
       const srec = s.clone();
       srec.text = str;
@@ -792,17 +828,18 @@ function parseWord(s) {
 }
 
 
-function enclosed(parser, s) {
+// Parse block or inline
+function p_enclosed(s, parser) {
   if (s.text[s.i] === ':' || s.text.startsWith('==', s.i)) {
-    const r = p_block(parser, s);
+    const r = p_block(s, parser);
     return [r, 'block'];
   } else {
-    const r = p_inline(parser, s);
+    const r = p_inline(s, parser);
     return [r, 'inline'];
   }
 }
 
-function p_block(parser, s) {
+function p_block(s, parser) {
 
   if (s.text[s.i] === ':') {
     s.i++;
@@ -813,18 +850,24 @@ function p_block(parser, s) {
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
       const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const r = parser(s, done);
+      const r = parser(s, { done });
       s.i++;  // skip newline
       return r;
 
     // \cmd:\n <stuff>
     } else {
       s.i = eol + 1;
-      let i = s.i;
-      while (s.text[i] === ' ') i++;
-      let column = i - s.i;
-      const r = indented(parser, column, false, s);
-      return r;
+
+      const nnel = getNextNonemptyLine(s.text, s.i);
+      const nnelIndent = nnel.length - nnel.trimLeft().length;
+      const currentIndent = s.indents[s.indents.length - 1] || 0;
+      if (nnelIndent <= currentIndent)
+        throw mkError(s, "Expected indent after colon");
+
+      s.indents.push(nnelIndent);
+      const result = parser(s);
+      s.indents.pop();
+      return result;
     }
   }
 
@@ -841,9 +884,11 @@ function p_block(parser, s) {
     chompSpace(s);
     consume(s, '\n');
 
+    const srec = { ...s.clone(), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
-    const result = p_main(s, done);
-    consume(s, `==/${sentinel}==\n`);
+    const result = p_main(srec, { done });
+    consume(srec, `==/${sentinel}==\n`);
+    Object.assign(s, { ...srec, indents: s.indents });
     return result;
   }
 
@@ -853,7 +898,7 @@ function p_block(parser, s) {
 
 }
 
-function p_inline(parser, s) {
+function p_inline(s, parser) {
   // \cmd[], cmd{}, etc
 
   const open = s.text[s.i];
@@ -870,39 +915,11 @@ function p_inline(parser, s) {
   s.i++;
 
   const done = s => s.text.startsWith(close, s.i);
-  const r = parser(s, done)
-  s.i += close.length;
+  const r = parser(s, { done })
+  consume(s, close);
 
   return r;
 }
-
-
-function p_verbatim(s, done) {
-
-  done = done || (_ => false);
-
-  const result = Cats.on(s.text);
-
-  if (done(s)) return '';
-  result.addFromSource(s.i);
-
-  while (true) {
-
-    s.i++;
-
-    if (done(s))
-      return result;
-
-    if (s.i > s.text.length)
-      throw mkError(s, "Unexpected EOF");
-
-    if (s.i !== s.text.length)
-      result.addFromSource(s.i);
-
-  }
-
-}
-
 
 
 function mkError(s, err) {
@@ -1299,7 +1316,7 @@ function renderTeX(tex, s) {
         result = child_process.execSync(cmd).toString();
       } catch (err) {
         s.env.log.info(err.stderr.toString());  // meh
-        throw 'LaTeX render failed; see above!';
+        throw mkError(s, 'LaTeX render failed; see above!');
       }
 
       s.env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
@@ -1309,7 +1326,7 @@ function renderTeX(tex, s) {
   });
 }
 
-function renderKaTeX(tex, displayMode, s) {
+function renderKaTeX(s, tex, displayMode) {
   if (!s.needOutputHtml) return '';
   return s.env.cache.at('katex', [renderKaTeX, tex, displayMode], () => {
     return katex.renderToString(tex, { displayMode });
@@ -1323,4 +1340,8 @@ function ruled(str, pref='>|') {
 
 function sample(str, from = 0, linec = 5) {
   return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
+}
+
+function sample_s(s, linec = 4) {
+  return sample(s.text, s.i, linec);
 }
