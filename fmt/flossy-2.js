@@ -209,6 +209,7 @@ function p_main(s, args) {
           p_indent,
           p_command,
           p_implicitReference,
+          p_escapes,
         ]
   );
 
@@ -291,8 +292,22 @@ function p_sigils(s) {
     '***\n': '<hr />',
 
     '--': '&mdash;',
+  };
 
-    // Sanitization
+  for (const [key, val] of Object.entries(mapping)) {
+    if (s.text.startsWith(key, s.i)) {
+      s.i += key.length;
+      return val;
+    }
+  }
+
+  return '';
+
+}
+
+
+function p_escapes(s) {
+  const mapping = {
     '<': '&lt;',
     '>': '&gt;',
     '&': '&amp;',
@@ -306,7 +321,6 @@ function p_sigils(s) {
   }
 
   return '';
-
 }
 
 
@@ -365,7 +379,14 @@ function p_indent(s) {
   const body = p_main(s);
   s.indents.pop();
 
-  return Cats.of(`<div style="margin-left: ${dIndent}ch; display: ${bulleted ? 'list-item' : 'block'}">`, body, '</div>');
+  return Cats.of(
+    '<div style="',
+    `margin-left: ${dIndent}ch;`,
+    `display: ${bulleted ? 'list-item' : 'block'}`,
+    '">',
+    body,
+    '</div>'
+  );
 }
 
 
