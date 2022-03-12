@@ -783,12 +783,12 @@ const commands = {
 
   // Title
   title(s) {
-    return Rep_Seq.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_toplevel_markup), '</div>');
+    return Rep_Seq.of('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Rep_Seq.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_toplevel_markup), '</div>');
+    return Rep_Seq.of('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Italic
@@ -1355,6 +1355,14 @@ function template(html) {
 
 <style>
 
+:root {
+  --color-static-rgb: 0, 0, 0;
+  --color-static: rgb(var(--color-static-rgb));
+
+  --color-dynamic-rgb: 204, 0, 102;
+  --color-dynamic: rgb(var(--color-dynamic-rgb));
+}
+
 body {
   margin: 0;
   font-size: 0;
@@ -1367,10 +1375,23 @@ main {
   line-height: 1.5em;
 }
 
+.title {
+  font-weight: bold;
+  color: var(--color-static);
+  font-size: 18px;
+  margin-bottom: 1em;
+}
+
+.section-header {
+  font-weight: bold;
+  color: var(--color-static);
+  border-bottom: 1px dotted var(--color-static);
+}
+
 code {
-  border: 1px solid rgb(200, 200, 200);
+  border: 1px solid rgba(var(--color-static-rgb), .25);
   background-color: rgb(245, 245, 245);
-  border-radius: 2px;
+  border-radius: 3px;
 }
 code.inline {
   display: inline;
@@ -1390,17 +1411,21 @@ hr {
   margin: 0;
 }
 
+a {
+  color: var(--color-dynamic);
+}
+
 /* Styling for references to other notes */
 .reference {
-  background-color: hsla(330, 75%, 85%, .25);
+  background-color: rgba(var(--color-dynamic-rgb), .15);
   text-decoration: none;
 }
 .reference:not(.invalid):hover {
-  background-color: hsla(330, 75%, 70%, .50);
+  background-color: rgba(var(--color-dynamic-rgb), .25);
 }
 .reference, .reference:visited { color: initial; }
 .reference.explicit {
-  border-bottom: 1px solid #C06;
+  border-bottom: 1px solid var(--color-dynamic);
 }
 .reference.invalid {
   color: red;
@@ -1409,9 +1434,13 @@ hr {
 
 </style>
 
-`, annotationsImplementation,
+`,
 
-jargonImplementation, `
+annotationsImplementation,
+
+jargonImplementation,
+
+`
 
 <main>`, html, `</main>
 
@@ -1434,8 +1463,18 @@ const annotationsImplementation = String.raw`
 .annotation-reference:after,
 .annotation-reference
 {
-  color: #C06;
+  color: rgba(var(--color-dynamic-rgb), .65);
   cursor: pointer;
+}
+
+.annotation-reference:hover:before,
+.annotation-reference:hover:after,
+.annotation-reference:hover,
+.annotation-reference.active:before,
+.annotation-reference.active:after,
+.annotation-reference.active
+{
+  color: var(--color-dynamic);
 }
 
 .annotation-reference.active:before,
@@ -1448,7 +1487,7 @@ const annotationsImplementation = String.raw`
 .annotation-definition {
   background: rgba(250, 250, 250);
   box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15);
-  border: 1px solid #C06;
+  border: 1px solid rgba(var(--color-static-rgb), .5);
   border-radius: 3px;
 
   padding: .5em 1em;
@@ -1543,7 +1582,7 @@ const jargonImplementation = String.raw`
 
   background: rgba(250, 250, 250);
   box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.35);
-  border: 1px solid #C06;
+  border: 1px solid var(--color-static);
   border-radius: 3px;
 
   text-align: center;
