@@ -1267,7 +1267,7 @@ class JargonMatcherJargonMatcher {
   constructor(jargs, exclude) {
     const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
     this.isSignif = c => signifChars.has(c);
-    this.normalize = s => [...s.toLowerCase()].filter(c => this.isSignif(c) || c === '$').join('');
+    this.normalize = s => [...s.toLowerCase()].filter(c => this.isSignif(c) || '$])>'.includes(c)).join('');
       // ^ n.b. we assume that length(norm(s)) <= length(s)
 
     this.jargs = (
