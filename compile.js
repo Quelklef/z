@@ -163,8 +163,9 @@ function withTemplate(mainHtml) {
 
 <html>
 <head>
-  <meta charset="utf-8">
   <title>ζ</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
   <script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.min.js"></script>
 <style>
 

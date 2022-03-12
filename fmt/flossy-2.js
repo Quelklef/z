@@ -315,7 +315,7 @@ ${tex}
     });
 
     if (this.isBlock)
-      html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
+      html = Cats.of('<div class="tikz">', html, '</div>');
 
     return html;
   }
@@ -1347,6 +1347,7 @@ function template(html) {
 <!DOCTYPE HTML>
 <html>
   <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
@@ -1409,6 +1410,15 @@ hr {
 
 .katex-display {
   margin: 0;
+}
+
+.tikz {
+  text-align: center;
+  display: block;
+  max-width: 100%;
+}
+.tikz > svg {
+  max-width: 100%;
 }
 
 a {
