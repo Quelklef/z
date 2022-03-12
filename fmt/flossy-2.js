@@ -158,7 +158,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
   const html = new Cats();
 
   const done = s => s.i >= s.text.length;
-  html.add(p_main(s, { done }));
+  html.add(p_toplevel_markup(s, done));
 
   if (s.note.referencedBy) {
     html.add('<br /><br />');
@@ -180,19 +180,22 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
 }
 
-function p_verbatim(s, args) {
-  return p_main(s, { ...args, verbatim: true });
+
+// Top-level parser: verbatim
+// Produces string
+function p_toplevel_verbatim(s, done = (_ => false)) {
+  return p_toplevel_impl(s, { done, verbatim: true });
 }
 
-// Top-level parser
-function p_main(s, args) {
+// Top-level parser: markup
+// Produces a rep
+function p_toplevel_markup(s, done = (_ => false)) {
+  return p_toplevel_impl(s, { done, verbatim: false });
+}
 
-  args ||= {};
-  args.done ||= (_ => false);
-  args.verbatim ||= false;
-
-  const { done, verbatim } = args;
-
+// Combination parser for both top-level parsers because
+// they share indentation-related logic
+function p_toplevel_impl(s, { done, verbatim }) {
   const parsers = (
     verbatim
       ? []
@@ -207,7 +210,7 @@ function p_main(s, args) {
         ]
   );
 
-  const html = Cats.on(s.text);
+  const result = Cats.on(s.text);
 
   if (done(s)) return '';
 
@@ -218,10 +221,12 @@ function p_main(s, args) {
     if (blockOver) break parsing;
     else s.i += advanceBy;
 
+    const samp = sample_s(s);
+
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
-      html.add(parser(s));
+      result.add(parser(s));
       if (s.i !== i0)
         continue parsing;
     }
@@ -236,12 +241,11 @@ function p_main(s, args) {
       throw mkError(s, "Unexpected EOF!");
 
     // Default case: advance by one character
-    html.addFromSource(s.i);
+    result.addFromSource(s.i);
     s.i++;
   }
 
-  return html;
-
+  return result;
 }
 
 function checkIndent(s) {
@@ -373,7 +377,7 @@ function p_indent(s) {
   // Parse as indented block
   s.i += newIndent - curIndent;
   s.indents.push(newIndent);
-  const body = p_main(s);
+  const body = p_toplevel_markup(s);
   s.indents.pop();
 
   return Cats.of(
@@ -393,7 +397,7 @@ function p_katex(s) {
   s.i++;
   const sx = s.clone();
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
-  const body = p_verbatim(s, { done });
+  const body = p_toplevel_verbatim(s, done);
   s.i++;
 
   try {
@@ -434,27 +438,27 @@ const commands = {
 
   // Title
   title(s) {
-    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s), '</div>');
+    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s), '</div>');
+    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Italic
   i(s) {
-    return Cats.of('<i>', p_inline(s), '</i>');
+    return Cats.of('<i>', p_inline(s, p_toplevel_markup), '</i>');
   },
 
   // Bold
   b(s) {
-    return Cats.of('<b>', p_inline(s), '</b>');
+    return Cats.of('<b>', p_inline(s, p_toplevel_markup), '</b>');
   },
 
   // Underline
   u(s) {
-    return Cats.of('<u>', p_inline(s), '</u>');
+    return Cats.of('<u>', p_inline(s, p_toplevel_markup), '</u>');
   },
 
   // Code
@@ -464,7 +468,7 @@ const commands = {
     let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
     chompSpace(s);
 
-    let [body, kind] = p_enclosed(s, { verbatim: true });
+    let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
     body = body.toString();
 
     const highlighted =
@@ -482,7 +486,7 @@ const commands = {
   // Comment (REMark)
   rem(s) {
     chompSpace(s);
-    const [comment, _] = p_enclosed(s, { verbatim: true });
+    const [comment, _] = p_enclosed(s, p_toplevel_verbatim);
     return '';
   },
 
@@ -500,7 +504,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s), '</span>');
+    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
 
   // Annotation definition
@@ -520,7 +524,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s), '</div>');
+    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Explicit note reference
@@ -540,7 +544,7 @@ const commands = {
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
-    const body = p_inline(sr);
+    const body = p_inline(sr, p_toplevel_markup);
     Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
       // ^ TODO: Technically, this is bugged!
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
@@ -564,7 +568,7 @@ const commands = {
     consume(s, '>');
     chompSpace(s)
 
-    const body = p_inline(s);
+    const body = p_inline(s, p_toplevel_markup);
     return Cats.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
@@ -578,7 +582,7 @@ const commands = {
       chompSpace(s);
     }
 
-    const [body, kind] = p_enclosed(s, { verbatim: true });
+    const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
 
     if (append) {
       s.katexPrefix.add(body);
@@ -603,7 +607,7 @@ const commands = {
     }
 
     let tex, kind;
-    [tex, kind] = p_enclosed(s, { verbatim: true });
+    [tex, kind] = p_enclosed(s, p_toplevel_verbatim);
 
     if (append) {
       s.texPrefix.add(tex);
@@ -658,7 +662,7 @@ ${tex}
     // TODO: more reucurrence happening here!
     const doImplicitReferences = s.doImplicitReferences;
     const srec = { ...s.clone(), doImplicitReferences: false };
-    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec), '</span>');
+    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec, p_toplevel_markup), '</span>');
     Object.assign(s, { ...srec, doImplicitReferences });
     return result;
   },
@@ -668,7 +672,7 @@ ${tex}
   x(s) {
     s.env.log.warn(`use of \\x`);
 
-    const [body, kind] = p_enclosed(s, { verbatim: true });
+    const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
 
     const code =
       kind === 'inline'
@@ -683,7 +687,7 @@ ${tex}
       const srec = s.clone();
       srec.text = str;
       srec.i = 0;
-      const result = p_main(srec, s => s.i >= s.text.length);
+      const result = p_toplevel_markup(srec, s => s.i >= s.text.length);
       Object.assign(s, {
           ...srec,
           text: s.text,
@@ -847,17 +851,17 @@ function parseWord(s) {
 
 
 // Parse block or inline
-function p_enclosed(s, p_main_args) {
+function p_enclosed(s, p_toplevel) {
   if (s.text[s.i] === ':' || s.text.startsWith('==', s.i)) {
-    const r = p_block(s, p_main_args);
+    const r = p_block(s, p_toplevel);
     return [r, 'block'];
   } else {
-    const r = p_inline(s, p_main_args);
+    const r = p_inline(s, p_toplevel);
     return [r, 'inline'];
   }
 }
 
-function p_block(s, p_main_args = {}) {
+function p_block(s, p_toplevel) {
 
   if (s.text[s.i] === ':') {
     s.i++;
@@ -868,7 +872,7 @@ function p_block(s, p_main_args = {}) {
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
       const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const r = p_main(s, { ...p_main_args, done });
+      const r = p_toplevel(s, done);
       s.i++;  // skip newline
       return r;
 
@@ -883,7 +887,7 @@ function p_block(s, p_main_args = {}) {
         throw mkError(s, "Expected indent after colon");
 
       s.indents.push(nnelIndent);
-      const result = p_main(s, { ...p_main_args });
+      const result = p_toplevel(s);
       s.indents.pop();
       return result;
     }
@@ -904,7 +908,7 @@ function p_block(s, p_main_args = {}) {
 
     const srec = { ...s.clone(), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
-    const result = p_main(srec, { ...p_main_args, done });
+    const result = p_toplevel(srec, done);
     consume(srec, `==/${sentinel}==\n`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
@@ -916,7 +920,7 @@ function p_block(s, p_main_args = {}) {
 
 }
 
-function p_inline(s, p_main_args = {}) {
+function p_inline(s, p_toplevel) {
   // \cmd[], cmd{}, etc
 
   const open = s.text[s.i];
@@ -933,7 +937,7 @@ function p_inline(s, p_main_args = {}) {
   s.i++;
 
   const done = s => s.text.startsWith(close, s.i);
-  const r = p_main(s, { ...p_main_args, done })
+  const r = p_toplevel(s, done)
   consume(s, close);
 
   return r;
