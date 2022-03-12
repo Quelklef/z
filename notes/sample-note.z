@@ -13,7 +13,7 @@ format=flossy-2
     }
 
 - Linking
-  - Defining \jarg <N:zeta (jargon|term(|inology))> [jargon], which turn into implicit references to other notes
+  - Defining \jarg <zeta (jargon|term(|s))> [jargon], which turn into implicit references to other notes
   - \ref sample-note-2 [Explicit references to other notes]
   - External, e.g. \href <https://google.com> [to Google]
 

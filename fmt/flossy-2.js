@@ -1,6 +1,7 @@
 const plib = require('path');
 const child_process = require('child_process');
 
+const clc = require('cli-color');
 const hljs = require('highlight.js');
 const libKatex = require('katex');
 
@@ -104,8 +105,8 @@ function mkNote(floc, source, graph, env) {
 
 class Rep {
 
-  // toHtml()
-  // children()
+  // .toHtml : () -> string | Cats
+  // .children : () -> Iterable<Rep>
 
   *tree() {
     for (const elem of this.children()) {
@@ -596,7 +597,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
 
     // Out of text but not yet done()
     if (s.i >= s.text.length)
-      throw mkError(s, "Unexpected EOF!");
+      throw mkError(s.text, s.i, "Unexpected EOF!");
 
     // Default case: advance by one character
     result.addFromSource(s.i);
@@ -768,11 +769,11 @@ function p_command(s) {
   const name = parseWord(s).toString();
 
   if (name === '')
-    throw mkError(sx, "Expected command name");
+    throw mkError(sx.text, sx.i, "Expected command name");
 
   const command = commands[name];
   if (!command)
-    throw mkError(sx, `No command '${name}'!`);
+    throw mkError(sx.text, sx.i, `No command '${name}'!`);
 
   return command(s);
 }
@@ -851,7 +852,7 @@ const commands = {
       chompSpace(s);
     } else {
       if (s.annotNameQueue.length === 0)
-        throw mkError(sx, "Unpaired \\adef");
+        throw mkError(sx.text, sx.i, "Unpaired \\adef");
       name = s.annotNameQueue[0];
       s.annotNameQueue.splice(0, 1);
     }
@@ -865,8 +866,8 @@ const commands = {
 
     chompSpace(s);
 
-    const toNoteId = parseWord(s).toString();
-    if (!toNoteId) throw mkError(sx, "Missing note ID");
+    const toNoteId = optionally(parseWord)(s);
+    if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
     chompSpace(s);
 
     const sr = s.clone();
@@ -1022,7 +1023,7 @@ function p_implicitReference(s) {
 function parseJargon(s) {
 
   if (!s.text.startsWith('<', s.i))
-    throw mkError(s, "Expected '<'");
+    throw mkError(s.text, s.i, "Expected '<'");
   s.i++;
 
   const parts = [['']];
@@ -1071,7 +1072,7 @@ function parseJargonAux(s) {
       } else if (s.text.startsWith('|', s.i)) {
         s.i++;
       } else {
-        throw mkError(s, "Expected pipe");
+        throw mkError(s.text, s.i, "Expected pipe");
       }
     }
     return parseJargonAux(s).flatMap(suff => choices.flat().map(pre => pre + suff));
@@ -1122,21 +1123,31 @@ function chompSpace(s) {
 
 function consume(s, str) {
   if (!s.text.startsWith(str, s.i))
-    throw mkError(s, `Expected '${str}'`);
+    throw mkError(s.text, s.i, `Expected '${str}'`);
   s.i += str.length;
 }
 
 function parseWord(s) {
+  const i0 = s.i;
   let word = Cats.on(s.text);
   while (/[\w-]/.test(s.text[s.i])) {
     word.addFromSource(s.i);
     s.i++;
   }
   word = word.toString();
-  if (!word) {
-    throw mkError(s, "Expected word");
-  }
+  if (!word)
+    throw mkError(s.text, i0, "Expected word");
   return word;
+}
+
+function optionally(parser) {
+  return s => {
+    try {
+      return parser(s);
+    } catch (e) {
+      return null;
+    }
+  }
 }
 
 
@@ -1152,6 +1163,8 @@ function p_enclosed(s, p_toplevel) {
 }
 
 function p_block(s, p_toplevel) {
+
+  const i0 = s.i;
 
   if (s.text[s.i] === ':') {
     s.i++;
@@ -1174,7 +1187,7 @@ function p_block(s, p_toplevel) {
       const nnelIndent = nnel.length - nnel.trimLeft().length;
       const currentIndent = s.indents[s.indents.length - 1] || 0;
       if (nnelIndent <= currentIndent)
-        throw mkError(s, "Expected indent after colon");
+        throw mkError(s.text, s.i, "Expected indent after colon");
 
       s.indents.push(nnelIndent);
       const result = p_toplevel(s);
@@ -1205,7 +1218,7 @@ function p_block(s, p_toplevel) {
   }
 
   else {
-    throw mkError(s, 'Expected colon or double-equals');
+    throw mkError(s.text, s.i, 'Expected colon or double-equals');
   }
 
 }
@@ -1234,44 +1247,94 @@ function p_inline(s, p_toplevel) {
 }
 
 
-function mkError(s, err) {
+// mkError(text, idx, err)
+// mkError(text, [i0, iF], err)  --  range inclusive
+function mkError(text, loc, err) {
 
   const linesAround = 2;
-  let i0 = s.i, iF = s.i;
-  for (let lines = 0; i0 >= 0            && lines <= linesAround; i0--) lines += s.text[i0 - 1] === '\n';
-  for (let lines = 0; iF < s.text.length && lines <= linesAround; iF++) lines += s.text[iF + 1] === '\n';
-  const block = s.text.slice(i0 + 1, iF);
+  const wrapWidth = 85;
+  const textLines = text.split('\n').map(ln => ln + '\n');
+  const textLineC = textLines.length - 1;
 
-  let lineno = s.text.slice(0, i0 + 1).split('\n').length + 1;
+  let y0, x0, yf, xf;
+  {
+    const range = typeof loc === 'number' ? [loc, loc] : loc;
+    const [i0, iF] = range;
+    [y0, x0] = toCoords(i0);
+    [yf, xf] = toCoords(iF);
+    yf++; xf++;  // end-exclusive ranges
+  }
 
-  const lines = block.split('\n');
-  const linenoStrLen = (lineno + lines.length + '').length;
+  const y0A = Math.max(y0 - linesAround, 0);
+  const yfA = Math.min(yf + linesAround, textLineC);
 
-  const msg = new Cats();
-  msg.add(' ─', strRep('─', linenoStrLen), '─┬─╴')
-  msg.add('  Error! ', err, '\n');
-  lines.forEach((line, lidx) => {
-    const start = i0 + 1 + lines.slice(0, lidx).map(ln => (ln + '\n').length).reduce((a, b) => a + b, 0);
-    const end = start + line.length;
-    const isTheLine = start <= s.i && s.i <= end;
-    const marker = isTheLine ? '▶' : ' ';
+  const lineNumberingWidth = ('' + yfA).length;
 
-    const linenoStr = (lineno + '').padStart(linenoStrLen, ' ');
+  const result = new Cats();
+  result.add('\n')
+  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┬─────\n');
+  for (let y = y0A; y <= yfA; y++) {
+    const line = textLines[y];
+    const lineNumber = clc.green((y + 1 + '').padStart(lineNumberingWidth));
+    const lineNumberBlank = strRep(' ', lineNumberingWidth);
+    const sigil = y0 <= y && y < yf ? clc.yellow('▶ ') : '  ';
 
-    msg.add(' ' + marker + ' ' + linenoStr + '│ ' + line + '\n');
-    if (isTheLine) {
-      const column = s.i % start;
-      msg.add(strRep(' ', 1 + '▶'.length + 1 + linenoStrLen), '│ ', strRep(' ', column), '▲', '\n');
+    // Highlight range for this line
+    let hlI0, hlIF;
+    if (y0 <= y && y < yf) {
+      hlI0 = y === y0 ? x0 : 0;
+      hlIF = y === yf - 1 ? xf : wrapWidth;
+    } else {
+      hlI0 = line.length;
+      hlIF = line.length;
     }
-    lineno++;
-  });
-  msg.add(' ─', strRep('─', linenoStrLen), '─┴─╴')
 
-  return Error('\n' + msg.toString());
+    const noNewline = line.slice(0, line.length - 1);
+    const wrapped = wrapText(noNewline);
+    wrapText(noNewline).forEach((wrp, wrpI) => {
+      const wrpI0 = wrpI * wrapWidth;
+      const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
+      wrp = wrp.slice(0, wrpHlI0) + clc.yellow.underline(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
 
+      const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
+      result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
+    });
+  }
+  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┼─────\n');
+  for (const wrp of wrapText('Error: ' + err))
+    result.add('       │ ' + clc.bold.red(wrp));
+  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
+
+  return Error('\n' + result.toString());
+
+  function toCoords(idx) {
+    let sol = 0, y = 0;
+    while (true) {
+      const eol = indexOf(text, '\n', sol);
+      if (eol >= idx) {
+        const x = idx - sol;
+        return [y, x];
+      }
+      y++;
+      sol = eol + 1;
+    }
+  }
 
   function strRep(s, n) {
-    let r = ''; while (n--) r += s; return r;
+    let result = '';
+    for (let i = 0; i < n; i++)
+      result += s;
+    return result;
+  }
+
+  function wrapText(s) {
+    const result = [];
+    for (const ln of s.split('\n'))
+      for (let i = 0; i * wrapWidth < ln.length; i++)
+        result.push(ln.slice(i * wrapWidth, (i + 1) * wrapWidth) + '\n');
+    if (result.length === 0)
+      result.push('\n');
+    return result;
   }
 
 }
