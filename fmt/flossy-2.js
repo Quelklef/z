@@ -2,7 +2,7 @@ const plib = require('path');
 const child_process = require('child_process');
 
 const hljs = require('highlight.js');
-const katex = require('katex');
+const libKatex = require('katex');
 
 const { quire } = require('../quire.js');
 const { lazyAss, Cats, withTempDir } = quire('../util.js');
@@ -40,7 +40,7 @@ function mkNote(floc, source, graph, env) {
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
   lazyAss(note[t], 'phase1', () => {
-    env.parent.log.info('phase-1 parsing', note.id);
+    env.parent.log.info('parsing for definitions', note.id);
     return parse({
       text: source,
       note, graph, env,
@@ -49,11 +49,20 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'defines', () => {
-    return note[t].phase1.defines;
+    const rep = note[t].phase1;
+    const defines = new Set();
+    rep.traverse(node => {
+      if (node instanceof Rep_Jargon) {
+        for (const form of node.forms) {
+          defines.add(form);
+        }
+      }
+    });
+    return defines;
   });
 
   lazyAss(note[t], 'phase2', () => {
-    env.parent.log.info('phase-2 parsing', note.id);
+    env.parent.log.info('parsing again!', note.id);
     return parse({
       text: source,
       note, graph, env,
@@ -62,24 +71,389 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'references', () => {
-    return note[t].phase2.references;
-  });
-
-  lazyAss(note[t], 'phase3', () => {
-    env.parent.log.info('phase-3 parsing', note.id);
-    return parse({
-      text: source,
-      note, graph, env,
-      doImplicitReferences: true,
+    const rep = note[t].phase2;
+    const references = new Set();
+    rep.traverse(node => {
+      if (node instanceof Rep_Implicit) {
+        references.add(node.toNote.id);
+      } else if (node instanceof Rep_Explicit) {
+        if (!!node.toNote)
+          references.add(node.toNote.id);
+      }
     });
+    return references;
   });
 
   lazyAss(note, 'html', () => {
-    return note[t].phase3.html.toString();
+    const rep = note[t].phase2;
+
+    const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
+    rep.traverse(node => {
+      if (node instanceof Rep_ReferencedBy)
+        node.setReferencedBy(referencedBy);
+    });
+
+    return rep.toHtml(env);
   });
 
   return note;
 }
+
+
+
+
+class Rep {
+
+  // toHtml()
+  // children()
+
+  *tree() {
+    for (const elem of this.children()) {
+      if (typeof elem === 'string' || elem instanceof Cats) {
+        yield elem;
+      } else {
+        yield elem;
+        yield* elem.tree();
+      }
+    }
+  }
+
+  traverse(func) {
+    for (const node of this.tree()) {
+      func(node);
+    }
+  }
+
+}
+
+
+class Rep_Seq extends Rep {
+
+  constructor(...parts) {
+    super();
+
+    this.parts = parts;
+
+    this.source = null;
+    this.pending = null;
+  }
+
+  _resolve() {
+    if (this.pending) {
+      const [i, j] = this.pending;
+      this.parts.push(this.source.slice(i, j));
+      this.pending = null;
+    }
+  }
+
+  static on(source) {
+    const seq = new Rep_Seq();
+    seq.source = source;
+    return seq;
+  }
+
+  static of(...parts) {
+    return new Rep_Seq(...parts);
+  }
+
+  add(part) {
+    this._resolve();
+    this.parts.push(part);
+  }
+
+  addFromSource(i) {
+    if (this.pending && this.pending[1] === i) {
+      this.pending[1]++;
+    } else {
+      this._resolve();
+      this.pending = [i, i + 1];
+    }
+  }
+
+  // == //
+
+  toHtml(env) {
+    this._resolve();
+    const html = new Cats();
+    for (const part of this.parts) {
+      if (typeof part === 'string') {
+        html.add(part);
+      } else if (part instanceof Cats) {
+        html.add(part.toString());
+      } else {
+        html.add(part.toHtml(env));
+      }
+    }
+    return html.toString();
+  }
+
+  children() {
+    this._resolve();
+    return this.parts;
+  }
+
+}
+
+
+class Rep_Indented extends Rep {
+
+  constructor({ indent, bulleted, body }) {
+    super();
+    this.indent = indent;
+    this.bulleted = bulleted;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    return Cats.of(
+      '<div style="',
+      `margin-left: ${this.indent}ch;`,
+      'display: ' + (this.bulleted ? 'list-item' : 'block'),
+      '">',
+      this.body.toHtml(env),
+      '</div>',
+    );
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+class Rep_Katex extends Rep {
+
+  constructor({ katex, displayMode }) {
+    super();
+    this.katex = katex;
+    this.displayMode = displayMode;
+  }
+
+  toHtml(env) {
+    return env.cache.at('katex', [this.katex, this.displayMode], () => {
+      try {
+        return libKatex.renderToString(this.katex, { displayMode: this.displayMode });
+      } catch (e) {
+        let text = e.toString();
+        text = text.split('\n')[0];
+        throw mkError(sx, text);
+      }
+    });
+  }
+
+  children() {
+    return [];
+  }
+
+}
+
+
+class Rep_Tex extends Rep {
+
+  constructor({ tex, isTikz, isBlock }) {
+    super();
+    this.tex = tex;
+    this.isTikz = isTikz;
+    this.isBlock = isBlock;
+  }
+
+  toHtml(env) {
+    let tex = this.tex;
+    if (this.isTikz) {
+      tex = String.raw`
+\begin{tikzpicture}
+${tex}
+\end{tikzpicture}
+`;
+    }
+
+    tex = String.raw`
+\documentclass{standalone}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{tikz}
+\usepackage{lmodern}
+
+\usepackage[T1]{fontenc}
+
+\begin{document}
+
+${tex}
+
+\end{document}
+`;
+
+    let html = env.cache.at('tex', [tex], () => {
+      return fss.withTempDir(tmp => {
+
+        env.log.info(`Rendering LaTeX [${tex.length}]`);
+
+        fss.write(plib.resolve(tmp, 'it.tex'), tex);
+
+        const cmd = String.raw`
+          cd ${tmp} \
+          && latex it.tex 1>&2 \
+          && dvisvgm it.dvi \
+          && { cat it-1.svg | tail -n+3; }
+        `;
+
+        let result;
+        try {
+          result = child_process.execSync(cmd).toString();
+        } catch (err) {
+          env.log.info(err.stderr.toString());  // meh
+          throw 'LaTeX render failed; see above!';  // TODO
+        }
+
+        env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
+        return result;
+
+      });
+    });
+
+    if (this.isBlock)
+      html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
+
+    return html;
+  }
+
+  children() {
+    return [];
+  }
+
+}
+
+
+class Rep_Code extends Rep {
+
+  constructor({ language, body, isBlock }) {
+    super();
+    this.language = language;
+    this.body = body;
+    this.isBlock = isBlock;
+  }
+
+  toHtml() {
+    const highlighted =
+      this.language !== null
+          ? hljs.highlight(this.body, { language: this.language })
+      : this.language === null && !this.isBlock
+          ? hljs.highlight(this.body, { language: 'plaintext' })
+      : this.language === null && this.isBlock
+          ? hljs.highlightAuto(this.body)
+      : impossible();
+
+    return Cats.of(`<code class="${this.isBlock ? 'block' : 'inline'}">`, highlighted.value, '</code>');
+  }
+
+  children() {
+    return [];
+  }
+
+}
+
+
+class Rep_Jargon extends Rep {
+
+  constructor({ forms, body }) {
+    super();
+    this.forms = forms;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    return Cats.of(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+class Rep_Implicit extends Rep {
+
+  constructor({ fromJargon, toNote, body }) {
+    super();
+    this.fromJargon = fromJargon;
+    this.toNote = toNote;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    if (!this.toNote) {
+      console.warn(`Bad jargon '${jarg}'!`);
+    }
+    const href = this.toNote?.href ?? '#';
+    return Cats.of(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+class Rep_Explicit extends Rep {
+
+  constructor({ toNoteId, toNote, body }) {
+    super();
+    this.toNoteId = toNoteId,
+    this.toNote = toNote;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    if (!this.toNote) env.log.warn(`Reference to nonexistent note '${this.toNoteId}'`);
+    if (this.toNote)
+      return Cats.of(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(), '</a>');
+    else
+      return Cats.of(`<a class="reference explicit invalid">`, this.body.toHtml(), '</a>');
+  }
+
+  children() {
+    return [this.body];
+  }
+}
+
+
+// Hacky but allows us to do rendering in 2 passes instead of 3
+class Rep_ReferencedBy extends Rep {
+
+  constructor() {
+    super();
+    this.referencedBy = null;
+  }
+
+  setReferencedBy(refBy) {
+    this.referencedBy = refBy;
+  }
+
+  toHtml() {
+    if (!this.referencedBy) return '';
+    const html = new Cats();
+    html.add('<br /><br />');
+    html.add('<hr />');
+    html.add('<p>Referenced by:</p>');
+    html.add('<ul>');
+    for (let refBy of this.referencedBy) {
+      html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
+    }
+    html.add('</ul>');
+    return html;
+  }
+
+  children() {
+    return [];
+  }
+
+}
+
+
 
 
 /*
@@ -116,12 +490,6 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
     // Indentation stack
     indents: [],
 
-    // Set of terms this note defines
-    defines: new Set(),
-
-    // Set of notes this note references, as their IDs
-    references: new Set(),
-
     doImplicitReferences,
     jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
 
@@ -138,11 +506,12 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
     katexPrefix: new Cats(),
     texPrefix: new Cats(),
 
+    // TODO: should the gensym/prefix/annotation/etc interpreting be moved
+    //       into the semrep?
+
     clone() {
       const c = { ...this };
       c.indents = [...c.indents];
-      c.defines = new Set(c.defines);
-      c.references = new Set(c.references);
       c.annotNameQueue = [...c.annotNameQueue];
       c.katexPrefix = c.katexPrefix.clone();
       c.texPrefix = c.texPrefix.clone();
@@ -155,28 +524,14 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
   s.i = indexOf(s.text, '\n', s.i) + 1;
   if (s.text[s.i] === '\n') s.i++;
 
-  const html = new Cats();
+  const rep = new Rep_Seq();
 
   const done = s => s.i >= s.text.length;
-  html.add(p_toplevel_markup(s, done));
+  rep.add(p_toplevel_markup(s, done));
 
-  if (s.note.referencedBy) {
-    html.add('<br /><br />');
-    html.add('<hr />');
-    html.add('<p>Referenced by:</p>');
-    html.add('<ul>');
-    for (let refBy of note.referencedBy) {
-      refBy = graph.notesById[refBy];
-      html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
-    }
-    html.add('</ul>');
-  }
+  rep.add(new Rep_ReferencedBy());
 
-  return {
-    defines: s.defines,
-    references: s.references,
-    html: withHtmlTemplate(html.toString()),
-  };
+  return template(rep);
 
 }
 
@@ -184,11 +539,14 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 // Top-level parser: verbatim
 // Produces string
 function p_toplevel_verbatim(s, done = (_ => false)) {
-  return p_toplevel_impl(s, { done, verbatim: true });
+  return (
+    p_toplevel_impl(s, { done, verbatim: true })
+    .toHtml()  // TODO: naughty
+  );
 }
 
 // Top-level parser: markup
-// Produces a rep
+// Produces a seq rep
 function p_toplevel_markup(s, done = (_ => false)) {
   return p_toplevel_impl(s, { done, verbatim: false });
 }
@@ -210,9 +568,9 @@ function p_toplevel_impl(s, { done, verbatim }) {
         ]
   );
 
-  const result = Cats.on(s.text);
+  const result = Rep_Seq.on(s.text);
 
-  if (done(s)) return '';
+  if (done(s)) return result;
 
   parsing:
   while (true) {
@@ -380,14 +738,7 @@ function p_indent(s) {
   const body = p_toplevel_markup(s);
   s.indents.pop();
 
-  return Cats.of(
-    '<div style="',
-    `margin-left: ${dIndent}ch;`,
-    `display: ${bulleted ? 'list-item' : 'block'}`,
-    '">',
-    body,
-    '</div>'
-  );
+  return new Rep_Indented({ indent: dIndent, bulleted, body });
 }
 
 
@@ -400,14 +751,7 @@ function p_katex(s) {
   const body = p_toplevel_verbatim(s, done);
   s.i++;
 
-  try {
-    const full = s.katexPrefix + '' + body;
-    return renderKaTeX(s, full, false)
-  } catch (e) {
-    let text = e.toString();
-    text = text.split('\n')[0];
-    throw mkError(sx, text);
-  }
+  return new Rep_Katex({ katex: s.katexPrefix + '' + body, displayMode: false });
 }
 
 
@@ -438,27 +782,27 @@ const commands = {
 
   // Title
   title(s) {
-    return Cats.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_toplevel_markup), '</div>');
+    return Rep_Seq.of('<div style="color: #C06; font-size: 18px; margin-bottom: 1em">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Cats.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_toplevel_markup), '</div>');
+    return Rep_Seq.of('<div style="color: #C06; border-bottom: 1px dotted #C06">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Italic
   i(s) {
-    return Cats.of('<i>', p_inline(s, p_toplevel_markup), '</i>');
+    return Rep_Seq.of('<i>', p_inline(s, p_toplevel_markup), '</i>');
   },
 
   // Bold
   b(s) {
-    return Cats.of('<b>', p_inline(s, p_toplevel_markup), '</b>');
+    return Rep_Seq.of('<b>', p_inline(s, p_toplevel_markup), '</b>');
   },
 
   // Underline
   u(s) {
-    return Cats.of('<u>', p_inline(s, p_toplevel_markup), '</u>');
+    return Rep_Seq.of('<u>', p_inline(s, p_toplevel_markup), '</u>');
   },
 
   // Code
@@ -467,20 +811,8 @@ const commands = {
     chompSpace(s);
     let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
     chompSpace(s);
-
     let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-    body = body.toString();
-
-    const highlighted =
-      language !== null
-          ? hljs.highlight(body, { language })
-      : language === null && kind === 'inline'
-          ? hljs.highlight(body, { language: 'plaintext' })
-      : language === null && kind === 'block'
-          ? hljs.highlightAuto(body)
-      : null;
-
-    return Cats.of(`<code class="${kind}">`, highlighted.value, '</code>');
+    return new Rep_Code({ language, body, isBlock: kind === 'block' });
   },
 
   // Comment (REMark)
@@ -504,7 +836,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Cats.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+    return Rep_Seq.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
 
   // Annotation definition
@@ -524,7 +856,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return Cats.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+    return Rep_Seq.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Explicit note reference
@@ -533,14 +865,9 @@ const commands = {
 
     chompSpace(s);
 
-    const noteId = parseWord(s).toString();
-    if (!noteId) throw mkError(sx, "Missing note ID");
-
+    const toNoteId = parseWord(s).toString();
+    if (!toNoteId) throw mkError(sx, "Missing note ID");
     chompSpace(s);
-
-    const ref = s.graph.notesById[noteId];
-    if (!ref) s.env.log.warn(`Reference to nonexistent note '${noteId}'`);
-    else s.references.add(ref.id);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -549,11 +876,8 @@ const commands = {
       // ^ TODO: Technically, this is bugged!
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
 
-    const href = ref ? ref.href : '';
-    if (ref)
-      return Cats.of(`<a href="${ref.href}" class="reference explicit">`, body, '</a>');
-    else
-      return Cats.of(`<a class="reference explicit invalid">`, body, '</a>');
+    const toNote = s.graph.notesById[toNoteId];
+    return new Rep_Explicit({ toNoteId, toNote, body });
   },
 
   // External (hyper-)reference
@@ -569,7 +893,7 @@ const commands = {
     chompSpace(s)
 
     const body = p_inline(s, p_toplevel_markup);
-    return Cats.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+    return Rep_Seq.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
   // KaTeX
@@ -590,9 +914,7 @@ const commands = {
     }
 
     const displayMode = { block: true, inline: false }[kind];
-    const full = s.katexPrefix + '' + body;
-    const rendered = renderKaTeX(s, full, displayMode);
-    return rendered;
+    return new Rep_Katex({ katex: s.katexPrefix + '' + body, displayMode });
   },
 
   // TeX, TikZ
@@ -615,35 +937,7 @@ const commands = {
     }
 
     tex = s.texPrefix + tex;
-
-    if (tikz) {
-      tex = String.raw`
-\begin{tikzpicture}
-${tex}
-\end{tikzpicture}
-`;
-    }
-
-    tex = String.raw`
-\documentclass{standalone}
-
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{tikz}
-\usepackage{lmodern}
-
-\usepackage[T1]{fontenc}
-
-\begin{document}
-
-${tex}
-
-\end{document}
-`;
-
-    let html = renderTeX(tex, s);
-    if (kind === 'block') html = Cats.of('<div style="display: block; text-align: center;">', html, '</div>');
-    return html;
+    return new Rep_Tex({ tex, isTikz: tikz, isBlock: kind === 'block' });
   },
 
 
@@ -657,14 +951,14 @@ ${tex}
       const jargs = parseJargon(s);
       forms = new Set([...forms, ...jargs]);
     }
-    s.defines = new Set([...s.defines, ...forms]);
 
     // TODO: more reucurrence happening here!
     const doImplicitReferences = s.doImplicitReferences;
     const srec = { ...s.clone(), doImplicitReferences: false };
-    const result = Cats.of(`<span class="jargon" data-forms="${[...forms].join(';')}">`, p_inline(srec, p_toplevel_markup), '</span>');
+    const body = p_inline(srec, p_toplevel_markup);
     Object.assign(s, { ...srec, doImplicitReferences });
-    return result;
+
+    return new Rep_Jargon({ forms, body });
   },
 
 
@@ -705,28 +999,23 @@ ${tex}
 // Jargon-lead implicit references
 function p_implicitReference(s) {
   if (!s.doImplicitReferences) return '';
+
   const r = s.jargonMatcher.findMeAMatch(s.text, s.i);
   if (r === null) return '';
 
   const [jarg, stepAmt] = r;
   const defNotes = s.graph.jargonToDefiningNoteSet[jarg];
 
-  let href;
-  let isValid;
-  if (defNotes && defNotes.size > 0) {
-    isValid = true;
-    const defNote = [...defNotes][0];  // TODO
-    href = defNote.href;
-    s.references.add(defNote.id);
-  } else {
-    isValid = false;
-    console.warn(`Bad jargon '${jarg}' in note '${s.note.id}'!`);
-    href = '#';
-  }
+  const toNote = (
+    defNotes && defNotes.size > 0
+      ? [...defNotes][0] // TODO
+      : null
+  );
 
   const body = escapeHtml(s.text.slice(s.i, s.i + stepAmt));
   s.i += stepAmt;
-  return `<a href="${href}" class="reference implicit ${isValid ? '' : 'invalid'}">${body}</a>`;;
+
+  return new Rep_Implicit({ fromJargon: jarg, toNote, body });
 }
 
 
@@ -844,8 +1133,9 @@ function parseWord(s) {
     s.i++;
   }
   word = word.toString();
-  if (!word)
+  if (!word) {
     throw mkError(s, "Expected word");
+  }
   return word;
 }
 
@@ -988,8 +1278,8 @@ function mkError(s, err) {
 
 
 
-function withHtmlTemplate(html) {
-  return String.raw`
+function template(html) {
+  return new Rep_Seq(String.raw`
 
 <!DOCTYPE HTML>
 <html>
@@ -1056,16 +1346,16 @@ hr {
 
 </style>
 
-${annotationsImplementation}
+`, annotationsImplementation,
 
-${jargonImplementation}
+jargonImplementation, `
 
-<main>${html}</main>
+<main>`, html, `</main>
 
 </body>
 </html>
 
-`;
+`);
 }
 
 const annotationsImplementation = String.raw`
@@ -1317,42 +1607,6 @@ function indexOf(str, sub, from = 0) {
   return result;
 }
 
-function renderTeX(tex, s) {
-  return s.env.cache.at('tex', [renderTeX, tex], () => {
-    return fss.withTempDir(tmp => {
-
-      s.env.log.info(`Rendering LaTeX [${tex.length}]`);
-
-      fss.write(plib.resolve(tmp, 'it.tex'), tex);
-
-      const cmd = String.raw`
-        cd ${tmp} \
-        && latex it.tex 1>&2 \
-        && dvisvgm it.dvi \
-        && { cat it-1.svg | tail -n+3; }
-      `;
-
-      let result;
-      try {
-        result = child_process.execSync(cmd).toString();
-      } catch (err) {
-        s.env.log.info(err.stderr.toString());  // meh
-        throw mkError(s, 'LaTeX render failed; see above!');
-      }
-
-      s.env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
-      return result;
-
-    });
-  });
-}
-
-function renderKaTeX(s, tex, displayMode) {
-  return s.env.cache.at('katex', [renderKaTeX, tex, displayMode], () => {
-    return katex.renderToString(tex, { displayMode });
-  });
-}
-
 function ruled(str, pref='>|') {
   const bar = '------';
   return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
@@ -1364,4 +1618,8 @@ function sample(str, from = 0, linec = 5) {
 
 function sample_s(s, linec = 4) {
   return sample(s.text, s.i, linec);
+}
+
+function impossible() {
+  throw Error('uh oh...');
 }

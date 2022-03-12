@@ -61,10 +61,7 @@ class Cats {
 
   add(...parts) {
     this._resolve();
-    for (const part of parts) {
-      const str = part.toString();
-      if (str) this.parts.push(str);
-    }
+    this.parts.push(...parts);
   }
 
   _resolve() {
@@ -89,9 +86,21 @@ class Cats {
 
   toString() {
     this._resolve();
-    const result = this.parts.map(c => c).join('');
-    this.parts = [result];
-    return result;
+
+    const stack = [...this.parts];
+    const result = [];
+
+    while (stack.length > 0) {
+      const left = stack[0];
+      stack.splice(0, 1);
+      if (left instanceof Cats) {
+        stack.splice(0, 0, ...left.parts);
+      } else {
+        result.push(left);
+      }
+    }
+
+    return result.join('');;
   }
 
 }
