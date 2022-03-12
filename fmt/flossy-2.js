@@ -1426,14 +1426,16 @@ a {
 }
 
 /* Styling for references to other notes */
+.reference, .reference:visited {
+  color: initial;
+}
 .reference {
-  background-color: rgba(var(--color-dynamic-rgb), .15);
+  background-color: rgba(var(--color-dynamic-rgb), .1);
   text-decoration: none;
 }
 .reference:not(.invalid):hover {
-  background-color: rgba(var(--color-dynamic-rgb), .25);
+  background-color: rgba(var(--color-dynamic-rgb), .2);
 }
-.reference, .reference:visited { color: initial; }
 .reference.explicit {
   border-bottom: 1px solid var(--color-dynamic);
 }
