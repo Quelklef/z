@@ -1357,7 +1357,7 @@ function template(html) {
 <style>
 
 :root {
-  --color-static-rgb: 0, 0, 0;
+  --color-static-rgb: 117, 19, 128;
   --color-static: rgb(var(--color-static-rgb));
 
   --color-dynamic-rgb: 204, 0, 102;

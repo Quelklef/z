@@ -238,42 +238,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // Refresh iframe on websocket message
   const ws = new WebSocket('ws://localhost:8001');
   ws.addEventListener('message', () => $iframe.contentWindow.location.reload());
-
-
-
-
-
-  const doColorPicker = true;
-  if (doColorPicker) {
-
-    const $picker = document.createElement('input');
-    $picker.type = 'color';
-    $picker.style.position = 'fixed';
-    $picker.style.top = '15px';
-    $picker.style.right = '15px';
-    $picker.style.width = '50px';
-    $picker.style.height = '50px';
-
-    document.body.append($picker);
-
-    $picker.addEventListener('input', () => {
-      const hex = $picker.value;
-      const { r, g, b } = hexToRgb(hex);
-      const rgb = r + ', ' + g + ', ' + b;
-      $iframe.contentWindow.document.body.style.setProperty('--color-static-rgb', rgb);
-      $iframe.contentWindow.document.body.style.setProperty('--color-static', 'rgb(' + rgb + ')');
-    });
-
-    // https://stackoverflow.com/a/5624139/4608364
-    function hexToRgb(hex) {
-      var result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
-      return result ? {
-        r: parseInt(result[1], 16),
-        g: parseInt(result[2], 16),
-        b: parseInt(result[3], 16)
-      } : null;
-    }
-  }
 });
 </script>
 
