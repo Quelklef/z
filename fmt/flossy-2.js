@@ -128,6 +128,7 @@ class Rep {
 }
 
 
+// TODO: instead of giving Rep_Seq .on and .of, etc, just have it accept a Cats ...?
 class Rep_Seq extends Rep {
 
   constructor(...parts) {
@@ -157,9 +158,11 @@ class Rep_Seq extends Rep {
     return new Rep_Seq(...parts);
   }
 
-  add(part) {
+  add(...parts) {
     this._resolve();
-    this.parts.push(part);
+    for (const part of parts)
+      if (part !== '')
+        this.parts.push(part);
   }
 
   addFromSource(i) {
@@ -225,10 +228,12 @@ class Rep_Indented extends Rep {
 
 class Rep_Katex extends Rep {
 
-  constructor({ katex, displayMode }) {
+  constructor({ katex, displayMode, sourceText, sourceRange }) {
     super();
     this.katex = katex;
     this.displayMode = displayMode;
+    this.sourceText = sourceText;
+    this.sourceRange = sourceRange;
   }
 
   toHtml(env) {
@@ -238,7 +243,7 @@ class Rep_Katex extends Rep {
       } catch (e) {
         let text = e.toString();
         text = text.split('\n')[0];
-        throw mkError(sx, text);
+        throw mkError(this.sourceText, this.sourceRange, text);
       }
     });
   }
@@ -648,6 +653,20 @@ function p_sigils(s) {
     '---\n': '<hr />',
     '***\n': '<hr />',
 
+    '<-->': '&xharr;',
+    '-->': '&xrarr;',
+    '<--': '&xlarr;',
+    '<==>': '&xhArr;',
+    '==>': '&xrArr;',
+    '<==': '&xlArr;',
+
+    '<->': '&harr;',
+    '->': '&rarr;',
+    '<-': '&larr;',
+    '<=>': '&hArr;',
+    '=>': '&rArr;',
+    '<=': '&lArr;',
+
     '--': '&mdash;',
   };
 
@@ -688,10 +707,10 @@ function escapeHtml(s) {
 function p_quotes(s) {
   if (!`'"`.includes(s.text[s.i])) return '';
 
-  const nonblank = c => !(c || '').match(/\s/);
+  const isletter = c => !!(c || '').match(/[a-zA-Z]/);
   const quot = s.text[s.i];
-  const before = nonblank(s.text[s.i - 1]);
-  const after = nonblank(s.text[s.i + 1]);
+  const before = isletter(s.text[s.i - 1]);
+  const after = isletter(s.text[s.i + 1]);
 
   const mapping = {
     [`true ' true`]: `’`,
@@ -746,34 +765,36 @@ function p_indent(s) {
 function p_katex(s) {
   if (s.text[s.i] !== '$') return '';
 
+  const xi0 = s.i;
   s.i++;
-  const sx = s.clone();
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
   const body = p_toplevel_verbatim(s, done);
-  s.i++;
+  consume(s, '$');
+  const xif = s.i;
 
-  return new Rep_Katex({ katex: s.katexPrefix + '' + body, displayMode: false });
+  return new Rep_Katex({
+    katex: s.katexPrefix + '' + body,
+    displayMode: false,
+    sourceText: s.text,
+    sourceRange: [xi0, xif],
+  });
 }
 
 
 
 // Execute a backslash command
 function p_command(s) {
+  const xi0 = s.i;
   if (s.text[s.i] !== '\\') return '';
-
-  const sx = s.clone();
   s.i++;
 
   chompSpace(s);
 
-  const name = parseWord(s).toString();
-
-  if (name === '')
-    throw mkError(sx.text, sx.i, "Expected command name");
+  const name = parseWord(s);
 
   const command = commands[name];
   if (!command)
-    throw mkError(sx.text, sx.i, `No command '${name}'!`);
+    throw mkError(s.text, [xi0, s.i], `No command '${name}'!`);
 
   return command(s);
 }
@@ -893,7 +914,12 @@ const commands = {
     consume(s, '>');
     chompSpace(s)
 
-    const body = p_inline(s, p_toplevel_markup);
+    const doImplicitReferences = s.doImplicitReferences;
+    const srec = { ...s.clone(), doImplicitReferences: false };
+      // ^ Nested <a> tags are forbidden in HTML
+    const body = p_inline(srec, p_toplevel_markup);
+    Object.assign(s, { ...srec, doImplicitReferences });
+
     return Rep_Seq.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
@@ -901,13 +927,15 @@ const commands = {
   katex(s) {
     chompSpace(s);
 
-    let append = s.text.startsWith('pre', s.i);
+    const append = s.text.startsWith('pre', s.i);
     if (append) {
       consume(s, 'pre');
       chompSpace(s);
     }
 
+    const xi0 = s.i;
     const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
+    const xif = s.i;
 
     if (append) {
       s.katexPrefix.add(body);
@@ -915,7 +943,12 @@ const commands = {
     }
 
     const displayMode = { block: true, inline: false }[kind];
-    return new Rep_Katex({ katex: s.katexPrefix + '' + body, displayMode });
+    return new Rep_Katex({
+      katex: s.katexPrefix + '' + body,
+      displayMode,
+      sourceText: s.text,
+      sourceRange: [xi0, xif],
+    });
   },
 
   // TeX, TikZ
@@ -992,6 +1025,90 @@ const commands = {
     };
 
     return eval(code) || '';
+  },
+
+
+  // tables
+  table(s) {
+
+    const xi0 = s.i;
+
+    chompBlank(s);
+    const opts = {};
+    while (true) {
+      const sb = s.clone();
+      chompBlank(sb);
+      if (!/[\w-]/.test(sb.text[sb.i])) break;
+      Object.assign(s, sb);
+
+      const key = parseWord(s);
+      consume(s, '=');
+      const val = parseWord(s);
+      opts[key] = val;
+    }
+
+    let doHeaders = false;
+    let doCentering = false;
+    for (const [key, val] of Object.entries(opts)) {
+      switch (key) {
+        case 'headers':
+          doHeaders = { 'yes': true, 'no': false }[val];
+          if (doHeaders === undefined)
+            throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
+          break;
+
+        case 'center':
+          doCentering = { 'yes': true, 'no': false }[val];
+          if (doCentering === undefined)
+            throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
+          break;
+
+        default:
+          throw mkError(s.text, [xi0, s.i], `Unknown table option ${key}`);
+      }
+    }
+
+    const rows = [];
+    while (true) {
+      const sb = s.clone();
+      chompBlank(sb);
+      if (!sb.text.startsWith('|', sb.i)) break;
+      Object.assign(s, sb);
+      consume(s, '|');
+
+      const row = [];
+      while (true) {
+        const sb = s.clone();
+        chompBlank(sb);
+        const cell = optionally(s => p_inline(s, p_toplevel_markup))(sb);
+        if (cell === null) break;
+        Object.assign(s, sb);
+        row.push(cell);
+      }
+      rows.push(row);
+    }
+
+    if (rows.length === 0)
+      throw mkError(s.text, [xi0, s.i], "Empty table")
+
+    let result = new Rep_Seq();
+    result.add('<table>');
+    rows.forEach((row, rowI) => {
+      const isHeader = rowI === 0;
+      result.add('<tr>');
+      for (const cell of row) {
+        const tag = isHeader && doHeaders ? 'th' : 'td';
+        result.add(`<${tag}>`, cell, `</${tag}>`);
+      }
+      result.add('</tr>');
+    });
+    result.add('</table>');
+
+    if (doCentering)
+      result = new Rep_Seq('<center>', result, '</center>');
+
+    return result;
+
   },
 
 };
@@ -1118,17 +1235,20 @@ function parseJargonAux(s) {
 
 function chompSpace(s) {
   while (s.text[s.i] === ' ') s.i++;
-  return s;
+}
+
+function chompBlank(s) {
+  while (/\s/.test(s.text[s.i])) s.i++;
 }
 
 function consume(s, str) {
   if (!s.text.startsWith(str, s.i))
-    throw mkError(s.text, s.i, `Expected '${str}'`);
+    throw mkError(s.text, [s.i, s.i + str.length], `Expected '${str}'`);
   s.i += str.length;
 }
 
 function parseWord(s) {
-  const i0 = s.i;
+  const xi0 = s.i;
   let word = Cats.on(s.text);
   while (/[\w-]/.test(s.text[s.i])) {
     word.addFromSource(s.i);
@@ -1136,7 +1256,7 @@ function parseWord(s) {
   }
   word = word.toString();
   if (!word)
-    throw mkError(s.text, i0, "Expected word");
+    throw mkError(s.text, xi0, "Expected word");
   return word;
 }
 
@@ -1236,7 +1356,7 @@ function p_inline(s, p_toplevel) {
   }
   const close = pairs[open];
   if (!close)
-    throw mkError(s, "Expected group: [], (), {}, or <>");
+    throw mkError(s.text, s.i, "Expected group: [], (), {}, or <>");
   s.i++;
 
   const done = s => s.text.startsWith(close, s.i);
@@ -1248,7 +1368,7 @@ function p_inline(s, p_toplevel) {
 
 
 // mkError(text, idx, err)
-// mkError(text, [i0, iF], err)  --  range inclusive
+// mkError(text, [i0, iF], err)  --  range [inc, exc]
 function mkError(text, loc, err) {
 
   const linesAround = 2;
@@ -1258,11 +1378,11 @@ function mkError(text, loc, err) {
 
   let y0, x0, yf, xf;
   {
-    const range = typeof loc === 'number' ? [loc, loc] : loc;
+    const range = typeof loc === 'number' ? [loc, loc + 1] : loc;
     const [i0, iF] = range;
     [y0, x0] = toCoords(i0);
     [yf, xf] = toCoords(iF);
-    yf++; xf++;  // end-exclusive ranges
+    yf++;  // end-exclusive range
   }
 
   const y0A = Math.max(y0 - linesAround, 0);
@@ -1294,7 +1414,7 @@ function mkError(text, loc, err) {
     wrapText(noNewline).forEach((wrp, wrpI) => {
       const wrpI0 = wrpI * wrapWidth;
       const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
-      wrp = wrp.slice(0, wrpHlI0) + clc.yellow.underline(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
+      wrp = wrp.slice(0, wrpHlI0) + clc.yellow(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
 
       const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
       result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
@@ -1302,7 +1422,7 @@ function mkError(text, loc, err) {
   }
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┼─────\n');
   for (const wrp of wrapText('Error: ' + err))
-    result.add('       │ ' + clc.bold.red(wrp));
+    result.add('       │ ' + clc.yellow(wrp));
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
 
   return Error('\n' + result.toString());
@@ -1423,6 +1543,17 @@ hr {
 
 a {
   color: var(--color-dynamic);
+}
+
+table {
+  border-collapse: collapse;
+  font-size: 1em;
+}
+table, tr, th, td {
+  border: 1px solid var(--color-static);
+}
+th, td {
+  padding: .3em .6em;
 }
 
 /* Styling for references to other notes */

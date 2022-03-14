@@ -1,12 +1,12 @@
 format=flossy-2
 
-\title: Sample note
+\title: Format \c[flossy]
 
-\sec: Generic features
+\sec: Features
 
 - Styling: \b[bold], \i[italic], \u[underline], \c[code]
 
-- Code blocks, too:
+- Code blocks:
   \code js:
     function f(x) {
       return x;
@@ -14,7 +14,7 @@ format=flossy-2
 
 - Linking
   - Defining \jarg <zeta (jargon|term(|s))> [jargon], which turn into implicit references to other notes
-  - \ref sample-note-2 [Explicit references to other notes]
+  - \ref fmt-flossy [Explicit references to other notes]
   - External, e.g. \href <https://google.com> [to Google]
 
 - Bulleted lists ...
@@ -25,7 +25,7 @@ format=flossy-2
     Pretty cool! \aref [they nest, too]
     \adef: amazing =)
 
-- And a handful of sigils \aref[click]
+- A handful of sigils \aref[click]
   \adef ====
 - "Fancy quotes"
 - Em dash --
@@ -34,17 +34,16 @@ format=flossy-2
   --> <-- <--> ==> <== <==>
 ==/==
 
+- Tables:
+    \table headers=yes center=yes
+      | [Header 1] [Header 2]
+      | [Data 1.1] [Data 1.2]
+      | [Data 2.1] [Data 2.2]
 
-\sec: Math-specific features
-
-- Inline $\KaTeX$: $\lvert x \rvert = \begin{cases} x & x \geq 0 \\ -x & x < 0 \end{cases}$
-
-- Block $\KaTeX$:
+- Block and inline $\KaTeX$:
   \katex: \frac{f : \tau \to \sigma,\ x : \tau}{f(x) : \sigma}
 
-- Inline \tex[\TeX]
-
-- Block \tex[\TeX]:
+- Block and inline \tex[\TeX]:
   \tex:
     \begin{math}
       \frac{f : \tau \to \sigma,\ x : \tau}{f(x) : \sigma}
