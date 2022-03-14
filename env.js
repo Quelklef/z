@@ -116,7 +116,7 @@ class Logger {
   }
 
   generic(color, fst, ...args) {
-    const prefix = [color(fst)].concat(this.prefixes.map(p => `(${p})`)).join(' ');
+    const prefix = [color(fst), ...this.prefixes.map(p => `(${p})`)].join(' ');
     console.log(prefix, ...args);
   }
 
@@ -133,7 +133,7 @@ class Logger {
   }
 
   error(...a) {
-    this.generic(clc.red.yellow, 'ERR ', ...a);
+    this.generic(clc.bold.red, 'ERR ', ...a);
   }
 
 }
