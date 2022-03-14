@@ -20,7 +20,7 @@ function main() {
     cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
   });
 
-  const formats = [];
+  const formats = {};
   for (const fname of fss.list('./fmt', { type: 'f' })) {
     const floc = plib.resolve(env.root, 'fmt', fname);
 
@@ -28,18 +28,40 @@ function main() {
     const name = plib.basename(fname, plib.extname(fname));
     Object.defineProperty(format, 'name', { value: name });
 
-    formats.push(format);
+    formats[name] = format;
   }
 
   const graph = {};
   graph.notes = [];
 
-  const notesLoc = plib.resolve(env.root, 'notes');
-  for (const format of formats) {
+  const files = fss.list(
+    plib.resolve(env.root, 'notes'),
+    { type: 'f', recursive: true },
+  );
 
-    const files = fss.list(notesLoc, { type: 'f', recursive: true });
-    for (let note of format(files, notesLoc, graph, env)) {
+  for (const floc of files) {
+    const source = fss.read(floc);
 
+    let formatName = null;
+    {
+      let eol = source.indexOf('\n');
+      if (eol === -1) eol = source.length;
+      const line0 = source.slice(0, eol);
+      if (line0.startsWith('format='))
+        formatName = line0.slice('format='.length);
+    }
+    if (!formatName) {
+      env.log.warn(`File at ${floc} has no format; skipping!`);
+      continue;
+    }
+
+    const format = formats[formatName];
+    if (!format) {
+      env.log.warn(`File at ${floc} specifies unknown format '${formatName}'; skipping!`);
+      continue;
+    }
+
+    for (let note of format(floc, source, graph, env)) {
       const cached = env.cache.getOr('notes', note.cacheKeys, null);
       if (cached) note = cached;
 
@@ -49,9 +71,10 @@ function main() {
       note[t].format = format;
 
       graph.notes.push(note);
-
     }
+
   }
+
 
   env.log.info(`Found ${graph.notes.length} notes`);
 

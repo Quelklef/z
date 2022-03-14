@@ -10,12 +10,8 @@ const { lazyAss, Cats, withTempDir } = quire('../util.js');
 const fss = quire('../fss.js');
 
 exports.default =
-function * (files, _, graph, env) {
-  for (const floc of files) {
-    const source = fss.read(floc);
-    if (source.startsWith('format=flossy-2\n'))
-      yield mkNote(floc, source, graph, env);
-  }
+function * (floc, source, graph, env) {
+  yield mkNote(floc, source, graph, env);
 }
 
 const scriptSrc = fss.read(__filename).toString();
