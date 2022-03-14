@@ -35,10 +35,11 @@ format=flossy-2
 ==/==
 
 - Tables:
-    \table headers=yes center=yes
-      | [Header 1] [Header 2]
-      | [Data 1.1] [Data 1.2]
-      | [Data 2.1] [Data 2.2]
+
+  \table headers=both
+    | [] [brown eyes] [blue eyes]
+    | [brown eyes] [brown eyes] [brown eyes]
+    | [blue eyes] [brown eyes] [blue eyes]
 
 - Block and inline $\KaTeX$:
   \katex: \frac{f : \tau \to \sigma,\ x : \tau}{f(x) : \sigma}

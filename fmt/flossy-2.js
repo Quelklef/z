@@ -887,7 +887,7 @@ const commands = {
 
     chompSpace(s);
 
-    const toNoteId = optionally(parseWord)(s);
+    const toNoteId = backtracking(s, parseWord);
     if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
     chompSpace(s);
 
@@ -1047,14 +1047,16 @@ const commands = {
       opts[key] = val;
     }
 
-    let doHeaders = false;
+    let doHorizontalHeaders = false;
+    let doVerticalHeaders = false;
     let doCentering = false;
     for (const [key, val] of Object.entries(opts)) {
       switch (key) {
         case 'headers':
-          doHeaders = { 'yes': true, 'no': false }[val];
-          if (doHeaders === undefined)
+          if (!'h v both no'.split(' ').includes(val))
             throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
+          doHorizontalHeaders = 'h both'.split(' ').includes(val);
+          doVerticalHeaders   = 'v both'.split(' ').includes(val);
           break;
 
         case 'center':
@@ -1064,25 +1066,25 @@ const commands = {
           break;
 
         default:
-          throw mkError(s.text, [xi0, s.i], `Unknown table option ${key}`);
+          throw mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
       }
     }
 
     const rows = [];
     while (true) {
-      const sb = s.clone();
-      chompBlank(sb);
-      if (!sb.text.startsWith('|', sb.i)) break;
-      Object.assign(s, sb);
-      consume(s, '|');
+      const ok = backtracking(s, s => {
+        chompBlank(s);
+        return consume(s, '|');
+      });
+      if (!ok) break;
 
       const row = [];
       while (true) {
-        const sb = s.clone();
-        chompBlank(sb);
-        const cell = optionally(s => p_inline(s, p_toplevel_markup))(sb);
+        const cell = backtracking(s, s => {
+          chompBlank(s);
+          return p_inline(s, p_toplevel_markup);
+        });
         if (cell === null) break;
-        Object.assign(s, sb);
         row.push(cell);
       }
       rows.push(row);
@@ -1092,14 +1094,15 @@ const commands = {
       throw mkError(s.text, [xi0, s.i], "Empty table")
 
     let result = new Rep_Seq();
-    result.add('<table>');
+    const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
+    result.add(`<table class="${classes.join(' ')}">`);
     rows.forEach((row, rowI) => {
-      const isHeader = rowI === 0;
       result.add('<tr>');
-      for (const cell of row) {
-        const tag = isHeader && doHeaders ? 'th' : 'td';
+      row.forEach((cell, cellI) => {
+        const isHeader = doHorizontalHeaders && rowI === 0 || doVerticalHeaders && cellI === 0;
+        const tag = isHeader ? 'th' : 'td';
         result.add(`<${tag}>`, cell, `</${tag}>`);
-      }
+      });
       result.add('</tr>');
     });
     result.add('</table>');
@@ -1245,6 +1248,7 @@ function consume(s, str) {
   if (!s.text.startsWith(str, s.i))
     throw mkError(s.text, [s.i, s.i + str.length], `Expected '${str}'`);
   s.i += str.length;
+  return str;
 }
 
 function parseWord(s) {
@@ -1260,14 +1264,16 @@ function parseWord(s) {
   return word;
 }
 
-function optionally(parser) {
-  return s => {
-    try {
-      return parser(s);
-    } catch (e) {
-      return null;
-    }
+function backtracking(s, parser) {
+  const sc = s.clone();
+  let result;
+  try {
+    result = parser(sc);
+  } catch (e) {
+    return null;
   }
+  Object.assign(s, sc);
+  return result;
 }
 
 
@@ -1554,6 +1560,14 @@ table, tr, th, td {
 }
 th, td {
   padding: .3em .6em;
+}
+table.headers-horiz tr:first-child {
+  border-bottom-width: 2px;
+}
+table.headers-vert td:first-child,
+table.headers-vert th:first-child
+{
+  border-right-width: 2px;
 }
 
 /* Styling for references to other notes */
