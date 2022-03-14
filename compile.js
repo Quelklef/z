@@ -114,9 +114,9 @@ function main() {
 
   }
 
+  env.log.info(`Caching...`);
   for (const note of graph.notes) {
     if (note[t].isFromCache) continue;
-    env.log.info(`Caching: ${note.id}`);
     env.cache.put('notes', note.cacheKeys, note);
   }
 

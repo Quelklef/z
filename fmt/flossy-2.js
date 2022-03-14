@@ -25,7 +25,7 @@ function mkNote(floc, source, graph, env) {
   const noteId = plib.basename(floc, '.z');
 
   env = env.descend();
-  env.log.prefixes.push(noteId.toString());
+  env.log.prefixes.push('note=' + noteId.toString());
 
   const note = {};
 
@@ -41,7 +41,7 @@ function mkNote(floc, source, graph, env) {
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
   lazyAss(note[t], 'phase1', () => {
-    env.parent.log.info('parsing for definitions', note.id);
+    env.parent.log.info('parsing', note.id);
     return parse({
       text: source,
       note, graph, env,
@@ -63,7 +63,7 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note[t], 'phase2', () => {
-    env.parent.log.info('parsing again!', note.id);
+    env.parent.log.info('parsing (again)', note.id);
     return parse({
       text: source,
       note, graph, env,
@@ -94,6 +94,7 @@ function mkNote(floc, source, graph, env) {
         node.setReferencedBy(referencedBy);
     });
 
+    env.parent.log.info('rendering', note.id);
     return rep.toHtml(env);
   });
 
