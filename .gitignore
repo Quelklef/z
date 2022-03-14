@@ -2,3 +2,4 @@ notes/priv/
 out/
 node_modules/
 result
+stats.prof

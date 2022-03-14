@@ -128,71 +128,30 @@ class Rep {
 }
 
 
-// TODO: instead of giving Rep_Seq .on and .of, etc, just have it accept a Cats ...?
 class Rep_Seq extends Rep {
 
   constructor(...parts) {
     super();
-
     this.parts = parts;
-
-    this.source = null;
-    this.pending = null;
-  }
-
-  _resolve() {
-    if (this.pending) {
-      const [i, j] = this.pending;
-      this.parts.push(this.source.slice(i, j));
-      this.pending = null;
-    }
-  }
-
-  static on(source) {
-    const seq = new Rep_Seq();
-    seq.source = source;
-    return seq;
-  }
-
-  static of(...parts) {
-    return new Rep_Seq(...parts);
   }
 
   add(...parts) {
-    this._resolve();
     for (const part of parts)
       if (part !== '')
         this.parts.push(part);
   }
 
-  addFromSource(i) {
-    if (this.pending && this.pending[1] === i) {
-      this.pending[1]++;
-    } else {
-      this._resolve();
-      this.pending = [i, i + 1];
-    }
-  }
-
   // == //
 
   toHtml(env) {
-    this._resolve();
-    const html = new Cats();
-    for (const part of this.parts) {
-      if (typeof part === 'string') {
-        html.add(part);
-      } else if (part instanceof Cats) {
-        html.add(part.toString());
-      } else {
-        html.add(part.toHtml(env));
-      }
-    }
-    return html.toString();
+    return (
+      this.parts
+      .map(part => part.toHtml ? part.toHtml(env) : part.toString())
+      .join('')
+    );
   }
 
   children() {
-    this._resolve();
     return this.parts;
   }
 
@@ -209,7 +168,7 @@ class Rep_Indented extends Rep {
   }
 
   toHtml(env) {
-    return Cats.of(
+    return new Cats(
       '<div style="',
       `margin-left: ${this.indent}ch;`,
       'display: ' + (this.bulleted ? 'list-item' : 'block'),
@@ -320,7 +279,7 @@ ${tex}
     });
 
     if (this.isBlock)
-      html = Cats.of('<div class="tikz">', html, '</div>');
+      html = new Cats('<div class="tikz">', html, '</div>');
 
     return html;
   }
@@ -351,7 +310,7 @@ class Rep_Code extends Rep {
           ? hljs.highlightAuto(this.body)
       : impossible();
 
-    return Cats.of(`<code class="${this.isBlock ? 'block' : 'inline'}">`, highlighted.value, '</code>');
+    return new Cats(`<code class="${this.isBlock ? 'block' : 'inline'}">`, highlighted.value, '</code>');
   }
 
   children() {
@@ -370,7 +329,7 @@ class Rep_Jargon extends Rep {
   }
 
   toHtml(env) {
-    return Cats.of(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
+    return new Cats(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
   }
 
   children() {
@@ -394,7 +353,7 @@ class Rep_Implicit extends Rep {
       console.warn(`Bad jargon '${jarg}'!`);
     }
     const href = this.toNote?.href ?? '#';
-    return Cats.of(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
+    return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
   }
 
   children() {
@@ -416,9 +375,9 @@ class Rep_Explicit extends Rep {
   toHtml(env) {
     if (!this.toNote) env.log.warn(`Reference to nonexistent note '${this.toNoteId}'`);
     if (this.toNote)
-      return Cats.of(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(), '</a>');
+      return new Cats(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(), '</a>');
     else
-      return Cats.of(`<a class="reference explicit invalid">`, this.body.toHtml(), '</a>');
+      return new Cats(`<a class="reference explicit invalid">`, this.body.toHtml(), '</a>');
   }
 
   children() {
@@ -459,6 +418,39 @@ class Rep_ReferencedBy extends Rep {
 
 }
 
+
+class Trie {
+  constructor(strings) {
+    this.isElement = Symbol("isElement");
+
+    this.trie = {};
+    strings = new Set(strings);
+    for (const str of strings) {
+      let root = this.trie;
+      for (const ch of str)
+        root = (root[ch] = root[ch] || {});
+      root[this.isElement] = true;
+    }
+  }
+
+  longestPrefixOf(str, i0) {
+    let result = null;
+    let root = this.trie;
+    let path = [];
+
+    for (let i = i0; i < str.length; i++) {
+      const ch = str[i];
+      if (root[this.isElement]) result = path.join('');
+      root = root[ch];
+      path.push(ch);
+      if (root === undefined) break;
+    }
+    if (root && root[this.isElement])
+      result = path.join('');
+
+    return result;
+  }
+}
 
 
 
@@ -574,7 +566,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
         ]
   );
 
-  const result = Rep_Seq.on(s.text);
+  const result = new Rep_Seq();
 
   if (done(s)) return result;
 
@@ -584,8 +576,6 @@ function p_toplevel_impl(s, { done, verbatim }) {
     const [blockOver, advanceBy] = checkIndent(s);
     if (blockOver) break parsing;
     else s.i += advanceBy;
-
-    const samp = sample_s(s);
 
     // Try each parser
     for (const parser of parsers) {
@@ -605,7 +595,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
       throw mkError(s.text, s.i, "Unexpected EOF!");
 
     // Default case: advance by one character
-    result.addFromSource(s.i);
+    result.add(s.text[s.i]);
     s.i++;
   }
 
@@ -646,39 +636,34 @@ function getNextNonemptyLine(text, i0 = 0) {
 }
 
 
+const sigilMapping = {
+  '---\n': '<hr />',
+  '***\n': '<hr />',
+
+  '<->': '&harr;',
+  '->': '&rarr;',
+  '<-': '&larr;',
+  '<=>': '&hArr;',
+  '=>': '&rArr;',
+  '<=': '&lArr;',
+  '<-->': '&xharr;',
+  '-->': '&xrarr;',
+  '<--': '&xlarr;',
+  '<==>': '&xhArr;',
+  '==>': '&xrArr;',
+  '<==': '&xlArr;',
+
+  '--': '&mdash;',
+};
+
+const sigilTrie = new Trie(Object.keys(sigilMapping));
+
 // Sigils: static replacements
 function p_sigils(s) {
-
-  const mapping = {
-    '---\n': '<hr />',
-    '***\n': '<hr />',
-
-    '<-->': '&xharr;',
-    '-->': '&xrarr;',
-    '<--': '&xlarr;',
-    '<==>': '&xhArr;',
-    '==>': '&xrArr;',
-    '<==': '&xlArr;',
-
-    '<->': '&harr;',
-    '->': '&rarr;',
-    '<-': '&larr;',
-    '<=>': '&hArr;',
-    '=>': '&rArr;',
-    '<=': '&lArr;',
-
-    '--': '&mdash;',
-  };
-
-  for (const [key, val] of Object.entries(mapping)) {
-    if (s.text.startsWith(key, s.i)) {
-      s.i += key.length;
-      return val;
-    }
-  }
-
-  return '';
-
+  const sigil = sigilTrie.longestPrefixOf(s.text, s.i);
+  if (!sigil) return '';
+  s.i += sigil.length;
+  return sigilMapping[sigil];
 }
 
 
@@ -804,27 +789,27 @@ const commands = {
 
   // Title
   title(s) {
-    return Rep_Seq.of('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
+    return new Rep_Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Section header
   sec(s) {
-    return Rep_Seq.of('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
+    return new Rep_Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Italic
   i(s) {
-    return Rep_Seq.of('<i>', p_inline(s, p_toplevel_markup), '</i>');
+    return new Rep_Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
   },
 
   // Bold
   b(s) {
-    return Rep_Seq.of('<b>', p_inline(s, p_toplevel_markup), '</b>');
+    return new Rep_Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
   },
 
   // Underline
   u(s) {
-    return Rep_Seq.of('<u>', p_inline(s, p_toplevel_markup), '</u>');
+    return new Rep_Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
   },
 
   // Code
@@ -858,7 +843,7 @@ const commands = {
 
     chompSpace(s);
 
-    return Rep_Seq.of(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+    return new Rep_Seq(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
 
   // Annotation definition
@@ -878,7 +863,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return Rep_Seq.of(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+    return new Rep_Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Explicit note reference
@@ -906,9 +891,9 @@ const commands = {
   href(s) {
     chompSpace(s)
     consume(s, '<');
-    const href = Cats.on(s.text);
+    const href = new Cats();
     while (s.i < s.text.length && s.text[s.i] !== '>') {
-      href.addFromSource(s.i);
+      href.add(s.text[s.i]);
       s.i++;
     }
     consume(s, '>');
@@ -920,7 +905,7 @@ const commands = {
     const body = p_inline(srec, p_toplevel_markup);
     Object.assign(s, { ...srec, doImplicitReferences });
 
-    return Rep_Seq.of(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+    return new Rep_Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
   // KaTeX
@@ -1200,12 +1185,12 @@ function parseJargonAux(s) {
 
   // Quoted syntax -- "word with some spaces"
   else if (s.text.startsWith('"', s.i)) {
-    const word = Cats.on(s.text);
+    const word = new Cats();
     s.i++;
     loop: while (true) {
       switch (s.text[s.i]) {
         case "\\":
-          word.addFromSource(s.i + 1);
+          word.add(s.text[s.i + 1]);
           s.i += 2;
           break;
 
@@ -1214,7 +1199,7 @@ function parseJargonAux(s) {
           break loop;
 
         default:
-          word.addFromSource(s.i);
+          word.add(s.text[s.i]);
           s.i++;
           break;
       }
@@ -1253,9 +1238,9 @@ function consume(s, str) {
 
 function parseWord(s) {
   const xi0 = s.i;
-  let word = Cats.on(s.text);
+  let word = new Cats();
   while (/[\w-]/.test(s.text[s.i])) {
-    word.addFromSource(s.i);
+    word.add(s.text[s.i]);
     s.i++;
   }
   word = word.toString();
@@ -1325,9 +1310,9 @@ function p_block(s, p_toplevel) {
   else if (s.text.startsWith('==', s.i)) {
     consume(s, '==');
 
-    let sentinel = Cats.on(s.text);
+    let sentinel = new Cats();
     while (!s.text.startsWith('==', s.i)) {
-      sentinel.addFromSource(s.i);
+      sentinel.add(s.text[s.i]);
       s.i++;
     }
 
