@@ -157,26 +157,71 @@ class Rep_Seq extends Rep {
 
 class Rep_Indented extends Rep {
 
-  constructor({ indent, bulleted, body }) {
+  constructor({ indent, body }) {
     super();
     this.indent = indent;
-    this.bulleted = bulleted;
     this.body = body;
   }
 
   toHtml(env) {
+    return new Cats(`<div style="margin-left: ${this.indent}ch">`, this.body.toHtml(env), '</div>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+class Rep_Bulleted extends Rep {
+
+  constructor({ body, isNumbered, id }) {
+    super()
+    this.body = body;
+    this.isNumbered = isNumbered;
+  }
+
+  toHtml(env) {
+    // TODO: numbers are wrong (make counter inc by parent, I think?)
     return new Cats(
-      '<div style="',
-      `margin-left: ${this.indent}ch;`,
-      'display: ' + (this.bulleted ? 'list-item' : 'block'),
-      '">',
+      `<div style="display: list-item; list-style-type: ${this.isNumbered ? 'decimal' : 'disc'}">`,
       this.body.toHtml(env),
-      '</div>',
+      "</div>",
     );
   }
 
   children() {
     return [this.body];
+  }
+
+}
+
+
+class Rep_Expand extends Rep {
+
+  constructor({ line, body, id }) {
+    super()
+    this.line = line;
+    this.body = body;
+    this.id = id;
+  }
+
+  toHtml(env) {
+    return new Cats(
+      `<div class="expand" id="${this.id}">`,
+      '<div class="expand-line">',
+      this.line.toHtml(env),
+      '</div>',
+      '<div class="expand-body">',
+      this.body.toHtml(env),
+      '</div>',
+      '</div>',
+    );
+  }
+
+  children() {
+    return [this.body, this.line];
   }
 
 }
@@ -725,8 +770,23 @@ function p_indent(s) {
   while (s.text[i] === ' ') i++;
   let dIndent = i - s.i;
 
-  const bulleted = s.text.startsWith('- ', s.i);
-  if (bulleted)
+  s.i += dIndent;
+
+  // Find bullet
+  let style = null;
+  {
+    if (backtracking(s, s => consume(s, '- '))) {
+      style = '-';
+    }
+    else if (backtracking(s, s => consume(s, '> '))) {
+      style = '>';
+    }
+    else if (backtracking(s, s => consume(s, '# '))) {
+      style = '#';
+    }
+  }
+
+  if (style)
     dIndent += 2;
 
   // If line not further indented, bail
@@ -734,13 +794,36 @@ function p_indent(s) {
     return '';
 
   const newIndent = curIndent + dIndent;
-  // Parse as indented block
-  s.i += newIndent - curIndent;
-  s.indents.push(newIndent);
-  const body = p_toplevel_markup(s);
-  s.indents.pop();
 
-  return new Rep_Indented({ indent: dIndent, bulleted, body });
+  if (style === '>') {
+
+    const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
+    consume(s, '\n');
+
+    s.indents.push(newIndent);
+    const body = p_toplevel_markup(s);
+    s.indents.pop();
+
+    return new Rep_Indented({
+      indent: dIndent,
+      body: new Rep_Expand({ line, body, id: s.gensym() }),
+    });
+
+  } else {
+
+    // TODO: instead of making indentation first-class, couldn't this
+    //       just set a done = s => s.startsWith('\n' + strRep(' ', newIndent)) ?
+    s.indents.push(newIndent);
+    body = p_toplevel_markup(s);
+    s.indents.pop();
+    if (style)
+      body = new Rep_Bulleted({
+        body,
+        isNumbered: style === '#',
+      });
+    return new Rep_Indented({ indent: dIndent, body });
+
+  }
 }
 
 
@@ -1096,6 +1179,16 @@ const commands = {
 
   },
 
+
+  // Expanding bullets
+  fold(s) {
+    chompSpace(s);
+    const [line, _] = p_enclosed(s, p_toplevel_markup);
+    chompSpace(s);
+    const body = p_block(s, p_toplevel_markup);
+    return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym() }) });
+  },
+
 };
 
 
@@ -1246,12 +1339,26 @@ function parseWord(s) {
   return word;
 }
 
+function p_integer(s) {
+  const xi0 = s.i;
+  let digs = new Cats();
+  while (/[0-9]/.test(s.text[s.i])) {
+    digs.add(s.text[s.i]);
+    s.i++;
+  }
+  digs = digs.toString();
+  if (!digs)
+    throw mkError(s.text, [xi0, s.i], "Expected number");
+  return parseInt(digs, 10);
+}
+
 function backtracking(s, parser) {
   const sc = s.clone();
   let result;
   try {
     result = parser(sc);
   } catch (e) {
+      // ^ TODO: this should only catch parser errors
     return null;
   }
   Object.assign(s, sc);
@@ -1318,9 +1425,9 @@ function p_block(s, p_toplevel) {
     consume(s, '\n');
 
     const srec = { ...s.clone(), indents: [] };
-    const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
+    const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
     const result = p_toplevel(srec, done);
-    consume(srec, `==/${sentinel}==\n`);
+    consume(srec, `==/${sentinel}==`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
   }
@@ -1410,7 +1517,7 @@ function mkError(text, loc, err) {
   }
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┼─────\n');
   for (const wrp of wrapText('Error: ' + err))
-    result.add('       │ ' + clc.yellow(wrp));
+    result.add(strRep(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
 
   return Error('\n' + result.toString());
@@ -1552,6 +1659,7 @@ table.headers-vert th:first-child
   border-right-width: 2px;
 }
 
+
 /* Styling for references to other notes */
 .reference, .reference:visited {
   color: initial;
@@ -1573,11 +1681,38 @@ table.headers-vert th:first-child
 
 </style>
 
+
+<script>
+
+// <-> URL sync helpers
+// Blunt, but it works
+// TODO: better API
+
+window.urlSynchronizedState = {};
+
+function syncToUrl() {
+  const url0 = new URL(window.location.href);
+  url0.searchParams.set('state', JSON.stringify(window.urlSynchronizedState));
+  window.history.pushState(null, '', url0.toString());
+}
+
+function syncFromUrl() {
+  const url = new URL(window.location.href);
+  const str = url.searchParams.get('state')
+  window.urlSynchronizedState = JSON.parse(str) || {};
+}
+
+syncFromUrl();
+
+</script>
+
 `,
 
 annotationsImplementation,
 
 jargonImplementation,
+
+expandableListsImplementation,
 
 `
 
@@ -1644,18 +1779,7 @@ const annotationsImplementation = String.raw`
 document.addEventListener('DOMContentLoaded', () => {
 
   // id set of expanded \aref nodes
-  let expandedRefs = new Set();
-
-  function urlToState() {
-    const url = new URL(window.location.href);
-    expandedRefs = new Set(url.searchParams.get('expanded-refs')?.split(';') || []);
-  }
-
-  function stateToUrl() {
-    const url0 = new URL(window.location.href);
-    url0.searchParams.set('expanded-refs', [...expandedRefs].join(';'));
-    window.history.pushState(null, '', url0.toString());
-  }
+  let expandedRefs = new Set(window.urlSynchronizedState.expandedRefs || []);
 
   function stateToDom() {
     for (const $ref of document.querySelectorAll('.annotation-reference')) {
@@ -1677,6 +1801,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  stateToDom();
+
   for (const $ref of document.querySelectorAll('.annotation-reference')) {
     $ref.addEventListener('click', () => {
       const isExpanded = expandedRefs.has($ref.id);
@@ -1684,12 +1810,11 @@ document.addEventListener('DOMContentLoaded', () => {
       else expandedRefs.add($ref.id);
 
       stateToDom();
-      stateToUrl();
+
+      window.urlSynchronizedState.expandedRefs = [...expandedRefs];
+      syncToUrl();
     });
   }
-
-  urlToState();
-  stateToDom();
 
 });
 
@@ -1789,6 +1914,87 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     return $tt;
+  }
+
+});
+
+</script>
+
+`;
+
+
+const expandableListsImplementation = String.raw`
+
+<style>
+
+.expand > .expand-line {
+  display: list-item;
+  list-style-type: disclosure-closed;
+  cursor: pointer;
+}
+.expand > .expand-line:hover {
+  background-color: rgba(var(--color-dynamic-rgb), .05);
+}
+.expand > .expand-line::marker {
+  color: var(--color-dynamic);
+}
+.expand > .expand-body {
+  border-top: 1px dashed rgba(var(--color-static-rgb), 0.3);
+  margin-top: .5em;
+  padding-top: .5em;
+  position: relative;
+}
+.expand > .expand-body::before {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  background-color: var(--color-dynamic);
+  width: 1px;
+  left: -1.5ch;  /* TODO: baked */
+  top: 0;
+  height: 100%;
+}
+.expand:not(.open) > .expand-body {
+  display: none;
+}
+.expand.open > .expand-line {
+  list-style-type: disclosure-open;
+}
+
+</style>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const openExpands = new Set(urlSynchronizedState.openExpands || []);
+
+  for (const $exp of document.querySelectorAll('.expand')) {
+    const $line = $exp.querySelector('.expand-line');
+    const $body = $exp.querySelector('.expand-body');
+
+    isExpanded = openExpands.has($exp.id);;
+
+    function rerender() {
+      if (isExpanded)
+        $exp.classList.add('open');
+      else
+        $exp.classList.remove('open');
+    }
+
+    rerender();
+
+    $line.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      rerender();
+
+      if (isExpanded)
+        openExpands.add($exp.id);
+      else
+        openExpands.delete($exp.id);
+      urlSynchronizedState.openExpands = [...openExpands];
+      syncToUrl();
+    });
   }
 
 });

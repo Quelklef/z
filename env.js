@@ -136,6 +136,10 @@ class Logger {
     this.generic(clc.bold.red, 'ERR ', ...a);
   }
 
+  debug(...a) {
+    this.generic(clc.bold.magenta, 'DEBG', ...a);
+  }
+
 }
 
 

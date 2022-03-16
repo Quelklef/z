@@ -1,47 +1,54 @@
 format=flossy-2
 
-\title: Format \c[flossy]
+\title: Title
 
-\sec: Features
+\sec: Section header
 
-- Styling: \b[bold], \i[italic], \u[underline], \c[code]
+\b[bold], \i[italic], \u[underline], \c[code]
 
-- Code blocks:
-  \code js:
-    function f(x) {
-      return x;
-    }
+\code:
+  function f(x) {
+    return x;
+  }
 
-- Linking
-  - Defining \jarg <zeta (jargon|term(|s))> [jargon], which turn into implicit references to other notes
-  - \ref fmt-flossy [Explicit references to other notes]
-  - External, e.g. \href <https://google.com> [to Google]
+\jarg <flossy (jargon|term(|s))> [jargon], implicit references, \ref fmt-flossy-stress-test [explicit], \href <https://google.com> [external]
 
-- Lists, which:
-  # nest
-  # number,
-  # and expand!
-    > I think this needs some style changes
-      More separation between
-      Heading and content?
+- Bullet
+  - Bullet
+    - Bullet
+  - Bullet
 
-- x
-    - Double-indented is fucked up rn
+    Bullet
+- Bullet
 
-- Inline footnotes \aref [click me!]
-  \adef:
-    Pretty cool! \aref [they nest, too]
-    \adef: amazing =)
+- Bullet
+    - Double-indent
 
-> A handful of sigils
-  - "Fancy quotes"
-  - Em dash --
-  - Arrows
-    -> <- <-> => <= <=>
-    --> <-- <--> ==> <== <==>
+Bullet
+  - Single-indent
 
-- Tables:
+# Number
+  # Number
+  # Number
+# Number
+# Number
 
+\aref [Inline footnotes]
+    \adef ====
+I should be doubly-indented
+==/==
+
+> Expand
+  > Expand again
+
+Sigils
+- "Fancy quotes"
+- Em dash --
+- Arrows
+  -> <- <-> => <= <=>
+  --> <-- <--> ==> <== <==>
+
+Tables:
   \table headers=both
     | [] [brown eyes] [blue eyes]
     | [brown eyes] [brown eyes] [brown eyes]
