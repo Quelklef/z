@@ -16,6 +16,7 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
+
 function mkNote(floc, source, graph, env) {
 
   const noteId = plib.basename(floc, '.z');
@@ -35,6 +36,7 @@ function mkNote(floc, source, graph, env) {
   // note[t] holds transient (non-cached) data
   const t = Symbol('fmt-proper.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
+
 
   lazyAss(note[t], 'phase1', () => {
     env.parent.log.info('parsing', note.id);
@@ -506,9 +508,9 @@ Parsers are expected to have the signature
 That is, they take some arguments and the current state s, and perform some
 parsing, mutating the state s, and producing a result r.
 
-If you want backtracking or lookahead, pass in s.clone().
+If you want lookahead, pass in s.clone().
 
-Parsers fail by throwing.
+Parsers fail by throwing ParseError.
 
 */
 
@@ -776,13 +778,13 @@ function p_indent(s) {
   // Find bullet
   let style = null;
   {
-    if (backtracking(s, s => consume(s, '- '))) {
+    if (p_backtracking(s, s => p_consume(s, '- '))) {
       style = '-';
     }
-    else if (backtracking(s, s => consume(s, '> '))) {
+    else if (p_backtracking(s, s => p_consume(s, '> '))) {
       style = '>';
     }
-    else if (backtracking(s, s => consume(s, '# '))) {
+    else if (p_backtracking(s, s => p_consume(s, '# '))) {
       style = '#';
     }
   }
@@ -799,7 +801,7 @@ function p_indent(s) {
   if (style === '>') {
 
     const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
-    consume(s, '\n');
+    p_consume(s, '\n');
 
     s.indents.push(newIndent);
     const body = p_toplevel_markup(s);
@@ -835,7 +837,7 @@ function p_katex(s) {
   s.i++;
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
   const body = p_toplevel_verbatim(s, done);
-  consume(s, '$');
+  p_consume(s, '$');
   const xif = s.i;
 
   return new Rep_Katex({
@@ -854,9 +856,9 @@ function p_command(s) {
   if (s.text[s.i] !== '\\') return '';
   s.i++;
 
-  chompSpace(s);
+  p_spaces(s);
 
-  const name = parseWord(s);
+  const name = p_word(s);
 
   const command = commands[name];
   if (!command)
@@ -896,33 +898,33 @@ const commands = {
   // Code
   c(s) { return commands.code(s); },
   code(s) {
-    chompSpace(s);
-    let language = /\w/.test(s.text[s.i]) ? parseWord(s).toString() : null;
-    chompSpace(s);
+    p_spaces(s);
+    let language = /\w/.test(s.text[s.i]) ? p_word(s).toString() : null;
+    p_spaces(s);
     let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
     return new Rep_Code({ language, body, isBlock: kind === 'block' });
   },
 
   // Comment (REMark)
   rem(s) {
-    chompSpace(s);
+    p_spaces(s);
     const [comment, _] = p_enclosed(s, p_toplevel_verbatim);
     return '';
   },
 
   // Annotation reference
   aref(s) {
-    chompSpace(s);
+    p_spaces(s);
 
     let name;
     if (!"[{(<:".includes(s.text[s.i])) {
-      name = parseWord(s).toString();
+      name = p_word(s).toString();
     } else {
       name = s.gensym('annot');
       s.annotNameQueue.push(name);
     }
 
-    chompSpace(s);
+    p_spaces(s);
 
     return new Rep_Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
@@ -931,12 +933,12 @@ const commands = {
   adef(s) {
     const sx = s.clone();
 
-    chompSpace(s);
+    p_spaces(s);
 
     let name;
     if (!"[{(<:=".includes(s.text[s.i])) {
-      name = parseWord(s);
-      chompSpace(s);
+      name = p_word(s);
+      p_spaces(s);
     } else {
       if (s.annotNameQueue.length === 0)
         throw mkError(sx.text, sx.i, "Unpaired \\adef");
@@ -951,11 +953,11 @@ const commands = {
   ref(s) {
     const sx = s.clone();
 
-    chompSpace(s);
+    p_spaces(s);
 
-    const toNoteId = backtracking(s, parseWord);
+    const toNoteId = p_backtracking(s, p_word);
     if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
-    chompSpace(s);
+    p_spaces(s);
 
     const sr = s.clone();
     sr.doImplicitReferences = false;
@@ -970,15 +972,15 @@ const commands = {
 
   // External (hyper-)reference
   href(s) {
-    chompSpace(s)
-    consume(s, '<');
+    p_spaces(s)
+    p_consume(s, '<');
     const href = new Cats();
     while (s.i < s.text.length && s.text[s.i] !== '>') {
       href.add(s.text[s.i]);
       s.i++;
     }
-    consume(s, '>');
-    chompSpace(s)
+    p_consume(s, '>');
+    p_spaces(s)
 
     const doImplicitReferences = s.doImplicitReferences;
     const srec = { ...s.clone(), doImplicitReferences: false };
@@ -991,12 +993,12 @@ const commands = {
 
   // KaTeX
   katex(s) {
-    chompSpace(s);
+    p_spaces(s);
 
     const append = s.text.startsWith('pre', s.i);
     if (append) {
-      consume(s, 'pre');
-      chompSpace(s);
+      p_consume(s, 'pre');
+      p_spaces(s);
     }
 
     const xi0 = s.i;
@@ -1020,12 +1022,12 @@ const commands = {
   // TeX, TikZ
   tikz(s) { return commands.tex(s, true); },
   tex(s, tikz = false) {
-    chompSpace(s);
+    p_spaces(s);
 
     let append = s.text.startsWith('pre', s.i);
     if (append) {
-      consume(s, 'pre');
-      chompSpace(s);
+      p_consume(s, 'pre');
+      p_spaces(s);
     }
 
     let tex, kind;
@@ -1046,7 +1048,7 @@ const commands = {
 
     let forms = new Set();
     while (true) {
-      chompSpace(s);
+      p_spaces(s);
       if (!s.text.startsWith('<', s.i)) break;
       const jargs = parseJargon(s);
       forms = new Set([...forms, ...jargs]);
@@ -1099,17 +1101,17 @@ const commands = {
 
     const xi0 = s.i;
 
-    chompBlank(s);
+    p_whitespace(s);
     const opts = {};
     while (true) {
       const sb = s.clone();
-      chompBlank(sb);
+      p_whitespace(sb);
       if (!/[\w-]/.test(sb.text[sb.i])) break;
       Object.assign(s, sb);
 
-      const key = parseWord(s);
-      consume(s, '=');
-      const val = parseWord(s);
+      const key = p_word(s);
+      p_consume(s, '=');
+      const val = p_word(s);
       opts[key] = val;
     }
 
@@ -1138,16 +1140,16 @@ const commands = {
 
     const rows = [];
     while (true) {
-      const ok = backtracking(s, s => {
-        chompBlank(s);
-        return consume(s, '|');
+      const ok = p_backtracking(s, s => {
+        p_whitespace(s);
+        return p_consume(s, '|');
       });
       if (!ok) break;
 
       const row = [];
       while (true) {
-        const cell = backtracking(s, s => {
-          chompBlank(s);
+        const cell = p_backtracking(s, s => {
+          p_whitespace(s);
           return p_inline(s, p_toplevel_markup);
         });
         if (cell === null) break;
@@ -1183,9 +1185,9 @@ const commands = {
 
   // Expanding bullets
   fold(s) {
-    chompSpace(s);
+    p_spaces(s);
     const [line, _] = p_enclosed(s, p_toplevel_markup);
-    chompSpace(s);
+    p_spaces(s);
     const body = p_block(s, p_toplevel_markup);
     return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym('expand') }) });
   },
@@ -1312,22 +1314,22 @@ function parseJargonAux(s) {
 
 }
 
-function chompSpace(s) {
+function p_spaces(s) {
   while (s.text[s.i] === ' ') s.i++;
 }
 
-function chompBlank(s) {
+function p_whitespace(s) {
   while (/\s/.test(s.text[s.i])) s.i++;
 }
 
-function consume(s, str) {
+function p_consume(s, str) {
   if (!s.text.startsWith(str, s.i))
     throw mkError(s.text, [s.i, s.i + str.length], `Expected '${str}'`);
   s.i += str.length;
   return str;
 }
 
-function parseWord(s) {
+function p_word(s) {
   const xi0 = s.i;
   let word = new Cats();
   while (/[\w-]/.test(s.text[s.i])) {
@@ -1353,14 +1355,16 @@ function p_integer(s) {
   return parseInt(digs, 10);
 }
 
-function backtracking(s, parser) {
+function p_backtracking(s, parser) {
   const sc = s.clone();
   let result;
   try {
     result = parser(sc);
   } catch (e) {
-      // ^ TODO: this should only catch parser errors
-    return null;
+    if (e instanceof ParseError)
+      return null;
+    else
+      throw e;
   }
   Object.assign(s, sc);
   return result;
@@ -1413,7 +1417,7 @@ function p_block(s, p_toplevel) {
   }
 
   else if (s.text.startsWith('==', s.i)) {
-    consume(s, '==');
+    p_consume(s, '==');
 
     let sentinel = new Cats();
     while (!s.text.startsWith('==', s.i)) {
@@ -1421,14 +1425,14 @@ function p_block(s, p_toplevel) {
       s.i++;
     }
 
-    consume(s, '==');
-    chompSpace(s);
-    consume(s, '\n');
+    p_consume(s, '==');
+    p_spaces(s);
+    p_consume(s, '\n');
 
     const srec = { ...s.clone(), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
     const result = p_toplevel(srec, done);
-    consume(srec, `==/${sentinel}==`);
+    p_consume(srec, `==/${sentinel}==`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
   }
@@ -1457,11 +1461,12 @@ function p_inline(s, p_toplevel) {
 
   const done = s => s.text.startsWith(close, s.i);
   const r = p_toplevel(s, done)
-  consume(s, close);
+  p_consume(s, close);
 
   return r;
 }
 
+class ParseError extends Error { }
 
 // mkError(text, idx, err)
 // mkError(text, [i0, iF], err)  --  range [inc, exc]
@@ -1521,7 +1526,7 @@ function mkError(text, loc, err) {
     result.add(strRep(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
 
-  return Error('\n' + result.toString());
+  return new ParseError('\n' + result.toString());
 
   function toCoords(idx) {
     let sol = 0, y = 0;
