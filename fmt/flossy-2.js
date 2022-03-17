@@ -534,9 +534,10 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
     jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
 
     // Symbol generation
-    cursym: 0,
-    gensym() {
-      return 'gensym-' + (this.cursym++);
+    cursyms: {},
+    gensym(namespace = '') {
+      if (!(namespace in this.cursyms)) this.cursyms[namespace] = 0;
+      return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
     },
 
     // annotation-related state
@@ -806,7 +807,7 @@ function p_indent(s) {
 
     return new Rep_Indented({
       indent: dIndent,
-      body: new Rep_Expand({ line, body, id: s.gensym() }),
+      body: new Rep_Expand({ line, body, id: s.gensym('expand') }),
     });
 
   } else {
@@ -917,13 +918,13 @@ const commands = {
     if (!"[{(<:".includes(s.text[s.i])) {
       name = parseWord(s).toString();
     } else {
-      name = s.gensym();
+      name = s.gensym('annot');
       s.annotNameQueue.push(name);
     }
 
     chompSpace(s);
 
-    return new Rep_Seq(`<span class="annotation-reference" id="${s.gensym()}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+    return new Rep_Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
 
   // Annotation definition
@@ -1186,7 +1187,7 @@ const commands = {
     const [line, _] = p_enclosed(s, p_toplevel_markup);
     chompSpace(s);
     const body = p_block(s, p_toplevel_markup);
-    return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym() }) });
+    return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym('expand') }) });
   },
 
 };
@@ -1942,6 +1943,8 @@ const expandableListsImplementation = String.raw`
   border-top: 1px dashed rgba(var(--color-static-rgb), 0.3);
   margin-top: .5em;
   padding-top: .5em;
+  margin-bottom: .5em;
+  padding-bottom: .5em;
   position: relative;
 }
 .expand > .expand-body::before {
@@ -1973,7 +1976,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const $line = $exp.querySelector('.expand-line');
     const $body = $exp.querySelector('.expand-body');
 
-    isExpanded = openExpands.has($exp.id);;
+    let isExpanded = openExpands.has($exp.id);;
 
     function rerender() {
       if (isExpanded)
