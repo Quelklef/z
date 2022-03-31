@@ -1,8 +1,8 @@
 const plib = require('path');
 const child_process = require('child_process');
 
-const { quire } = require('./quire.js');
-const fss = quire('./fss.js');
+const { squire } = require('./squire.js');
+const fss = squire('./fss.js');
 
 
 /*

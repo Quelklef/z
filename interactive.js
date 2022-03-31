@@ -5,8 +5,8 @@ const keypress = require('keypress');
 const StaticServer = require('static-server');
 const WebSocket = require('ws');
 
-const { quire } = require('./quire.js');
-const { mkEnv } = quire('./env.js');
+const { squire } = require('./squire.js');
+const { mkEnv } = squire('./env.js');
 
 
 
@@ -63,7 +63,7 @@ async function recompile() {
   // Clear screen...
   for (let i = 0; i < 100; i++) process.stdout.write('\n');
 
-  const { main } = quire('./compile.js');
+  const { main } = squire('./compile.js');
 
   try {
     main();

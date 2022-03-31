@@ -1,12 +1,10 @@
 const { katex } = require('katex');
 const plib = require('path');
 
-const { quire } = require('./quire.js');
-const { lazyAss, Cats } = quire('./util.js');
-const { mkEnv } = quire('./env.js');
-const fss = quire('./fss.js');
-
-
+const { squire } = require('./squire.js');
+const { lazyAss, Cats } = squire('./util.js');
+const { mkEnv } = squire('./env.js');
+const fss = squire('./fss.js');
 
 const t = Symbol('compile.t');
 
@@ -24,7 +22,7 @@ function main() {
   for (const fname of fss.list('./fmt', { type: 'f' })) {
     const floc = plib.resolve(env.root, 'fmt', fname);
 
-    const format = quire(floc).default;
+    const format = squire(floc).default;
     const name = plib.basename(fname, plib.extname(fname));
     Object.defineProperty(format, 'name', { value: name });
 

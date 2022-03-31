@@ -9,9 +9,9 @@ const child_process = require('child_process');
 
 const katex = require('katex');
 
-const { quire } = require('../quire.js');
-const { lazyAss, Cats } = quire('../util.js');
-const fss = quire('../fss.js');
+const { squire } = require('../squire.js');
+const { lazyAss, Cats } = squire('../util.js');
+const fss = squire('../fss.js');
 
 exports.default =
 function * (floc, source, graph, env) {
