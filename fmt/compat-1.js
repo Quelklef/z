@@ -36,11 +36,7 @@ function mkNote(floc, source, graph, env) {
 
   note.defines = extract(note.source, '[:', ':]');
 
-  if (note.isRoam && note.defines.size > 0) {
-    note.id = [...note.defines][0];
-  } else {
-    note.id = plib.basename(note.floc, '.z');
-  }
+  note.id = plib.basename(note.floc, '.z');
 
   env = env.descend();
   env.log.prefixes.push(note.id.toString());

@@ -20,7 +20,10 @@ in pkgs.stdenv.mkDerivation {
   name = "z";
   inherit src;
 
-  buildInputs = [ pkgs.nodejs-15_x pkgs.texlive.combined.scheme-full ];
+  buildInputs = [
+    pkgs.nodejs-15_x pkgs.texlive.combined.scheme-full
+    pkgs.dhall-json
+  ];
 
   installPhase = ''
     mkdir $out

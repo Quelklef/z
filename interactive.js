@@ -111,7 +111,7 @@ async function recompile() {
 }
 
 
-const handlers = [];
+let handlers = [];
 keypress(process.stdin);
 process.stdin.setRawMode(true);
 process.stdin.resume();
@@ -122,9 +122,10 @@ process.stdin.on('keypress', (ch, key) => {
 });
 
 function withUserInput(func) {
-  handlers.push(ch => {
+  const handler = ch => {
     const done = func(ch)
-    if (done) handlers.pop();
+    if (done) handlers = handlers.flatMap(h => h === handler ? [] : [h]);
     else console.log("?");
-  });
+  };
+  handlers.push(handler);
 }

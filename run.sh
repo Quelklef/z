@@ -1,2 +1,2 @@
-node interactive.js
+nix-shell --command 'node interactive.js'
 

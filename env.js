@@ -183,6 +183,9 @@ function deserialize(str) {
     if (['number', 'string', 'null', 'boolean'].includes(typeof json))
       return json;
 
+    if (json === null)
+      return json;
+
     if (Array.isArray(json))
       return json.map(fromJson);
 

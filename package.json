@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Quelklef/z#readme",
   "dependencies": {
+    "axios": "^0.26.1",
     "chokidar": "^3.5.3",
     "cli-color": "^2.0.1",
     "highlight.js": "^11.4.0",

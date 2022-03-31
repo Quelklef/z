@@ -13,6 +13,9 @@ TODO:
    Useful in combination with cacheKeys for automagic reload on
    dependency change!
 
+... Y'know, I think this module can be made "magic" by having it
+    monkeypatch global.require.
+
 */
 
 /*

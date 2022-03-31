@@ -312,7 +312,7 @@ ${tex}
         try {
           result = child_process.execSync(cmd).toString();
         } catch (err) {
-          env.log.info(err.stderr.toString());  // meh
+          env.log.error(err.stderr.toString());  // meh
           throw 'LaTeX render failed; see above!';  // TODO
         }
 
@@ -394,7 +394,7 @@ class Rep_Implicit extends Rep {
 
   toHtml(env) {
     if (!this.toNote) {
-      console.warn(`Bad jargon '${jarg}'!`);
+      env.log.warn(`Bad jargon '${jarg}'!`);
     }
     const href = this.toNote?.href ?? '#';
     return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
@@ -523,6 +523,9 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
     // Environmental references
     graph, note, env,
 
+    // Note metadata (initialized below)
+    meta: null,
+
     // Source text
     text,
 
@@ -563,8 +566,10 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
   };
 
-  // Skip format header and optional following newline
+  // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
+  note.meta = p_noteMetadata(s);
+  if (note.meta) s.env.log.info('metadata is', note.meta);
   if (s.text[s.i] === '\n') s.i++;
 
   const rep = new Rep_Seq();
@@ -576,6 +581,167 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
   return template(rep);
 
+}
+
+
+function p_noteMetadata(s) {
+  if (!s.text.startsWith('meta:', s.i))
+    return null;
+
+  s.i += 'meta:'.length;
+  p_spaces(s);
+
+  const expr = p_dhallExpr(s);
+  return evalDhall(expr, s.env);
+}
+
+// Scan a single Dhall expression
+// Because Dhall uses whitespace to juxtapose, it's not possible to
+// know whan an expression has ended.
+// If your expressions are being cut off, wrap them in parens.
+function p_dhallExpr(s) {
+
+  let delims = [];
+
+  const i0 = s.i;
+
+  parsing:
+  while (true) {
+
+    if (s.i >= s.text.length)
+      break parsing;
+
+    const topDelim = delims[delims.length - 1]
+    switch (topDelim) {
+
+      // Expression
+      case undefined:
+      case '${':
+      case '(':
+      case '[':
+      case '{':
+      {
+
+        const pairs = {
+          "''": null,
+          '"': null,
+          "{-": null,
+          "(": ")",
+          "[": "]",
+          "{": "}",
+        };
+
+        for (const [opener, closer] of Object.entries(pairs)) {
+          if (s.text.startsWith(opener, s.i)) {
+            s.i += opener.length;
+            delims.push(opener);
+            continue parsing;
+          }
+          if (closer && s.text.startsWith(closer, s.i)) {
+            if (pairs[topDelim] !== closer)
+              throw mkError(s.text, [i0, s.i], `Unpaired '${closer}'`);
+            s.i += closer.length;
+            delims.pop();
+            continue parsing;
+          }
+        }
+
+        s.i++;
+
+      }
+      break;
+
+      // String
+      case '"':
+      case "''":
+      {
+        if (s.text.startsWith('\\', s.i)) {
+          s.i += 2;
+        }
+        else if (s.text.startsWith(topDelim, s.i)) {
+          s.i += topDelim.length;
+          delims.pop();
+        }
+        else if (s.text.startsWith('${', s.i)) {
+          s.i += 2;
+          delims.push('${');
+        }
+        else {
+          s.i++;
+        }
+      }
+      break;
+
+      // Line comment
+      case '--':
+      {
+        if (s.text.startsWith('\n', s.i))
+          delims.pop();
+        s.i++;
+      }
+      break;
+
+      // Block comment
+      case '{-':
+      {
+        if (s.text.startsWith('{-', s.i)) {
+          s.i += 2;
+          delims.push('{-');
+        }
+        else if (s.text.startsWith('-}', s.i)) {
+          s.i += 2;
+          delims.pop();
+        }
+        else {
+          s.i++;
+        }
+      }
+      break;
+
+      default:
+        impossible(topDelim);
+
+    }
+
+    if (delims.length === 0)
+      break parsing;
+
+  }
+
+  // Scan to line end
+  s.i = indexOf(s.text, '\n', s.i);
+
+  return s.text.slice(i0, s.i);
+
+}
+
+function evalDhall(expr, env) {
+  return env.cache.at('dhall', [expr], () => {
+    return fss.withTempDir(tmp => {
+
+      env.log.info(`Evaluating Dhall [${expr.length}]`);
+
+      fss.write(plib.resolve(tmp, 'it.dhall'), expr);
+
+      const cmd = String.raw`
+        cd ${tmp} \
+        && dhall-to-json --file it.dhall --compact
+      `;
+
+      let result;
+      try {
+        result = child_process.execSync(cmd).toString();
+      } catch (err) {
+        env.log.error(err.stderr.toString());  // meh
+        throw 'Dhall eval failed; see above!';  // TODO
+      }
+
+      result = JSON.parse(result);
+      env.log.info(`Evaluating Dhall [done] [${expr.length}]`);
+      return result;
+
+    });
+  });
 }
 
 
@@ -1515,7 +1681,7 @@ function mkError(text, loc, err) {
     wrapText(noNewline).forEach((wrp, wrpI) => {
       const wrpI0 = wrpI * wrapWidth;
       const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
-      wrp = wrp.slice(0, wrpHlI0) + clc.yellow(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
+      wrp = wrp.slice(0, wrpHlI0) + clc.bgYellow.black(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
 
       const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
       result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
@@ -2075,6 +2241,6 @@ function sample_s(s, linec = 4) {
   return sample(s.text, s.i, linec);
 }
 
-function impossible() {
-  throw Error('uh oh...');
+function impossible(msg = '') {
+  throw Error('uh oh... [' + msg.toString() + ']');
 }
