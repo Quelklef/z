@@ -85,7 +85,7 @@ function main() {
       counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
     env.log.info(
-      `Found ${formats.length} formats: `
+      `Found ${Object.keys(formats).length} formats: `
        + sorted.map(k => `${k} (×${counts[k]})`).join(', ')
     );
   }
@@ -127,6 +127,7 @@ function main() {
 
   fss.write(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
 
+  env.log.info(`Writing...`);
   for (const note of graph.notes) {
 
     fss.write(

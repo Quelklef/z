@@ -1,0 +1,350 @@
+const plib = require('path');
+const child_process = require('child_process');
+
+const { squire } = require('../squire.js');
+const { lazyAss, Cats, withTempDir } = squire('../util.js');
+const fss = squire('../fss.js');
+
+exports.default =
+function * (floc, source, graph, env) {
+  yield * parseTranscription(floc, source, graph, env);
+}
+
+const scriptSrc = fss.read(__filename).toString();
+
+const t = Symbol('t');
+
+function * parseTranscription(floc, source, graph, env) {
+
+  const fname = plib.basename(floc, plib.extname(floc));
+  const journalNumber = parseInt(fname.split('-')[1], 10);
+
+  const pages = [];
+
+  for (const line of source.split('\n')) {
+
+    const curPage = pages[pages.length - 1];
+
+    // Command
+    if (line.startsWith(':')) {
+
+      const cmd = line.slice(':'.length, indexOf(line, ' '));
+      const payload = line.slice((':' + cmd + ' ').length);
+
+      if (cmd === 'page') {
+        const newPage = {};
+        newPage.range = payload.includes('-') ? payload.split('-') : [payload, payload];
+        newPage.id = mkId(journalNumber, newPage.range);
+        newPage.cacheKeys = [newPage.id, scriptSrc, source];
+        newPage.defines = [];
+        newPage.references = new Set();
+        newPage.journalInfo = { number: journalNumber };
+
+        Object.defineProperty(newPage, t, { enumerable: false, value: {} });
+        newPage[t].source = new Cats();
+        newPage[t].sourceLocation = floc;
+
+        if (curPage && iso(curPage.range[1], x => x + 1) !== newPage.range[0])
+          throw Error(`Bad indexing ${curPage.range[1]} -> ${newPage.range[0]}`);
+
+        pages.push(newPage);
+      }
+
+      else if (cmd === 'when') {
+        curPage.when = payload;
+      }
+
+      else if (cmd === 'transcribed-when') {
+        // pass
+      }
+
+      else {
+        throw Error(`Unrecognized command: ${cmd}`);
+      }
+
+    // Content
+    } else {
+      if (!curPage) continue;
+      curPage[t].source.add(line, '\n');
+    }
+
+  }
+
+  for (const page of pages) {
+    lazyAss(page, 'html', () => {
+      env.log.info('Rendering ' + page.id);
+      return mkHtml(page, graph, env);
+    });
+    yield page;
+  }
+
+}
+
+function prettifyRange(range) {
+  return range[0] === range[1] ? range[0] : `${range[0]}-${range[1]}`;
+}
+
+function mkId(journalNumber, range) {
+  return `j${journalNumber}p${prettifyRange(range)}`;
+}
+
+function iso(num, f) {
+  const len = num.length;
+  const n = parseInt(num, 10);
+  const fn = f(n);
+  return ('' + fn).padStart(len, '0');
+}
+
+function isThisFormat(note) {
+  return t in note;
+}
+
+function mkHtml(page, graph, env) {
+
+  const html = parseBody(page[t].source.toString().trim(), env);
+
+  let prevNext = '';
+  {
+    const prevPage = graph.notes.find(n => isThisFormat(n) && iso(n.range[1], x => x + 1) === page.range[0]);
+    const nextPage = graph.notes.find(n => isThisFormat(n) && n.range[0] === iso(page.range[1], x => x + 1));
+    // ^ TODO: O(n) but ought to be O(1)
+    prevNext = mk(prevPage, '&larr; prev') + ' &bull; ' + mk(nextPage, 'next &rarr;');
+
+    function mk(n, text) {
+      if (!n) return `<span style="opacity: 0.5">${text}</span>`;
+      return `<a href="${n.href}">${text}</a>`;
+    }
+  }
+
+  let images = '';
+  {
+    for (let pg = page.range[0]; parseInt(pg, 10) <= parseInt(page.range[1], 10); pg = iso(pg, x => x + 1)) {
+      const b64 = base64OfFile(
+        plib.resolve(page[t].sourceLocation, '..', 'assets', `j-${page.journalInfo.number}-p-${pg}.png`),
+        env
+      );
+      images += `<img class="page" src="data:image/png;base64,${b64}" />`;
+    }
+  }
+
+  let whenHtml = '';
+  {
+    if (page.when)
+      whenHtml = '<span style="font-family: monospace">' + escapeHtml(page.when) + '</span>\n\n';
+  }
+
+  return String.raw`
+
+<html>
+  <head>
+    <meta charset="utf-8">
+  </head>
+  <body>
+
+<style>
+
+@import url('https://fonts.googleapis.com/css2?family=Merriweather&display=swap');
+
+* {
+  box-sizing: border-box;
+}
+
+.prevnext a {
+  color: inherit;
+  text-decoration: none;
+}
+
+body {
+  font-family: 'Merriweather', serif;
+  font-size: 14px;
+  margin-bottom: 25vh;
+}
+
+
+main {
+  width: 100%;
+}
+
+.prelude {
+  text-align: center;
+  color: rgb(117, 19, 128);
+  margin-bottom: 50px;
+  border-bottom: 1px dotted rgba(117, 19, 128, .25);
+}
+
+.leftright {
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr 2fr;
+  grid-template-rows: 1fr;
+  column-gap: 2.5em;
+}
+
+.leftright .left {
+  grid-column: 1 / 1;
+  grid-row: 2 / 2;
+}
+
+.leftright .right {
+  grid-column: 2 / 2;
+  grid-row: 2 / 2;
+  white-space: pre-wrap;
+}
+
+.right {
+  line-height: 1.5em;
+}
+
+.left {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-start;
+  align-content: flex-start;
+}
+
+.left a {
+  display: contents;
+}
+
+.page {
+  width: 48%;
+  margin-bottom: 2%;
+  margin-right: 2%;
+  border: 1px solid rgb(200, 200, 200);
+}
+
+.interp, .interp::before, .interp::after {
+  color: grey;
+}
+.interp::before { content: '['; }
+.interp::after { content: ']'; }
+
+</style>
+
+<main>
+
+<div class="prelude">
+  <p>Journal #${page.journalInfo.number} &bull; ${prettifyRange(page.range)}</p>
+  <p class="prevnext">${prevNext}</p>
+</div>
+
+<div class="leftright">
+  <div class="left">${images}</div>
+  <div class="right">${whenHtml}${html.toString()}</div>
+</div>
+
+</main>
+
+  </body>
+</html>
+
+`;
+}
+
+
+
+// indexOf but on fail return str.length instead of -1
+function indexOf(str, sub, from = 0) {
+  let result = str.indexOf(sub, from);
+  if (result === -1) result = str.length;
+  return result;
+}
+
+function escapeHtml(s) {
+  const htmlEscapes = {
+    '<': '&lt;',
+    '>': '&gt;',
+    '&': '&amp;',
+  };
+
+  return [...s].map(c => htmlEscapes[c] || c).join('');
+}
+
+function base64OfFile(floc, env) {
+  return env.cache.at('assets', [floc], () => {
+    env.log.info(`Reading asset ${floc}`);
+    return child_process.execSync(
+      `cat ${floc} | base64 -w 0`,
+      {
+        maxBuffer: 2 ** 30,  // ~1G; it be like that
+      }
+    ).toString();
+  });
+}
+
+
+
+function parseBody(body, env) {
+
+  let stack = [];
+  const result = new Cats();
+
+  let i = 0;
+  while (i < body.length) {
+
+    const isLiteral = stack.length > 0 && stack[stack.length - 1] === 'html';
+
+    if (body.startsWith('\\', i)) {
+      result.add(body[i]);
+      i += 2;
+    }
+
+    else if (isLiteral && body[i] !== ']') {
+      result.add(body[i]);
+      i++;
+    }
+
+    else if (body.startsWith('--', i)) {
+      result.add('&em;');
+      i += 2;
+    }
+
+    else if (body.startsWith('[', i)) {
+      i++;
+      const cmd = body.slice(i, indexOf(body, ':', i));
+      i += cmd.length;
+      stack.push(cmd);
+      if (body[i] !== ':') throw Error('Expected command');
+      i++;
+
+      if (['u', 'i', 'b'].includes(cmd)) {
+        result.add(`<${cmd}>`);
+      } else if (cmd === 'c') {  // comment
+        result.add('<span class="interp">');
+      } else if (cmd === 'html') {
+        true;
+      } else {
+        throw Error(`Unrecognized command ${cmd}`);
+      }
+    }
+
+    else if (body.startsWith(']', i)) {
+      if (stack.length === 0) throw Error(`Unmached ']' near: ${body.slice(i - 10, i + 10)}`);
+      const cmd = stack.pop();
+      i++;
+      if (['u', 'i', 'b'].includes(cmd)) {
+        result.add(`</${cmd}>`);
+      } else if (cmd === 'c') {
+        result.add('</span>');
+      } else if (cmd === 'html') {
+        true;
+      } else {
+        throw Error(`Impossible: ${cmd}`);
+      }
+    }
+
+    else {
+      result.add(escapeHtml(body[i]));
+      i++;
+    }
+
+  }
+
+  if (stack.length > 0)
+    throw Error(`Nonempty stack after parse: ${stack}`);
+
+  return result.toString();
+
+  return escapeHtml(body);
+}
