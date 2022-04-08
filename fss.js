@@ -31,6 +31,7 @@ function read(loc) {
 /* List directory descendant paths */
 exports.list =
 function * list(dirloc, args) {
+  args ||= {};
   args.type ||= 'both';
   args.recursive ||= false;
 
@@ -54,6 +55,16 @@ function * list(dirloc, args) {
 exports.remove =
 function remove(loc) {
   fs.rmSync(loc, { recursive: true });
+}
+
+
+/* Empty a directory */
+exports.empty =
+function empty(loc) {
+  if (!fs.lstatSync(loc).isDirectory())
+    throw Error('Does not point to a directory: ' + loc);
+  fs.rmSync(loc, { recursive: true });
+  fs.mkdirSync(loc);
 }
 
 

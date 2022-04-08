@@ -38,6 +38,8 @@ function main() {
   );
 
   for (const floc of files) {
+    if (plib.extname(floc) !== '.z') continue;
+
     const source = fss.read(floc);
 
     let formatName = null;
@@ -115,6 +117,12 @@ function main() {
       if (!(refId in graph.notesById)) continue;  // can happen due to caching weirdness
       graph.notesById[refId].referencedBy.add(note.id);
     }
+  }
+
+  // Empty out dir except for cache
+  for (const loc of fss.list(plib.resolve(env.root, 'out'))) {
+    const isCache = plib.resolve(loc) === plib.resolve(env.cache.root);
+    if (!isCache) fss.remove(loc);
   }
 
   fss.write(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));

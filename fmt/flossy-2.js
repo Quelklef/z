@@ -450,7 +450,7 @@ class Rep_ReferencedBy extends Rep {
     html.add('<p>Referenced by:</p>');
     html.add('<ul>');
     for (let refBy of this.referencedBy) {
-      html.add(`<li><a href="${refBy.href}" class="reference">${refBy.id}</a></li>`);
+      html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
     }
     html.add('</ul>');
     return html;
@@ -1324,6 +1324,11 @@ const commands = {
       rows.push(row);
     }
 
+    p_backtracking(s, s => {
+      p_spaces(s);
+      p_consume(s, '\n');
+    });
+
     if (rows.length === 0)
       throw mkError(s.text, [xi0, s.i], "Empty table")
 
@@ -1837,14 +1842,17 @@ table.headers-vert th:first-child
   color: initial;
 }
 .reference {
-  background-color: rgba(var(--color-dynamic-rgb), .1);
   text-decoration: none;
 }
-.reference:not(.invalid):hover {
-  background-color: rgba(var(--color-dynamic-rgb), .2);
+.reference.implicit:not(:hover) {
+  border-bottom: 1.5px solid rgba(var(--color-dynamic-rgb), .15);
 }
-.reference.explicit {
-  border-bottom: 1px solid var(--color-dynamic);
+.reference:not(.invalid):hover {
+  border: none;
+  background-color: rgba(var(--color-dynamic-rgb), .25);
+}
+.reference.explicit:not(:hover) {
+  border-bottom: 2px solid rgba(var(--color-dynamic-rgb), .75);
 }
 .reference.invalid {
   color: red;
