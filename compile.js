@@ -119,6 +119,21 @@ function main() {
     }
   }
 
+  // note.assets : [string]
+  // String of absolute paths to files
+  graph.resolvedAssetHrefs = {};
+  for (const note of graph.notes) {
+    for (const assetLoc of (note.assets ?? [])) {
+      if (!plib.isAbsolute(assetLoc))
+        throw Error(`Note '${note.id}' requests asset at '${assetLoc}'; asset paths MUST be absolute!`);
+
+      let href = '/' + plib.join('assets', plib.basename(assetLoc));
+      while (href in graph.resolvedAssetHrefs)
+        href = href.slice(0, plib.extname(href).length) + '0' + pib.extname(href);
+      graph.resolvedAssetHrefs[assetLoc] = href;
+    }
+  }
+
   // Empty out dir except for cache
   for (const loc of fss.list(plib.resolve(env.root, 'out'))) {
     const isCache = plib.resolve(loc) === plib.resolve(env.cache.root);
@@ -128,8 +143,8 @@ function main() {
   fss.write(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
 
   env.log.info(`Writing...`);
-  for (const note of graph.notes) {
 
+  for (const note of graph.notes) {
     fss.write(
       plib.resolve(env.root, 'out', 'raw', note.relativeLoc),
       '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
@@ -141,7 +156,16 @@ function main() {
       plib.resolve(env.root, 'out', note.relativeLoc),
       withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`),
     );
+  }
 
+  fss.mkdir(plib.resolve(env.root, 'out', 'assets'));
+  for (const [assetLoc, assetHref] of Object.entries(graph.resolvedAssetHrefs)) {
+    const dest = plib.join(env.root, 'out', assetHref);
+    if (process.env.Z_SYMLINKS_OK === '1') {
+      fss.symlink({ source: assetLoc, dest });  // symlink for speed
+    } else {
+      fss.copy({ source: assetLoc, dest });
+    }
   }
 
   env.log.info(`Caching...`);

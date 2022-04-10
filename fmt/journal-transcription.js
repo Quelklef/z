@@ -12,6 +12,8 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
+const emitSensitiveInfo = process.env.Z_EMIT_SENSITIVE_INFO === '1';
+
 const t = Symbol('t');
 
 function * parseTranscription(floc, source, graph, env) {
@@ -35,14 +37,14 @@ function * parseTranscription(floc, source, graph, env) {
         const newPage = {};
         newPage.range = payload.includes('-') ? payload.split('-') : [payload, payload];
         newPage.id = mkId(journalNumber, newPage.range);
-        newPage.cacheKeys = [newPage.id, scriptSrc, source];
+        newPage.cacheKeys = [newPage.id, scriptSrc, source, emitSensitiveInfo];
         newPage.defines = [];
         newPage.references = new Set();
         newPage.journalInfo = { number: journalNumber };
+        newPage.doEmitThisPage = emitSensitiveInfo;
 
         Object.defineProperty(newPage, t, { enumerable: false, value: {} });
         newPage[t].source = new Cats();
-        newPage[t].sourceLocation = floc;
 
         if (curPage && iso(curPage.range[1], x => x + 1) !== newPage.range[0])
           throw Error(`Bad indexing ${curPage.range[1]} -> ${newPage.range[0]}`);
@@ -58,6 +60,10 @@ function * parseTranscription(floc, source, graph, env) {
         // pass
       }
 
+      else if (cmd === 'public') {
+        curPage.doEmitThisPage = true;
+      }
+
       else {
         throw Error(`Unrecognized command: ${cmd}`);
       }
@@ -71,10 +77,33 @@ function * parseTranscription(floc, source, graph, env) {
   }
 
   for (const page of pages) {
+    const [_, hasAnyCensoring] = parseBody(page[t].source.toString().trim(), env);
+
+    const doImages = (page.doEmitThisPage && !hasAnyCensoring) || emitSensitiveInfo;
+
+    if (doImages) {
+      page.images = [];
+      for (
+        let pg = page.range[0];
+        parseInt(pg, 10) <= parseInt(page.range[1], 10);
+        pg = iso(pg, x => x + 1)
+      ) {
+        const name = `j-${page.journalInfo.number}-p-${pg}.png`;
+        const loc = plib.resolve(floc, '..', 'assets', name);
+        page.images.push(loc);
+      }
+      page.assets = [...page.images];
+    } else {
+      page.images = [];
+    }
+  }
+
+  for (const page of pages) {
     lazyAss(page, 'html', () => {
       env.log.info('Rendering ' + page.id);
       return mkHtml(page, graph, env);
     });
+
     yield page;
   }
 
@@ -101,7 +130,7 @@ function isThisFormat(note) {
 
 function mkHtml(page, graph, env) {
 
-  const html = parseBody(page[t].source.toString().trim(), env);
+  const [html, _] = parseBody(page[t].source.toString().trim(), env);
 
   let prevNext = '';
   {
@@ -118,12 +147,9 @@ function mkHtml(page, graph, env) {
 
   let images = '';
   {
-    for (let pg = page.range[0]; parseInt(pg, 10) <= parseInt(page.range[1], 10); pg = iso(pg, x => x + 1)) {
-      const b64 = base64OfFile(
-        plib.resolve(page[t].sourceLocation, '..', 'assets', `j-${page.journalInfo.number}-p-${pg}.png`),
-        env
-      );
-      images += `<img class="page" src="data:image/png;base64,${b64}" />`;
+    for (const imageLoc of page.images) {
+      const href = graph.resolvedAssetHrefs[imageLoc];
+      images += `<a href="${href}" target="_blank"><img class="page" src="${href}" /></a>`;
     }
   }
 
@@ -175,7 +201,7 @@ main {
 .leftright {
   width: 100%;
   display: grid;
-  grid-template-columns: 1fr 2fr;
+  grid-template-columns: 1fr 3fr;
   grid-template-rows: 1fr;
   column-gap: 2.5em;
 }
@@ -208,9 +234,8 @@ main {
 }
 
 .page {
-  width: 48%;
+  width: 100%;
   margin-bottom: 2%;
-  margin-right: 2%;
   border: 1px solid rgb(200, 200, 200);
 }
 
@@ -229,10 +254,12 @@ main {
   <p class="prevnext">${prevNext}</p>
 </div>
 
+${page.doEmitThisPage ? String.raw`
 <div class="leftright">
   <div class="left">${images}</div>
   <div class="right">${whenHtml}${html.toString()}</div>
 </div>
+` : '<center><p>This section has not been made public.</p></center>'}
 
 </main>
 
@@ -261,43 +288,42 @@ function escapeHtml(s) {
   return [...s].map(c => htmlEscapes[c] || c).join('');
 }
 
-function base64OfFile(floc, env) {
-  return env.cache.at('assets', [floc], () => {
-    env.log.info(`Reading asset ${floc}`);
-    return child_process.execSync(
-      `cat ${floc} | base64 -w 0`,
-      {
-        maxBuffer: 2 ** 30,  // ~1G; it be like that
-      }
-    ).toString();
-  });
-}
-
-
 
 function parseBody(body, env) {
+
+  body += '\n';
 
   let stack = [];
   const result = new Cats();
 
+  let hasAnyCensoring = false;
+
   let i = 0;
   while (i < body.length) {
 
+    if (i === 0 || body[i - 1] === '\n') {
+      if (i !== 0) result.add('</div>');
+      let indent = 0;
+      while (body[i] === ' ') {
+        indent++;
+        i++;
+      }
+      result.add(`<div style="margin-left: ${indent}ch">`);
+      if (indent !== 0) continue;
+    }
+
     const isLiteral = stack.length > 0 && stack[stack.length - 1] === 'html';
+    const isCensoring = stack.includes('#');
 
     if (body.startsWith('\\', i)) {
       result.add(body[i]);
       i += 2;
     }
 
+    // TODO: this lets [html:raw html] leak out of [#:censors]
     else if (isLiteral && body[i] !== ']') {
       result.add(body[i]);
       i++;
-    }
-
-    else if (body.startsWith('--', i)) {
-      result.add('&em;');
-      i += 2;
     }
 
     else if (body.startsWith('[', i)) {
@@ -314,6 +340,8 @@ function parseBody(body, env) {
         result.add('<span class="interp">');
       } else if (cmd === 'html') {
         true;
+      } else if (cmd === '#') {
+        hasAnyCensoring = true;
       } else {
         throw Error(`Unrecognized command ${cmd}`);
       }
@@ -327,11 +355,29 @@ function parseBody(body, env) {
         result.add(`</${cmd}>`);
       } else if (cmd === 'c') {
         result.add('</span>');
-      } else if (cmd === 'html') {
+      } else if (cmd === 'html' || cmd === '#') {
         true;
       } else {
         throw Error(`Impossible: ${cmd}`);
       }
+    }
+
+    else if (isCensoring && !emitSensitiveInfo) {
+      if (body[i] === '\n') {
+        result.add('\n');
+        i++;
+      } else {
+        const length = Math.random() < .3 ? 0 : (Math.random() < .5 ? 1 : 2);
+        for (let _ = 0; _ < length; _++) {
+          result.add('&#8203;<span style="background: black; color: black">X</span>&#8203;');
+        }
+        i++;
+      }
+    }
+
+    else if (body.startsWith('--', i)) {
+      result.add('&mdash;');
+      i += 2;
     }
 
     else {
@@ -344,7 +390,5 @@ function parseBody(body, env) {
   if (stack.length > 0)
     throw Error(`Nonempty stack after parse: ${stack}`);
 
-  return result.toString();
-
-  return escapeHtml(body);
+  return [result.toString(), hasAnyCensoring];
 }

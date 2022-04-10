@@ -96,3 +96,17 @@ function withTempDir(fun) {
     fs.rmSync(path, { recursive: true });
   }
 }
+
+
+/* Create a symbolic link */
+exports.symlink =
+function symlinkSync({ source, dest }) {
+  fs.symlinkSync(source, dest);
+}
+
+
+/* Copy a file or directory */
+exports.copy =
+function copy({ source, dest }) {
+  fs.copyFileSync(source, dest);
+}

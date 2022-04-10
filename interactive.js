@@ -22,6 +22,7 @@ const server = new StaticServer({
   rootPath: plib.resolve(process.env.PWD, 'out'),
   port: PORT,
   host: '0.0.0.0',
+  followSymlink: true,  // assets are symlink'd
 });
 
 server.start();
@@ -84,8 +85,9 @@ async function recompile() {
     .forEach((ns, i) => nss[i + 1] = ns);
 
   console.log(
-    '[q]uit; force [r]ecompile; clear cache: [a]ll'
-    + Object.entries(nss).map(([i, ns]) => ` [${i}]${ns}`).join('')
+    '\nquit: [q]'
+    + '\nrecompile: [r]'
+    + '\nclear cache: [a] all' + Object.entries(nss).map(([i, ns]) => `; [${i}] ${ns}`).join('')
   );
 
   withUserInput(ch => {

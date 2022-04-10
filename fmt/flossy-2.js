@@ -1839,7 +1839,7 @@ table.headers-vert th:first-child
 
 /* Styling for references to other notes */
 .reference, .reference:visited {
-  color: initial;
+  color: inherit;
 }
 .reference {
   text-decoration: none;
