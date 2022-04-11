@@ -2,7 +2,7 @@ const { katex } = require('katex');
 const plib = require('path');
 
 const { squire } = require('./squire.js');
-const { lazyAss, Cats } = squire('./util.js');
+const { lazyAss, Cats, iife } = squire('./util.js');
 const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
@@ -95,44 +95,57 @@ function main() {
     note.href = '/' + note.relativeLoc;
   }
 
-  graph.notesById = {};
-  for (const note of graph.notes)
-    graph.notesById[note.id] = note;
+  graph.notesById = iife(function() {
+    const notesById = {};
+    for (const note of graph.notes)
+      notesById[note.id] = note;
+    return notesById;
+  });
 
-  graph.jargonSet = new Set();
-  graph.jargonToDefiningNoteSet = {};
-  for (const note of graph.notes) {
-    for (const jarg of note.defines) {
-      graph.jargonSet.add(jarg);
-      if (!(jarg in graph.jargonToDefiningNoteSet))
-        graph.jargonToDefiningNoteSet[jarg] = new Set();
-      graph.jargonToDefiningNoteSet[jarg].add(note);
+  [graph.jargonSet, graph.jargonToDefiningNoteSet] = iife(function() {
+    const jargonSet = new Set();
+    const jargonToDefiningNoteSet = {};
+    for (const note of graph.notes) {
+      for (const jarg of note.defines) {
+        jargonSet.add(jarg);
+        if (!(jarg in jargonToDefiningNoteSet))
+          jargonToDefiningNoteSet[jarg] = new Set();
+        jargonToDefiningNoteSet[jarg].add(note);
+      }
     }
-  }
+    return [jargonSet, jargonToDefiningNoteSet];
+  });
 
+  const noteReferencedByMap = {};
   for (const note of graph.notes)
-    note.referencedBy = new Set();
+    noteReferencedByMap[note.id] = new Set();
   for (const note of graph.notes) {
     for (const refId of note.references) {
       if (!(refId in graph.notesById)) continue;  // can happen due to caching weirdness
-      graph.notesById[refId].referencedBy.add(note.id);
+      noteReferencedByMap[refId].add(note.id);
     }
   }
+  for (const note of graph.notes)
+    note.referencedBy = noteReferencedByMap[note.id];
 
-  // note.assets : [string]
+  // graph.resolvedAssetHrefs : { string: string }
+  // derived from note.assets : [string]
   // String of absolute paths to files
-  graph.resolvedAssetHrefs = {};
-  for (const note of graph.notes) {
-    for (const assetLoc of (note.assets ?? [])) {
-      if (!plib.isAbsolute(assetLoc))
-        throw Error(`Note '${note.id}' requests asset at '${assetLoc}'; asset paths MUST be absolute!`);
+  graph.resolvedAssetHrefs = iife(function() {
+    const resolved = {}
+    for (const note of graph.notes) {
+      for (const assetLoc of (note.assets ?? [])) {
+        if (!plib.isAbsolute(assetLoc))
+          throw Error(`Note '${note.id}' requests asset at '${assetLoc}'; asset paths MUST be absolute!`);
 
-      let href = '/' + plib.join('assets', plib.basename(assetLoc));
-      while (href in graph.resolvedAssetHrefs)
-        href = href.slice(0, plib.extname(href).length) + '0' + pib.extname(href);
-      graph.resolvedAssetHrefs[assetLoc] = href;
+        let href = '/' + plib.join('assets', plib.basename(assetLoc));
+        while (href in resolved)
+          href = href.slice(0, plib.extname(href).length) + '0' + pib.extname(href);
+        resolved[assetLoc] = href;
+      }
     }
-  }
+    return resolved;
+  });
 
   // Empty out dir except for cache
   for (const loc of fss.list(plib.resolve(env.root, 'out'))) {

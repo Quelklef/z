@@ -46,10 +46,17 @@ function lazyAss(obj, key, lz) {
 }
 
 
+/* App-wide standard hashing */
 exports.hash =
 function hash(...keys) {
   let hash = crypto.createHash('md5');
   for (const key of keys)
     hash.update(key.toString())
   return hash.digest('hex');
+}
+
+
+exports.iife =
+function iife(f) {
+  return f();
 }
