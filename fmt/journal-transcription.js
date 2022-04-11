@@ -132,6 +132,8 @@ function mkHtml(page, graph, env) {
 
   const [html, _] = parseBody(page[t].source.toString().trim(), env);
 
+  const emphasizeImages = html.trim().split('\n').length === 1;
+
   let prevNext = '';
   {
     const prevPage = graph.notes.find(n => isThisFormat(n) && iso(n.range[1], x => x + 1) === page.range[0]);
@@ -146,12 +148,14 @@ function mkHtml(page, graph, env) {
   }
 
   let images = '';
+  images +='<div class="left">';
   {
     for (const imageLoc of page.images) {
       const href = graph.resolvedAssetHrefs[imageLoc];
       images += `<a href="${href}" target="_blank"><img class="page" src="${href}" /></a>`;
     }
   }
+  images += '</div>';
 
   let whenHtml = '';
   {
@@ -166,6 +170,22 @@ function mkHtml(page, graph, env) {
     <meta charset="utf-8">
   </head>
   <body>
+
+<main>
+
+<div class="prelude">
+  <p>Journal #${page.journalInfo.number} &bull; ${prettifyRange(page.range)}</p>
+  <p class="prevnext">${prevNext}</p>
+</div>
+
+${page.doEmitThisPage ? String.raw`
+<div class="leftright">
+  ${images}
+  <div class="right">${whenHtml}${html.toString()}</div>
+</div>
+` : '<center><p>This section has not been made public.</p></center>'}
+
+</main>
 
 <style>
 
@@ -200,20 +220,15 @@ main {
 
 .leftright {
   width: 100%;
-  display: grid;
-  grid-template-columns: 1fr 3fr;
-  grid-template-rows: 1fr;
-  column-gap: 2.5em;
+  display: flex;
 }
 
 .leftright .left {
-  grid-column: 1 / 1;
-  grid-row: 2 / 2;
+  flex: 0 0 ${emphasizeImages ? '65%' : '25%'};
+  margin-right: 2em;
 }
 
 .leftright .right {
-  grid-column: 2 / 2;
-  grid-row: 2 / 2;
   white-space: pre-wrap;
 }
 
@@ -246,22 +261,6 @@ main {
 .interp::after { content: ']'; }
 
 </style>
-
-<main>
-
-<div class="prelude">
-  <p>Journal #${page.journalInfo.number} &bull; ${prettifyRange(page.range)}</p>
-  <p class="prevnext">${prevNext}</p>
-</div>
-
-${page.doEmitThisPage ? String.raw`
-<div class="leftright">
-  <div class="left">${images}</div>
-  <div class="right">${whenHtml}${html.toString()}</div>
-</div>
-` : '<center><p>This section has not been made public.</p></center>'}
-
-</main>
 
   </body>
 </html>

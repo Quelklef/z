@@ -1,5 +1,0 @@
-format=flossy-2
-
-\title: The other sample note
-
-I define a term called \jarg <implicit(|ly) referenc(e|es|ed|ing)> [implicit referencing]. The other note was automatically linked to me because it contained the text "implicit references". \ref sample-note [Take me back!]
