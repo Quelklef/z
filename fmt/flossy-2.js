@@ -1186,8 +1186,7 @@ const commands = {
   },
 
   // TeX, TikZ
-  tikz(s) { return commands.tex(s, true); },
-  tex(s, tikz = false) {
+  tikz(s) {
     p_spaces(s);
 
     let append = s.text.startsWith('pre', s.i);
@@ -1205,7 +1204,7 @@ const commands = {
     }
 
     tex = s.texPrefix + tex;
-    return new Rep_Tex({ tex, isTikz: tikz, isBlock: kind === 'block' });
+    return new Rep_Tex({ tex, isTikz: true, isBlock: kind === 'block' });
   },
 
 
