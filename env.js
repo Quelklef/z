@@ -1,10 +1,9 @@
-const crypto = require('crypto');
 const plib = require('path');
 
 const clc = require('cli-color');
 
 const { squire } = require('./squire.js');
-const { writeFile } = squire('./util.js');
+const { hash, writeFile } = squire('./util.js');
 const fss = squire('./fss.js');
 
 
@@ -46,11 +45,7 @@ class Cache {
   }
 
   _mkPath(ns, keys) {
-    let hash = crypto.createHash('md5');
-    for (const key of keys)
-      hash.update(key.toString())
-    hash = hash.digest('hex');
-    return plib.resolve(this.root, ns, hash);
+    return plib.resolve(this.root, ns, hash(...keys));
   }
 
   get(ns, keys) {

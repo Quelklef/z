@@ -62,7 +62,7 @@ function main() {
     }
 
     for (let note of format(floc, source, graph, env)) {
-      const cached = env.cache.getOr('notes', note.cacheKeys, null);
+      const cached = env.cache.getOr('notes', [note.hash], null);
       if (cached) note = cached;
 
       // Initialize transient (non-cached) data
@@ -171,7 +171,7 @@ function main() {
   env.log.info(`Caching...`);
   for (const note of graph.notes) {
     if (note[t].isFromCache) continue;
-    env.cache.put('notes', note.cacheKeys, note);
+    env.cache.put('notes', [note.hash], note);
   }
 
   env.log.success('Done!');

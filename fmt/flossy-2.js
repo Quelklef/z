@@ -6,7 +6,7 @@ const hljs = require('highlight.js');
 const libKatex = require('katex');
 
 const { squire } = require('../squire.js');
-const { lazyAss, Cats, withTempDir } = squire('../util.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../util.js');
 const fss = squire('../fss.js');
 
 exports.default =
@@ -29,7 +29,7 @@ function mkNote(floc, source, graph, env) {
   note.source = source;
   note.source += '\n';  // allows parsers to assume lines end with \n
 
-  note.cacheKeys = [floc, source, scriptSrc];
+  note.hash = hash(floc, source, scriptSrc);
 
   note.id = noteId;
 

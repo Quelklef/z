@@ -2,7 +2,7 @@ const plib = require('path');
 const child_process = require('child_process');
 
 const { squire } = require('../squire.js');
-const { lazyAss, Cats, withTempDir } = squire('../util.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../util.js');
 const fss = squire('../fss.js');
 
 exports.default =
@@ -37,7 +37,7 @@ function * parseTranscription(floc, source, graph, env) {
         const newPage = {};
         newPage.range = payload.includes('-') ? payload.split('-') : [payload, payload];
         newPage.id = mkId(journalNumber, newPage.range);
-        newPage.cacheKeys = [newPage.id, scriptSrc, source, emitSensitiveInfo];
+        newPage.hash = hash(newPage.id, scriptSrc, source, emitSensitiveInfo);
         newPage.defines = [];
         newPage.references = new Set();
         newPage.journalInfo = { number: journalNumber };

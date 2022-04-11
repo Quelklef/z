@@ -1,27 +1,12 @@
 const plib = require('path');
 const child_process = require('child_process');
+const crypto = require('crypto');
 
 const { squire } = require('./squire.js');
 const fss = squire('./fss.js');
 
 
-/*
-
-String builder.
-
-cats = new Cats()
-cats.add(s1, s2)  // add strings
-str = cats.toString()  // build
-
-cats = Cats.of(a, b, c)
-  // start with some strings
-  // a,b,c can be anything supporting .toString()
-
-The name 'Cats' stands for 'concatenations', coming
-from the fact that instances are internally
-represented by an array of items to concatenate.
-
-*/
+/* String builder */
 exports.Cats =
 class Cats {
 
@@ -58,4 +43,13 @@ function lazyAss(obj, key, lz) {
       return val;
     }
   });
+}
+
+
+exports.hash =
+function hash(...keys) {
+  let hash = crypto.createHash('md5');
+  for (const key of keys)
+    hash.update(key.toString())
+  return hash.digest('hex');
 }

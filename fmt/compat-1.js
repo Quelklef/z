@@ -10,7 +10,7 @@ const child_process = require('child_process');
 const katex = require('katex');
 
 const { squire } = require('../squire.js');
-const { lazyAss, Cats } = squire('../util.js');
+const { lazyAss, Cats, hash } = squire('../util.js');
 const fss = squire('../fss.js');
 
 exports.default =
@@ -41,7 +41,7 @@ function mkNote(floc, source, graph, env) {
   env = env.descend();
   env.log.prefixes.push(note.id.toString());
 
-  note.cacheKeys = [floc, source, scriptSrc];
+  note.hash = hash(floc, source, scriptSrc);
 
   // lazy attrs:
   //  .references (need graph.jargonSet)
