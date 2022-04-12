@@ -865,6 +865,8 @@ const sigilMapping = {
   '<==': '&xlArr;',
 
   '--': '&mdash;',
+
+  '{sec}': '§',
 };
 
 const sigilTrie = new Trie(Object.keys(sigilMapping));
@@ -1360,6 +1362,13 @@ const commands = {
     p_spaces(s);
     const body = p_block(s, p_toplevel_markup);
     return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym('expand') }) });
+  },
+
+  ['unsafe-raw-html'](s) {
+    s.env.log.warn(`use of \\unsafe-raw-html`);
+    p_spaces(s);
+    const [html, _] = p_enclosed(s, p_toplevel_verbatim);
+    return new Rep_Seq(html);
   },
 
 };
