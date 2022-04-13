@@ -1651,6 +1651,10 @@ class ParseError extends Error { }
 // mkError(text, [i0, iF], err)  --  range [inc, exc]
 function mkError(text, loc, err) {
 
+  // TODO: p_backtracking will cause creation and then disposal
+  //       of errors, so calculating the error message will be a waste.
+  //       Benchmark to see if it's worth to calculate lazily.
+
   const linesAround = 2;
   const wrapWidth = 85;
   const textLines = text.split('\n').map(ln => ln + '\n');
@@ -1708,6 +1712,7 @@ function mkError(text, loc, err) {
   return new ParseError('\n' + result.toString());
 
   function toCoords(idx) {
+    idx = Math.min(Math.max(idx, 0), text.length - 1);
     let sol = 0, y = 0;
     while (true) {
       const eol = indexOf(text, '\n', sol);
