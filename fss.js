@@ -50,6 +50,12 @@ function * list(dirloc, args) {
   }
 }
 
+/* Move a file or directory */
+exports.move =
+function move({ source, dest }) {
+  fs.renameSync(source, dest);
+}
+
 
 /* Remove a file or directory */
 exports.remove =
@@ -108,5 +114,5 @@ function symlinkSync({ source, dest }) {
 /* Copy a file or directory */
 exports.copy =
 function copy({ source, dest }) {
-  fs.copyFileSync(source, dest);
+  fs.cpSync(source, dest, { recursive: true });
 }

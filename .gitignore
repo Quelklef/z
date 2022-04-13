@@ -1,5 +1,6 @@
 notes/
 out/
+out-cmp/
 node_modules/
 result
 stats.prof

@@ -4,6 +4,7 @@ const child_process = require('child_process');
 const { squire } = require('../squire.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../util.js');
 const fss = squire('../fss.js');
+const rand = squire('../rand.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -17,6 +18,8 @@ const emitSensitiveInfo = process.env.Z_EMIT_SENSITIVE_INFO === '1';
 const t = Symbol('t');
 
 function * parseTranscription(floc, source, graph, env) {
+
+  rand.seed(0);  // make deterministic to prevent misleading diffs
 
   const fname = plib.basename(floc, plib.extname(floc));
   const journalNumber = parseInt(fname.split('-')[1], 10);
@@ -366,7 +369,7 @@ function parseBody(body, env) {
         result.add('\n');
         i++;
       } else {
-        const length = Math.random() < .3 ? 0 : (Math.random() < .5 ? 1 : 2);
+        const length = rand.random() < .3 ? 0 : (rand.random() < .5 ? 1 : 2);
         for (let _ = 0; _ < length; _++) {
           result.add('&#8203;<span style="background: black; color: black">X</span>&#8203;');
         }

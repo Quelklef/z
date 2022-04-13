@@ -1,9 +1,16 @@
-{ pkgs ? import <nixpkgs> {} }: let
+{ }: let
+
+pkgs =
+  let fetched = builtins.fetchGit {
+        url = "https://github.com/NixOS/nixpkgs";
+        rev = "02b279323f3b5b031cd8aeb6440d76f0b735855e";
+      };
+  in import fetched { };
 
 npmlock2nix =
   let fetched = builtins.fetchGit {
         url = "https://github.com/tweag/npmlock2nix.git";
-        rev = "8ada8945e05b215f3fffbd10111f266ea70bb502";
+        rev = "dd2897c3a6e404446704a63f40b9a29fa0acf752";
       };
   in import fetched { inherit pkgs; };
 
@@ -21,7 +28,8 @@ in pkgs.stdenv.mkDerivation {
   inherit src;
 
   buildInputs = [
-    pkgs.nodejs-15_x pkgs.texlive.combined.scheme-full
+    pkgs.nodejs-17_x
+    pkgs.texlive.combined.scheme-full
     pkgs.dhall-json
   ];
 
