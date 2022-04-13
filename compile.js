@@ -19,11 +19,11 @@ function main() {
   });
 
   const formats = {};
-  for (const fname of fss.list('./fmt', { type: 'f' })) {
-    const floc = plib.resolve(env.root, 'fmt', fname);
+  for (const dname of fss.list('./fmt', { type: 'd' })) {
+    const floc = plib.resolve(env.root, 'fmt', dname, 'format.js');
 
     const format = squire(floc).default;
-    const name = plib.basename(fname, plib.extname(fname));
+    const name = plib.parse(floc).dir.split(plib.sep).reverse()[0];
     Object.defineProperty(format, 'name', { value: name });
 
     formats[name] = format;

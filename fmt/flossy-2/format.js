@@ -5,9 +5,9 @@ const clc = require('cli-color');
 const hljs = require('highlight.js');
 const libKatex = require('katex');
 
-const { squire } = require('../squire.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../util.js');
-const fss = squire('../fss.js');
+const { squire } = require('../../squire.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
+const fss = squire('../../fss.js');
 
 exports.default =
 function * (floc, source, graph, env) {

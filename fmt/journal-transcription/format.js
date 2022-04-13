@@ -1,10 +1,10 @@
 const plib = require('path');
 const child_process = require('child_process');
 
-const { squire } = require('../squire.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../util.js');
-const fss = squire('../fss.js');
-const rand = squire('../rand.js');
+const { squire } = require('../../squire.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
+const fss = squire('../../fss.js');
+const rand = squire('../../rand.js');
 
 exports.default =
 function * (floc, source, graph, env) {
