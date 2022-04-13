@@ -10,7 +10,7 @@ require('js-fire')({
 
   i: (serverPort = 8000, websocketPort = 8001) => {
     // Start an interactive session
-    require('./interactive.js').main(serverPort, websocketPort);
+    require('./interactive.js').main({ serverPort, websocketPort });
   },
 
 });

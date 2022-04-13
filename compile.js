@@ -10,7 +10,10 @@ const t = Symbol('compile.t');
 
 const main =
 exports.main =
-function main() {
+function main(args) {
+
+  let { websocketPort } = args ?? {};
+  websocketPort ??= null;
 
   fss.mkdir(plib.resolve(process.env.PWD, 'out'));
   const env = mkEnv({
@@ -167,7 +170,7 @@ function main() {
 
     fss.write(
       plib.resolve(env.root, 'out', note.relativeLoc),
-      withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`),
+      withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`, websocketPort),
     );
   }
 
@@ -224,8 +227,9 @@ function renderIndex(graph) {
   return withTemplate(html);
 }
 
-function withTemplate(mainHtml) {
-  return String.raw`
+function withTemplate(mainHtml, websocketPort) {
+  const result = new Cats();
+  result.add(String.raw`
 <!DOCTYPE HTML>
 
 <html>
@@ -295,7 +299,14 @@ iframe {
 
 <nav>ζ&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="/">table</a></nav>
 
-<main>${mainHtml}</main>
+<main>`);
+
+  result.add(mainHtml);
+
+  result.add(String.raw`</main>`);
+
+  if (websocketPort !== null) {
+    result.add(String.raw`
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -308,11 +319,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 </script>
 
-</body>
-</html>
-`;
+`);
+  }
+
+  result.add(`</body></html>`);
+
+  return result.toString();
 }
-
-
-if (require.main === module)
-  main();

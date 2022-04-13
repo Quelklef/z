@@ -11,8 +11,7 @@ const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
 exports.main =
-function main(serverPort, websocketPort) {
-  /* Start interactive mode */
+function main({ serverPort, websocketPort }) {
 
   const env = mkEnv({
     root: process.env.PWD,
@@ -104,7 +103,7 @@ function main(serverPort, websocketPort) {
 
     let compileSuccess = false;
     try {
-      main();
+      main({ websocketPort });
       compileSuccess = true;
     } catch (e) {
       console.error(e);
