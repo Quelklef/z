@@ -10,9 +10,8 @@ const { squire } = require('./squire.js');
 const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
-require('js-fire')(main);
-
-function main(serverPort = 8000, websocketPort = 8001) {
+exports.main =
+function main(serverPort, websocketPort) {
   /* Start interactive mode */
 
   const env = mkEnv({
