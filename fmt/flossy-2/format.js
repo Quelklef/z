@@ -620,342 +620,340 @@ function p_command(s) {
 }
 
 
-const commands = {
+const commands = {};
 
-  // Title
-  title(s) {
-    return new Rep.Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
-  },
+// Title
+commands.title = function(s) {
+  return new Rep.Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
+}
 
-  // Section header
-  sec(s) {
-    return new Rep.Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
-  },
+// Section header
+commands.sec = function(s) {
+  return new Rep.Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
+}
 
-  // Italic
-  i(s) {
-    return new Rep.Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
-  },
+// Italic
+commands.i = function(s) {
+  return new Rep.Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
+}
 
-  // Bold
-  b(s) {
-    return new Rep.Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
-  },
+// Bold
+commands.b = function(s) {
+  return new Rep.Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
+}
 
-  // Underline
-  u(s) {
-    return new Rep.Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
-  },
+// Underline
+commands.u = function(s) {
+  return new Rep.Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
+}
 
-  // Code
-  c(s) { return commands.code(s); },
-  code(s) {
+// Code
+commands.c = function(s) { return commands.code(s); }
+commands.code = function(s) {
+  p_spaces(s);
+  let language = /\w/.test(s.text[s.i]) ? p_word(s).toString() : null;
+  p_spaces(s);
+  let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
+  return new Rep.Code({ language, body, isBlock: kind === 'block' });
+}
+
+// Comment (REMark)
+commands.rem = function(s) {
+  p_spaces(s);
+  const [comment, _] = p_enclosed(s, p_toplevel_verbatim);
+  return '';
+}
+
+// Annotation reference
+commands.aref = function(s) {
+  p_spaces(s);
+
+  let name;
+  if (!"[{(<:".includes(s.text[s.i])) {
+    name = p_word(s).toString();
+  } else {
+    name = s.gensym('annot');
+    s.annotNameQueue.push(name);
+  }
+
+  p_spaces(s);
+
+  return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+}
+
+// Annotation definition
+commands.adef = function(s) {
+  const sx = s.clone();
+
+  p_spaces(s);
+
+  let name;
+  if (!"[{(<:=".includes(s.text[s.i])) {
+    name = p_word(s);
     p_spaces(s);
-    let language = /\w/.test(s.text[s.i]) ? p_word(s).toString() : null;
-    p_spaces(s);
-    let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-    return new Rep.Code({ language, body, isBlock: kind === 'block' });
-  },
+  } else {
+    if (s.annotNameQueue.length === 0)
+      throw mkError(sx.text, sx.i, "Unpaired \\adef");
+    name = s.annotNameQueue[0];
+    s.annotNameQueue.splice(0, 1);
+  }
 
-  // Comment (REMark)
-  rem(s) {
+  return new Rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+}
+
+// Explicit note reference
+commands.ref = function(s) {
+  const sx = s.clone();
+
+  p_spaces(s);
+
+  const toNoteId = p_backtracking(s, p_word);
+  if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
+  p_spaces(s);
+
+  const sr = s.clone();
+  sr.doImplicitReferences = false;
+  const body = p_inline(sr, p_toplevel_markup);
+  Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
+    // ^ TODO: Technically, this is bugged!
+    //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
+
+  const toNote = s.graph.notesById[toNoteId];
+  return new Rep.Explicit({ toNoteId, toNote, body });
+}
+
+// External (hyper-)reference
+commands.href = function(s) {
+  p_spaces(s)
+  p_consume(s, '<');
+  const href = new Cats();
+  while (s.i < s.text.length && s.text[s.i] !== '>') {
+    href.add(s.text[s.i]);
+    s.i++;
+  }
+  p_consume(s, '>');
+  p_spaces(s)
+
+  const doImplicitReferences = s.doImplicitReferences;
+  const srec = { ...s.clone(), doImplicitReferences: false };
+    // ^ Nested <a> tags are forbidden in HTML
+  const body = p_inline(srec, p_toplevel_markup);
+  Object.assign(s, { ...srec, doImplicitReferences });
+
+  return new Rep.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+}
+
+// KaTeX
+commands.katex = function(s) {
+  p_spaces(s);
+
+  const append = s.text.startsWith('pre', s.i);
+  if (append) {
+    p_consume(s, 'pre');
     p_spaces(s);
-    const [comment, _] = p_enclosed(s, p_toplevel_verbatim);
+  }
+
+  const xi0 = s.i;
+  const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
+  const xif = s.i;
+
+  if (append) {
+    s.katexPrefix.add(body);
     return '';
-  },
+  }
 
-  // Annotation reference
-  aref(s) {
+  const displayMode = { block: true, inline: false }[kind];
+  return new Rep.Katex({
+    katex: s.katexPrefix + '' + body,
+    displayMode,
+    sourceText: s.text,
+    sourceRange: [xi0, xif],
+  });
+}
+
+// TeX, TikZ
+commands.tikz = function(s) {
+  p_spaces(s);
+
+  let append = s.text.startsWith('pre', s.i);
+  if (append) {
+    p_consume(s, 'pre');
     p_spaces(s);
+  }
 
-    let name;
-    if (!"[{(<:".includes(s.text[s.i])) {
-      name = p_word(s).toString();
-    } else {
-      name = s.gensym('annot');
-      s.annotNameQueue.push(name);
-    }
+  let tex, kind;
+  [tex, kind] = p_enclosed(s, p_toplevel_verbatim);
 
+  if (append) {
+    s.texPrefix.add(tex);
+    return '';
+  }
+
+  tex = s.texPrefix + tex;
+  return new Rep.Tex({ tex, isTikz: true, isBlock: kind === 'block' });
+}
+
+
+// Jargon
+commands.jarg = function(s) {
+
+  let forms = new Set();
+  while (true) {
     p_spaces(s);
+    if (!s.text.startsWith('<', s.i)) break;
+    const jargs = p_jargon(s);
+    forms = new Set([...forms, ...jargs]);
+  }
 
-    return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
-  },
+  // TODO: more reucurrence happening here!
+  const doImplicitReferences = s.doImplicitReferences;
+  const srec = { ...s.clone(), doImplicitReferences: false };
+  const body = p_inline(srec, p_toplevel_markup);
+  Object.assign(s, { ...srec, doImplicitReferences });
 
-  // Annotation definition
-  adef(s) {
-    const sx = s.clone();
+  return new Rep.Jargon({ forms, body });
+}
 
-    p_spaces(s);
 
-    let name;
-    if (!"[{(<:=".includes(s.text[s.i])) {
-      name = p_word(s);
-      p_spaces(s);
-    } else {
-      if (s.annotNameQueue.length === 0)
-        throw mkError(sx.text, sx.i, "Unpaired \\adef");
-      name = s.annotNameQueue[0];
-      s.annotNameQueue.splice(0, 1);
-    }
+// Experimenal execute command
+commands.x = function(s) {
+  s.env.log.warn(`use of \\x`);
 
-    return new Rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
-  },
+  const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
 
-  // Explicit note reference
-  ref(s) {
-    const sx = s.clone();
+  const code =
+    kind === 'inline'
+      ? body.toString()
+    : kind === 'block'
+      ? `(function(){\n${body}\n})()`
+    : null;
 
-    p_spaces(s);
-
-    const toNoteId = p_backtracking(s, p_word);
-    if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
-    p_spaces(s);
-
-    const sr = s.clone();
-    sr.doImplicitReferences = false;
-    const body = p_inline(sr, p_toplevel_markup);
-    Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
-      // ^ TODO: Technically, this is bugged!
-      //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
-
-    const toNote = s.graph.notesById[toNoteId];
-    return new Rep.Explicit({ toNoteId, toNote, body });
-  },
-
-  // External (hyper-)reference
-  href(s) {
-    p_spaces(s)
-    p_consume(s, '<');
-    const href = new Cats();
-    while (s.i < s.text.length && s.text[s.i] !== '>') {
-      href.add(s.text[s.i]);
-      s.i++;
-    }
-    p_consume(s, '>');
-    p_spaces(s)
-
-    const doImplicitReferences = s.doImplicitReferences;
-    const srec = { ...s.clone(), doImplicitReferences: false };
-      // ^ Nested <a> tags are forbidden in HTML
-    const body = p_inline(srec, p_toplevel_markup);
-    Object.assign(s, { ...srec, doImplicitReferences });
-
-    return new Rep.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
-  },
-
-  // KaTeX
-  katex(s) {
-    p_spaces(s);
-
-    const append = s.text.startsWith('pre', s.i);
-    if (append) {
-      p_consume(s, 'pre');
-      p_spaces(s);
-    }
-
-    const xi0 = s.i;
-    const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-    const xif = s.i;
-
-    if (append) {
-      s.katexPrefix.add(body);
-      return '';
-    }
-
-    const displayMode = { block: true, inline: false }[kind];
-    return new Rep.Katex({
-      katex: s.katexPrefix + '' + body,
-      displayMode,
-      sourceText: s.text,
-      sourceRange: [xi0, xif],
+  // Set up eval() environment
+  // TODO: both this codeblock and p_indent do some wack recursion shit that should be reified
+  const parse = str => {
+    const srec = s.clone();
+    srec.text = str;
+    srec.i = 0;
+    const result = p_toplevel_markup(srec, s => s.i >= s.text.length);
+    Object.assign(s, {
+        ...srec,
+        text: s.text,
+        i: s.i,
     });
-  },
-
-  // TeX, TikZ
-  tikz(s) {
-    p_spaces(s);
-
-    let append = s.text.startsWith('pre', s.i);
-    if (append) {
-      p_consume(s, 'pre');
-      p_spaces(s);
-    }
-
-    let tex, kind;
-    [tex, kind] = p_enclosed(s, p_toplevel_verbatim);
-
-    if (append) {
-      s.texPrefix.add(tex);
-      return '';
-    }
-
-    tex = s.texPrefix + tex;
-    return new Rep.Tex({ tex, isTikz: true, isBlock: kind === 'block' });
-  },
-
-
-  // Jargon
-  jarg(s) {
-
-    let forms = new Set();
-    while (true) {
-      p_spaces(s);
-      if (!s.text.startsWith('<', s.i)) break;
-      const jargs = p_jargon(s);
-      forms = new Set([...forms, ...jargs]);
-    }
-
-    // TODO: more reucurrence happening here!
-    const doImplicitReferences = s.doImplicitReferences;
-    const srec = { ...s.clone(), doImplicitReferences: false };
-    const body = p_inline(srec, p_toplevel_markup);
-    Object.assign(s, { ...srec, doImplicitReferences });
-
-    return new Rep.Jargon({ forms, body });
-  },
-
-
-  // Experimenal execute command
-  x(s) {
-    s.env.log.warn(`use of \\x`);
-
-    const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-
-    const code =
-      kind === 'inline'
-        ? body.toString()
-      : kind === 'block'
-        ? `(function(){\n${body}\n})()`
-      : null;
-
-    // Set up eval() environment
-    // TODO: both this codeblock and p_indent do some wack recursion shit that should be reified
-    const parse = str => {
-      const srec = s.clone();
-      srec.text = str;
-      srec.i = 0;
-      const result = p_toplevel_markup(srec, s => s.i >= s.text.length);
-      Object.assign(s, {
-          ...srec,
-          text: s.text,
-          i: s.i,
-      });
-      return result;
-    };
-
-    return eval(code) || '';
-  },
-
-
-  // tables
-  table(s) {
-
-    const xi0 = s.i;
-
-    p_whitespace(s);
-    const opts = {};
-    while (true) {
-      const sb = s.clone();
-      p_whitespace(sb);
-      if (!/[\w-]/.test(sb.text[sb.i])) break;
-      Object.assign(s, sb);
-
-      const key = p_word(s);
-      p_consume(s, '=');
-      const val = p_word(s);
-      opts[key] = val;
-    }
-
-    let doHorizontalHeaders = false;
-    let doVerticalHeaders = false;
-    let doCentering = false;
-    for (const [key, val] of Object.entries(opts)) {
-      switch (key) {
-        case 'headers':
-          if (!'h v both no'.split(' ').includes(val))
-            throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
-          doHorizontalHeaders = 'h both'.split(' ').includes(val);
-          doVerticalHeaders   = 'v both'.split(' ').includes(val);
-          break;
-
-        case 'center':
-          doCentering = { 'yes': true, 'no': false }[val];
-          if (doCentering === undefined)
-            throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
-          break;
-
-        default:
-          throw mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
-      }
-    }
-
-    const rows = [];
-    while (true) {
-      const ok = p_backtracking(s, s => {
-        p_whitespace(s);
-        return p_consume(s, '|');
-      });
-      if (!ok) break;
-
-      const row = [];
-      while (true) {
-        const cell = p_backtracking(s, s => {
-          p_whitespace(s);
-          return p_inline(s, p_toplevel_markup);
-        });
-        if (cell === null) break;
-        row.push(cell);
-      }
-      rows.push(row);
-    }
-
-    p_backtracking(s, s => {
-      p_spaces(s);
-      p_consume(s, '\n');
-    });
-
-    if (rows.length === 0)
-      throw mkError(s.text, [xi0, s.i], "Empty table")
-
-    let result = new Rep.Seq();
-    const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
-    result.add(`<table class="${classes.join(' ')}">`);
-    rows.forEach((row, rowI) => {
-      result.add('<tr>');
-      row.forEach((cell, cellI) => {
-        const isHeader = doHorizontalHeaders && rowI === 0 || doVerticalHeaders && cellI === 0;
-        const tag = isHeader ? 'th' : 'td';
-        result.add(`<${tag}>`, cell, `</${tag}>`);
-      });
-      result.add('</tr>');
-    });
-    result.add('</table>');
-
-    if (doCentering)
-      result = new Rep.Seq('<center>', result, '</center>');
-
     return result;
+  };
 
-  },
+  return eval(code) || '';
+}
 
 
-  // Expanding bullets
-  fold(s) {
+// tables
+commands.table = function(s) {
+
+  const xi0 = s.i;
+
+  p_whitespace(s);
+  const opts = {};
+  while (true) {
+    const sb = s.clone();
+    p_whitespace(sb);
+    if (!/[\w-]/.test(sb.text[sb.i])) break;
+    Object.assign(s, sb);
+
+    const key = p_word(s);
+    p_consume(s, '=');
+    const val = p_word(s);
+    opts[key] = val;
+  }
+
+  let doHorizontalHeaders = false;
+  let doVerticalHeaders = false;
+  let doCentering = false;
+  for (const [key, val] of Object.entries(opts)) {
+    switch (key) {
+      case 'headers':
+        if (!'h v both no'.split(' ').includes(val))
+          throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
+        doHorizontalHeaders = 'h both'.split(' ').includes(val);
+        doVerticalHeaders   = 'v both'.split(' ').includes(val);
+        break;
+
+      case 'center':
+        doCentering = { 'yes': true, 'no': false }[val];
+        if (doCentering === undefined)
+          throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
+        break;
+
+      default:
+        throw mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
+    }
+  }
+
+  const rows = [];
+  while (true) {
+    const ok = p_backtracking(s, s => {
+      p_whitespace(s);
+      return p_consume(s, '|');
+    });
+    if (!ok) break;
+
+    const row = [];
+    while (true) {
+      const cell = p_backtracking(s, s => {
+        p_whitespace(s);
+        return p_inline(s, p_toplevel_markup);
+      });
+      if (cell === null) break;
+      row.push(cell);
+    }
+    rows.push(row);
+  }
+
+  p_backtracking(s, s => {
     p_spaces(s);
-    const [line, _] = p_enclosed(s, p_toplevel_markup);
-    p_spaces(s);
-    const body = p_block(s, p_toplevel_markup);
-    return new Rep.Indented({ indent: 2, body: new Rep.Expand({ line, body, id: s.gensym('expand') }) });
-  },
+    p_consume(s, '\n');
+  });
 
-  ['unsafe-raw-html'](s) {
-    s.env.log.warn(`use of \\unsafe-raw-html`);
-    p_spaces(s);
-    const [html, _] = p_enclosed(s, p_toplevel_verbatim);
-    return new Rep.Seq(html);
-  },
+  if (rows.length === 0)
+    throw mkError(s.text, [xi0, s.i], "Empty table")
 
-};
+  let result = new Rep.Seq();
+  const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
+  result.add(`<table class="${classes.join(' ')}">`);
+  rows.forEach((row, rowI) => {
+    result.add('<tr>');
+    row.forEach((cell, cellI) => {
+      const isHeader = doHorizontalHeaders && rowI === 0 || doVerticalHeaders && cellI === 0;
+      const tag = isHeader ? 'th' : 'td';
+      result.add(`<${tag}>`, cell, `</${tag}>`);
+    });
+    result.add('</tr>');
+  });
+  result.add('</table>');
+
+  if (doCentering)
+    result = new Rep.Seq('<center>', result, '</center>');
+
+  return result;
+
+}
+
+
+// Expanding bullets
+commands.fold = function(s) {
+  p_spaces(s);
+  const [line, _] = p_enclosed(s, p_toplevel_markup);
+  p_spaces(s);
+  const body = p_block(s, p_toplevel_markup);
+  return new Rep.Indented({ indent: 2, body: new Rep.Expand({ line, body, id: s.gensym('expand') }) });
+}
+
+commands['unsafe-raw-html'] = function(s) {
+  s.env.log.warn(`use of \\unsafe-raw-html`);
+  p_spaces(s);
+  const [html, _] = p_enclosed(s, p_toplevel_verbatim);
+  return new Rep.Seq(html);
+}
 
 
 // Jargon-lead implicit references
