@@ -1,13 +1,13 @@
 const plib = require('path');
 const child_process = require('child_process');
 
-const clc = require('cli-color');
-const hljs = require('highlight.js');
-const libKatex = require('katex');
-
 const { squire } = require('../../squire.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 const fss = squire('../../fss.js');
+
+const Rep = squire('./rep.js');
+const { Trie, indexOf, impossible } = require('./util.js');
+const { p_consume, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -15,7 +15,6 @@ function * (floc, source, graph, env) {
 }
 
 const scriptSrc = fss.read(__filename).toString();
-
 
 function mkNote(floc, source, graph, env) {
 
@@ -51,7 +50,7 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase1;
     const defines = new Set();
     rep.traverse(node => {
-      if (node instanceof Rep_Jargon) {
+      if (node instanceof Rep.Jargon) {
         for (const form of node.forms) {
           defines.add(form);
         }
@@ -73,9 +72,9 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase2;
     const references = new Set();
     rep.traverse(node => {
-      if (node instanceof Rep_Implicit) {
+      if (node instanceof Rep.Implicit) {
         references.add(node.toNote.id);
-      } else if (node instanceof Rep_Explicit) {
+      } else if (node instanceof Rep.Explicit) {
         if (!!node.toNote)
           references.add(node.toNote.id);
       }
@@ -88,7 +87,7 @@ function mkNote(floc, source, graph, env) {
 
     const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
     rep.traverse(node => {
-      if (node instanceof Rep_ReferencedBy)
+      if (node instanceof Rep.ReferencedBy)
         node.setReferencedBy(referencedBy);
     });
 
@@ -98,421 +97,6 @@ function mkNote(floc, source, graph, env) {
 
   return note;
 }
-
-
-
-
-class Rep {
-
-  // .toHtml : () -> string | Cats
-  // .children : () -> Iterable<Rep>
-
-  *tree() {
-    for (const elem of this.children()) {
-      if (typeof elem === 'string' || elem instanceof Cats) {
-        yield elem;
-      } else {
-        yield elem;
-        yield* elem.tree();
-      }
-    }
-  }
-
-  traverse(func) {
-    for (const node of this.tree()) {
-      func(node);
-    }
-  }
-
-}
-
-
-class Rep_Seq extends Rep {
-
-  constructor(...parts) {
-    super();
-    this.parts = parts;
-  }
-
-  add(...parts) {
-    for (const part of parts)
-      if (part !== '')
-        this.parts.push(part);
-  }
-
-  // == //
-
-  toHtml(env) {
-    return (
-      this.parts
-      .map(part => part.toHtml ? part.toHtml(env) : part.toString())
-      .join('')
-    );
-  }
-
-  children() {
-    return this.parts;
-  }
-
-}
-
-
-class Rep_Indented extends Rep {
-
-  constructor({ indent, body }) {
-    super();
-    this.indent = indent;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    return new Cats(`<div style="margin-left: ${this.indent}ch">`, this.body.toHtml(env), '</div>');
-  }
-
-  children() {
-    return [this.body];
-  }
-
-}
-
-
-class Rep_Bulleted extends Rep {
-
-  constructor({ body, isNumbered, id }) {
-    super()
-    this.body = body;
-    this.isNumbered = isNumbered;
-  }
-
-  toHtml(env) {
-    // TODO: numbers are wrong (make counter inc by parent, I think?)
-    return new Cats(
-      `<div style="display: list-item; list-style-type: ${this.isNumbered ? 'decimal' : 'disc'}">`,
-      this.body.toHtml(env),
-      "</div>",
-    );
-  }
-
-  children() {
-    return [this.body];
-  }
-
-}
-
-
-class Rep_Expand extends Rep {
-
-  constructor({ line, body, id }) {
-    super()
-    this.line = line;
-    this.body = body;
-    this.id = id;
-  }
-
-  toHtml(env) {
-    return new Cats(
-      `<div class="expand" id="${this.id}">`,
-      '<div class="expand-line">',
-      this.line.toHtml(env),
-      '</div>',
-      '<div class="expand-body">',
-      this.body.toHtml(env),
-      '</div>',
-      '</div>',
-    );
-  }
-
-  children() {
-    return [this.body, this.line];
-  }
-
-}
-
-
-class Rep_Katex extends Rep {
-
-  constructor({ katex, displayMode, sourceText, sourceRange }) {
-    super();
-    this.katex = katex;
-    this.displayMode = displayMode;
-    this.sourceText = sourceText;
-    this.sourceRange = sourceRange;
-  }
-
-  toHtml(env) {
-    return env.cache.at('katex', [this.katex, this.displayMode], () => {
-      try {
-        return libKatex.renderToString(this.katex, { displayMode: this.displayMode });
-      } catch (e) {
-        let text = e.toString();
-        text = text.split('\n')[0];
-        throw mkError(this.sourceText, this.sourceRange, text);
-      }
-    });
-  }
-
-  children() {
-    return [];
-  }
-
-}
-
-
-class Rep_Tex extends Rep {
-
-  constructor({ tex, isTikz, isBlock }) {
-    super();
-    this.tex = tex;
-    this.isTikz = isTikz;
-    this.isBlock = isBlock;
-  }
-
-  toHtml(env) {
-    let tex = this.tex;
-    if (this.isTikz) {
-      tex = String.raw`
-\begin{tikzpicture}
-${tex}
-\end{tikzpicture}
-`;
-    }
-
-    tex = String.raw`
-\documentclass{standalone}
-
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{tikz}
-\usepackage{lmodern}
-
-\usepackage[T1]{fontenc}
-
-\begin{document}
-
-${tex}
-
-\end{document}
-`;
-
-    let html = env.cache.at('tex', [tex], () => {
-      return fss.withTempDir(tmp => {
-
-        env.log.info(`Rendering LaTeX [${tex.length}]`);
-
-        fss.write(plib.resolve(tmp, 'it.tex'), tex);
-
-        const cmd = String.raw`
-          cd ${tmp} \
-          && latex it.tex 1>&2 \
-          && dvisvgm it.dvi \
-          && { cat it-1.svg | tail -n+3; }
-        `;
-
-        let result;
-        try {
-          result = child_process.execSync(cmd).toString();
-        } catch (err) {
-          env.log.error(err.stderr.toString());  // meh
-          throw 'LaTeX render failed; see above!';  // TODO
-        }
-
-        env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
-        return result;
-
-      });
-    });
-
-    if (this.isBlock)
-      html = new Cats('<div class="tikz">', html, '</div>');
-
-    return html;
-  }
-
-  children() {
-    return [];
-  }
-
-}
-
-
-class Rep_Code extends Rep {
-
-  constructor({ language, body, isBlock }) {
-    super();
-    this.language = language;
-    this.body = body;
-    this.isBlock = isBlock;
-  }
-
-  toHtml() {
-    const highlighted =
-      this.language !== null
-          ? hljs.highlight(this.body, { language: this.language })
-      : this.language === null && !this.isBlock
-          ? hljs.highlight(this.body, { language: 'plaintext' })
-      : this.language === null && this.isBlock
-          ? hljs.highlightAuto(this.body)
-      : impossible();
-
-    return new Cats(`<code class="${this.isBlock ? 'block' : 'inline'}">`, highlighted.value, '</code>');
-  }
-
-  children() {
-    return [];
-  }
-
-}
-
-
-class Rep_Jargon extends Rep {
-
-  constructor({ forms, body }) {
-    super();
-    this.forms = forms;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    return new Cats(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
-  }
-
-  children() {
-    return [this.body];
-  }
-
-}
-
-
-class Rep_Implicit extends Rep {
-
-  constructor({ fromJargon, toNote, body }) {
-    super();
-    this.fromJargon = fromJargon;
-    this.toNote = toNote;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    if (!this.toNote) {
-      env.log.warn(`Bad jargon '${jarg}'!`);
-    }
-    const href = this.toNote?.href ?? '#';
-    return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
-  }
-
-  children() {
-    return [this.body];
-  }
-
-}
-
-
-class Rep_Explicit extends Rep {
-
-  constructor({ toNoteId, toNote, body }) {
-    super();
-    this.toNoteId = toNoteId,
-    this.toNote = toNote;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    if (!this.toNote) env.log.warn(`Reference to nonexistent note '${this.toNoteId}'`);
-    if (this.toNote)
-      return new Cats(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(), '</a>');
-    else
-      return new Cats(`<a class="reference explicit invalid">`, this.body.toHtml(), '</a>');
-  }
-
-  children() {
-    return [this.body];
-  }
-}
-
-
-// Hacky but allows us to do rendering in 2 passes instead of 3
-class Rep_ReferencedBy extends Rep {
-
-  constructor() {
-    super();
-    this.referencedBy = null;
-  }
-
-  setReferencedBy(refBy) {
-    this.referencedBy = refBy;
-  }
-
-  toHtml() {
-    if (!this.referencedBy) return '';
-    const html = new Cats();
-    html.add('<br /><br />');
-    html.add('<hr />');
-    html.add('<p>Referenced by:</p>');
-    html.add('<ul>');
-    for (let refBy of this.referencedBy) {
-      html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
-    }
-    html.add('</ul>');
-    return html;
-  }
-
-  children() {
-    return [];
-  }
-
-}
-
-
-class Trie {
-  constructor(strings) {
-    this.isElement = Symbol("isElement");
-
-    this.trie = {};
-    strings = new Set(strings);
-    for (const str of strings) {
-      let root = this.trie;
-      for (const ch of str)
-        root = (root[ch] = root[ch] || {});
-      root[this.isElement] = true;
-    }
-  }
-
-  longestPrefixOf(str, i0) {
-    let result = null;
-    let root = this.trie;
-    let path = [];
-
-    for (let i = i0; i < str.length; i++) {
-      const ch = str[i];
-      if (root[this.isElement]) result = path.join('');
-      root = root[ch];
-      path.push(ch);
-      if (root === undefined) break;
-    }
-    if (root && root[this.isElement])
-      result = path.join('');
-
-    return result;
-  }
-}
-
-
-
-/*
-
-Quick prelude on parsing
-
-Parsers are expected to have the signature
-  r = parser(s, ...args)
-
-That is, they take some arguments and the current state s, and perform some
-parsing, mutating the state s, and producing a result r.
-
-If you want lookahead, pass in s.clone().
-
-Parsers fail by throwing ParseError.
-
-*/
 
 
 function parse({ text, note, graph, env, doImplicitReferences }) {
@@ -572,12 +156,12 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
   if (note.meta) s.env.log.info('metadata is', note.meta);
   if (s.text[s.i] === '\n') s.i++;
 
-  const rep = new Rep_Seq();
+  const rep = new Rep.Seq();
 
   const done = s => s.i >= s.text.length;
   rep.add(p_toplevel_markup(s, done));
 
-  rep.add(new Rep_ReferencedBy());
+  rep.add(new Rep.ReferencedBy());
 
   return template(rep);
 
@@ -777,7 +361,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
         ]
   );
 
-  const result = new Rep_Seq();
+  const result = new Rep.Seq();
 
   if (done(s)) return result;
 
@@ -975,9 +559,9 @@ function p_indent(s) {
     const body = p_toplevel_markup(s);
     s.indents.pop();
 
-    return new Rep_Indented({
+    return new Rep.Indented({
       indent: dIndent,
-      body: new Rep_Expand({ line, body, id: s.gensym('expand') }),
+      body: new Rep.Expand({ line, body, id: s.gensym('expand') }),
     });
 
   } else {
@@ -988,11 +572,11 @@ function p_indent(s) {
     body = p_toplevel_markup(s);
     s.indents.pop();
     if (style)
-      body = new Rep_Bulleted({
+      body = new Rep.Bulleted({
         body,
         isNumbered: style === '#',
       });
-    return new Rep_Indented({ indent: dIndent, body });
+    return new Rep.Indented({ indent: dIndent, body });
 
   }
 }
@@ -1008,7 +592,7 @@ function p_katex(s) {
   p_consume(s, '$');
   const xif = s.i;
 
-  return new Rep_Katex({
+  return new Rep.Katex({
     katex: s.katexPrefix + '' + body,
     displayMode: false,
     sourceText: s.text,
@@ -1040,27 +624,27 @@ const commands = {
 
   // Title
   title(s) {
-    return new Rep_Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
+    return new Rep.Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Section header
   sec(s) {
-    return new Rep_Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
+    return new Rep.Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Italic
   i(s) {
-    return new Rep_Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
+    return new Rep.Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
   },
 
   // Bold
   b(s) {
-    return new Rep_Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
+    return new Rep.Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
   },
 
   // Underline
   u(s) {
-    return new Rep_Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
+    return new Rep.Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
   },
 
   // Code
@@ -1070,7 +654,7 @@ const commands = {
     let language = /\w/.test(s.text[s.i]) ? p_word(s).toString() : null;
     p_spaces(s);
     let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-    return new Rep_Code({ language, body, isBlock: kind === 'block' });
+    return new Rep.Code({ language, body, isBlock: kind === 'block' });
   },
 
   // Comment (REMark)
@@ -1094,7 +678,7 @@ const commands = {
 
     p_spaces(s);
 
-    return new Rep_Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+    return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
   },
 
   // Annotation definition
@@ -1114,7 +698,7 @@ const commands = {
       s.annotNameQueue.splice(0, 1);
     }
 
-    return new Rep_Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+    return new Rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
   },
 
   // Explicit note reference
@@ -1135,7 +719,7 @@ const commands = {
       //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
 
     const toNote = s.graph.notesById[toNoteId];
-    return new Rep_Explicit({ toNoteId, toNote, body });
+    return new Rep.Explicit({ toNoteId, toNote, body });
   },
 
   // External (hyper-)reference
@@ -1156,7 +740,7 @@ const commands = {
     const body = p_inline(srec, p_toplevel_markup);
     Object.assign(s, { ...srec, doImplicitReferences });
 
-    return new Rep_Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+    return new Rep.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
   },
 
   // KaTeX
@@ -1179,7 +763,7 @@ const commands = {
     }
 
     const displayMode = { block: true, inline: false }[kind];
-    return new Rep_Katex({
+    return new Rep.Katex({
       katex: s.katexPrefix + '' + body,
       displayMode,
       sourceText: s.text,
@@ -1206,7 +790,7 @@ const commands = {
     }
 
     tex = s.texPrefix + tex;
-    return new Rep_Tex({ tex, isTikz: true, isBlock: kind === 'block' });
+    return new Rep.Tex({ tex, isTikz: true, isBlock: kind === 'block' });
   },
 
 
@@ -1217,7 +801,7 @@ const commands = {
     while (true) {
       p_spaces(s);
       if (!s.text.startsWith('<', s.i)) break;
-      const jargs = parseJargon(s);
+      const jargs = p_jargon(s);
       forms = new Set([...forms, ...jargs]);
     }
 
@@ -1227,7 +811,7 @@ const commands = {
     const body = p_inline(srec, p_toplevel_markup);
     Object.assign(s, { ...srec, doImplicitReferences });
 
-    return new Rep_Jargon({ forms, body });
+    return new Rep.Jargon({ forms, body });
   },
 
 
@@ -1333,7 +917,7 @@ const commands = {
     if (rows.length === 0)
       throw mkError(s.text, [xi0, s.i], "Empty table")
 
-    let result = new Rep_Seq();
+    let result = new Rep.Seq();
     const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
     result.add(`<table class="${classes.join(' ')}">`);
     rows.forEach((row, rowI) => {
@@ -1348,7 +932,7 @@ const commands = {
     result.add('</table>');
 
     if (doCentering)
-      result = new Rep_Seq('<center>', result, '</center>');
+      result = new Rep.Seq('<center>', result, '</center>');
 
     return result;
 
@@ -1361,14 +945,14 @@ const commands = {
     const [line, _] = p_enclosed(s, p_toplevel_markup);
     p_spaces(s);
     const body = p_block(s, p_toplevel_markup);
-    return new Rep_Indented({ indent: 2, body: new Rep_Expand({ line, body, id: s.gensym('expand') }) });
+    return new Rep.Indented({ indent: 2, body: new Rep.Expand({ line, body, id: s.gensym('expand') }) });
   },
 
   ['unsafe-raw-html'](s) {
     s.env.log.warn(`use of \\unsafe-raw-html`);
     p_spaces(s);
     const [html, _] = p_enclosed(s, p_toplevel_verbatim);
-    return new Rep_Seq(html);
+    return new Rep.Seq(html);
   },
 
 };
@@ -1393,11 +977,11 @@ function p_implicitReference(s) {
   const body = escapeHtml(s.text.slice(s.i, s.i + stepAmt));
   s.i += stepAmt;
 
-  return new Rep_Implicit({ fromJargon: jarg, toNote, body });
+  return new Rep.Implicit({ fromJargon: jarg, toNote, body });
 }
 
 
-function parseJargon(s) {
+function p_jargon(s) {
 
   if (!s.text.startsWith('<', s.i))
     throw mkError(s.text, s.i, "Expected '<'");
@@ -1409,7 +993,7 @@ function parseJargon(s) {
       s.i++;
       break;
     }
-    parts.push(parseJargonAux(s));
+    parts.push(p_jargonAux(s));
   }
 
   let result = [''];
@@ -1419,13 +1003,13 @@ function parseJargon(s) {
 
 }
 
-function parseJargonAux(s) {
+function p_jargonAux(s) {
 
   // Noun combinator -- N:noun
   if (s.text.startsWith('N:', s.i)) {
     s.env.log.warn('use of deprecated N: combinator in jargon');
     s.i += 2;
-    return parseJargonAux(s).flatMap(j => {
+    return p_jargonAux(s).flatMap(j => {
       j = j.toString();
       if (j.endsWith('y'))
         return [j, j.slice(0, j.length - 1) + 'ies'];
@@ -1441,7 +1025,7 @@ function parseJargonAux(s) {
     s.i++;
     const choices = [];
     while (true) {
-      const choice = parseJargonAux(s);
+      const choice = p_jargonAux(s);
       choices.push(choice);
       if (s.text.startsWith(')', s.i)) {
         s.i++;
@@ -1452,7 +1036,7 @@ function parseJargonAux(s) {
         throw mkError(s.text, s.i, "Expected pipe");
       }
     }
-    return parseJargonAux(s).flatMap(suff => choices.flat().map(pre => pre + suff));
+    return p_jargonAux(s).flatMap(suff => choices.flat().map(pre => pre + suff));
   }
 
   // Quoted syntax -- "word with some spaces"
@@ -1488,67 +1072,10 @@ function parseJargonAux(s) {
   else {
     const char = s.text[s.i];
     s.i++;
-    return parseJargonAux(s).map(j => char + j);
+    return p_jargonAux(s).map(j => char + j);
   }
 
 }
-
-function p_spaces(s) {
-  while (s.text[s.i] === ' ') s.i++;
-}
-
-function p_whitespace(s) {
-  while (/\s/.test(s.text[s.i])) s.i++;
-}
-
-function p_consume(s, str) {
-  if (!s.text.startsWith(str, s.i))
-    throw mkError(s.text, [s.i, s.i + str.length], `Expected '${str}'`);
-  s.i += str.length;
-  return str;
-}
-
-function p_word(s) {
-  const xi0 = s.i;
-  let word = new Cats();
-  while (/[\w-]/.test(s.text[s.i])) {
-    word.add(s.text[s.i]);
-    s.i++;
-  }
-  word = word.toString();
-  if (!word)
-    throw mkError(s.text, xi0, "Expected word");
-  return word;
-}
-
-function p_integer(s) {
-  const xi0 = s.i;
-  let digs = new Cats();
-  while (/[0-9]/.test(s.text[s.i])) {
-    digs.add(s.text[s.i]);
-    s.i++;
-  }
-  digs = digs.toString();
-  if (!digs)
-    throw mkError(s.text, [xi0, s.i], "Expected number");
-  return parseInt(digs, 10);
-}
-
-function p_backtracking(s, parser) {
-  const sc = s.clone();
-  let result;
-  try {
-    result = parser(sc);
-  } catch (e) {
-    if (e instanceof ParseError)
-      return null;
-    else
-      throw e;
-  }
-  Object.assign(s, sc);
-  return result;
-}
-
 
 // Parse block or inline
 function p_enclosed(s, p_toplevel) {
@@ -1645,109 +1172,10 @@ function p_inline(s, p_toplevel) {
   return r;
 }
 
-class ParseError extends Error { }
-
-// mkError(text, idx, err)
-// mkError(text, [i0, iF], err)  --  range [inc, exc]
-function mkError(text, loc, err) {
-
-  // TODO: p_backtracking will cause creation and then disposal
-  //       of errors, so calculating the error message will be a waste.
-  //       Benchmark to see if it's worth to calculate lazily.
-
-  const linesAround = 2;
-  const wrapWidth = 85;
-  const textLines = text.split('\n').map(ln => ln + '\n');
-  const textLineC = textLines.length - 1;
-
-  let y0, x0, yf, xf;
-  {
-    const range = typeof loc === 'number' ? [loc, loc + 1] : loc;
-    const [i0, iF] = range;
-    [y0, x0] = toCoords(i0);
-    [yf, xf] = toCoords(iF);
-    yf++;  // end-exclusive range
-  }
-
-  const y0A = Math.max(y0 - linesAround, 0);
-  const yfA = Math.min(yf + linesAround, textLineC);
-
-  const lineNumberingWidth = ('' + yfA).length;
-
-  const result = new Cats();
-  result.add('\n')
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┬─────\n');
-  for (let y = y0A; y <= yfA; y++) {
-    const line = textLines[y];
-    const lineNumber = clc.green((y + 1 + '').padStart(lineNumberingWidth));
-    const lineNumberBlank = strRep(' ', lineNumberingWidth);
-    const sigil = y0 <= y && y < yf ? clc.yellow('▶ ') : '  ';
-
-    // Highlight range for this line
-    let hlI0, hlIF;
-    if (y0 <= y && y < yf) {
-      hlI0 = y === y0 ? x0 : 0;
-      hlIF = y === yf - 1 ? xf : wrapWidth;
-    } else {
-      hlI0 = line.length;
-      hlIF = line.length;
-    }
-
-    const noNewline = line.slice(0, line.length - 1);
-    const wrapped = wrapText(noNewline);
-    wrapText(noNewline).forEach((wrp, wrpI) => {
-      const wrpI0 = wrpI * wrapWidth;
-      const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
-      wrp = wrp.slice(0, wrpHlI0) + clc.bgYellow.black(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
-
-      const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
-      result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
-    });
-  }
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┼─────\n');
-  for (const wrp of wrapText('Error: ' + err))
-    result.add(strRep(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
-
-  return new ParseError('\n' + result.toString());
-
-  function toCoords(idx) {
-    idx = Math.min(Math.max(idx, 0), text.length - 1);
-    let sol = 0, y = 0;
-    while (true) {
-      const eol = indexOf(text, '\n', sol);
-      if (eol >= idx) {
-        const x = idx - sol;
-        return [y, x];
-      }
-      y++;
-      sol = eol + 1;
-    }
-  }
-
-  function strRep(s, n) {
-    let result = '';
-    for (let i = 0; i < n; i++)
-      result += s;
-    return result;
-  }
-
-  function wrapText(s) {
-    const result = [];
-    for (const ln of s.split('\n'))
-      for (let i = 0; i * wrapWidth < ln.length; i++)
-        result.push(ln.slice(i * wrapWidth, (i + 1) * wrapWidth) + '\n');
-    if (result.length === 0)
-      result.push('\n');
-    return result;
-  }
-
-}
-
 
 
 function template(html) {
-  return new Rep_Seq(String.raw`
+  return new Rep.Seq(String.raw`
 
 <!DOCTYPE HTML>
 <html>
@@ -2242,13 +1670,6 @@ class JargonMatcherJargonMatcher {
 }
 
 
-// indexOf but on fail return str.length instead of -1
-function indexOf(str, sub, from = 0) {
-  let result = str.indexOf(sub, from);
-  if (result === -1) result = str.length;
-  return result;
-}
-
 function ruled(str, pref='>|') {
   const bar = '------';
   return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
@@ -2260,8 +1681,4 @@ function sample(str, from = 0, linec = 5) {
 
 function sample_s(s, linec = 4) {
   return sample(s.text, s.i, linec);
-}
-
-function impossible(msg = '') {
-  throw Error('uh oh... [' + msg.toString() + ']');
 }
