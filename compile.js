@@ -227,7 +227,7 @@ function renderIndex(graph) {
   return withTemplate(html);
 }
 
-function withTemplate(mainHtml, websocketPort) {
+function withTemplate(mainHtml, websocketPort = null) {
   const result = new Cats();
   result.add(String.raw`
 <!DOCTYPE HTML>
@@ -303,24 +303,27 @@ iframe {
 
   result.add(mainHtml);
 
-  result.add(String.raw`</main>`);
+  result.add(`</main>`);
 
-  if (websocketPort !== null) {
-    result.add(String.raw`
-
+  result.add(`
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const $iframe = document.getElementsByTagName('iframe')[0];
   iFrameResize({ log: false }, $iframe);
+`);
 
+  if (websocketPort !== null) {
+    result.add(String.raw`
   // Refresh iframe on websocket message
-  const ws = new WebSocket('ws://localhost:8001');
+  const ws = new WebSocket('ws://localhost:${websocketPort}');
   ws.addEventListener('message', () => $iframe.contentWindow.location.reload());
-});
-</script>
-
 `);
   }
+
+  result.add(String.raw`
+});
+</script>
+`);
 
   result.add(`</body></html>`);
 

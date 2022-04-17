@@ -37,7 +37,7 @@ in pkgs.stdenv.mkDerivation {
     mkdir $out
     cp -r ${npmlock2nix.node_modules { inherit src; }}/. .
     cp -r ${./notes} ./notes
-    node compile.js
+    node main.js c
     mv ./out/* $out
   '';
 }
