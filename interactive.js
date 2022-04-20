@@ -32,7 +32,7 @@ function main({ serverPort, websocketPort }) {
 
   const watcher = chokidar
     .watch(
-      ['./notes', './*.js', './fmt/*.js'],
+      ['./notes', './*.js', './fmt/**/*.*'],
       { cwd: '.' },
     )
     .on('ready', () => {
@@ -70,7 +70,7 @@ function main({ serverPort, websocketPort }) {
       fss.move({ source: './out/.cache', dest: './.cache-save-hack' });
       try {
         child_process.execSync(
-          'git --no-pager diff --no-index ./out-cmp ./out --minimal --word-diff=color || true',
+          'git --no-pager diff --unified=0 --no-index ./out-cmp ./out --minimal --word-diff=color || true',
           { stdio: 'inherit' },
         );
       } finally {

@@ -8,6 +8,8 @@ const { squire } = require('../../squire.js');
 const { Cats, withTempDir } = squire('../../util.js');
 const fss = squire('../../fss.js');
 
+const { mkError } = squire('./parsing.js');
+
 const Rep =
 exports.Rep =
 class Rep {

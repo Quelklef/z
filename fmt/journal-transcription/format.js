@@ -117,7 +117,7 @@ function prettifyRange(range) {
 }
 
 function mkId(journalNumber, range) {
-  return `j${journalNumber}p${prettifyRange(range)}`;
+  return `J${journalNumber}p${prettifyRange(range)}`;
 }
 
 function iso(num, f) {
