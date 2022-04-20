@@ -7,7 +7,7 @@ const fss = squire('../../fss.js');
 
 const Rep = squire('./rep.js');
 const { Trie, indexOf, impossible } = require('./util.js');
-const { p_consume, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
+const { p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -169,10 +169,12 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
 
 function p_noteMetadata(s) {
-  if (!s.text.startsWith('meta:', s.i))
+  const prefix = 'meta:';
+
+  if (!s.text.startsWith(prefix, s.i))
     return null;
 
-  s.i += 'meta:'.length;
+  s.i += prefix.length;
   p_spaces(s);
 
   const expr = p_dhallExpr(s, { takeToEol: true });
@@ -531,13 +533,13 @@ function p_indent(s) {
   // Find bullet
   let style = null;
   {
-    if (p_backtracking(s, s => p_consume(s, '- '))) {
+    if (p_backtracking(s, s => p_take(s, '- '))) {
       style = '-';
     }
-    else if (p_backtracking(s, s => p_consume(s, '> '))) {
+    else if (p_backtracking(s, s => p_take(s, '> '))) {
       style = '>';
     }
-    else if (p_backtracking(s, s => p_consume(s, '# '))) {
+    else if (p_backtracking(s, s => p_take(s, '# '))) {
       style = '#';
     }
   }
@@ -554,7 +556,7 @@ function p_indent(s) {
   if (style === '>') {
 
     const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
-    p_consume(s, '\n');
+    p_take(s, '\n');
 
     s.indents.push(newIndent);
     const body = p_toplevel_markup(s);
@@ -590,7 +592,7 @@ function p_katex(s) {
   s.i++;
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
   const body = p_toplevel_verbatim(s, done);
-  p_consume(s, '$');
+  p_take(s, '$');
   const xif = s.i;
 
   return new Rep.Katex({
@@ -633,20 +635,11 @@ commands.sec = function(s) {
   return new Rep.Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
 }
 
-// Italic
-commands.i = function(s) {
-  return new Rep.Seq('<i>', p_inline(s, p_toplevel_markup), '</i>');
-}
-
-// Bold
-commands.b = function(s) {
-  return new Rep.Seq('<b>', p_inline(s, p_toplevel_markup), '</b>');
-}
-
-// Underline
-commands.u = function(s) {
-  return new Rep.Seq('<u>', p_inline(s, p_toplevel_markup), '</u>');
-}
+// Italic, bold, underline, strikethrough
+for (const tag of 'ibus')
+  commands[tag] = function(s) {
+    return new Rep.Seq(`<${tag}>`, p_inline(s, p_toplevel_markup), `</${tag}>`);
+  }
 
 // Code
 commands.c = function(s) { return commands.code(s); }
@@ -745,13 +738,9 @@ commands.scope = function(s) {
 // External (hyper-)reference
 commands.href = function(s) {
   p_spaces(s)
-  p_consume(s, '<');
-  const href = new Cats();
-  while (s.i < s.text.length && s.text[s.i] !== '>') {
-    href.add(s.text[s.i]);
-    s.i++;
-  }
-  p_consume(s, '>');
+  p_take(s, '<');
+  const href = p_takeTo(s, '>');
+  p_take(s, '>');
   p_spaces(s)
 
   const doImplicitReferences = s.doImplicitReferences;
@@ -769,7 +758,7 @@ commands.katex = function(s) {
 
   const append = s.text.startsWith('pre', s.i);
   if (append) {
-    p_consume(s, 'pre');
+    p_take(s, 'pre');
     p_spaces(s);
   }
 
@@ -797,7 +786,7 @@ commands.tikz = function(s) {
 
   let append = s.text.startsWith('pre', s.i);
   if (append) {
-    p_consume(s, 'pre');
+    p_take(s, 'pre');
     p_spaces(s);
   }
 
@@ -881,7 +870,7 @@ commands.table = function(s) {
     Object.assign(s, sb);
 
     const key = p_word(s);
-    p_consume(s, '=');
+    p_take(s, '=');
     const val = p_word(s);
     opts[key] = val;
   }
@@ -913,7 +902,7 @@ commands.table = function(s) {
   while (true) {
     const ok = p_backtracking(s, s => {
       p_whitespace(s);
-      return p_consume(s, '|');
+      return p_take(s, '|');
     });
     if (!ok) break;
 
@@ -931,7 +920,7 @@ commands.table = function(s) {
 
   p_backtracking(s, s => {
     p_spaces(s);
-    p_consume(s, '\n');
+    p_take(s, '\n');
   });
 
   if (rows.length === 0)
@@ -1138,22 +1127,16 @@ function p_block(s, p_toplevel) {
   // \cmd <stuff> ==WORD==
   // Consumes to ==/WORD==
   else if (s.text.startsWith('==', s.i)) {
-    p_consume(s, '==');
-
-    let sentinel = new Cats();
-    while (!s.text.startsWith('==', s.i)) {
-      sentinel.add(s.text[s.i]);
-      s.i++;
-    }
-
-    p_consume(s, '==');
+    p_take(s, '==');
+    const sentinel = p_takeTo(s, '==');
+    p_take(s, '==');
     p_spaces(s);
-    p_consume(s, '\n');
+    p_take(s, '\n');
 
     const srec = { ...s.clone(), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
     const result = p_toplevel(srec, done);
-    p_consume(srec, `==/${sentinel}==`);
+    p_take(srec, `==/${sentinel}==`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
   }
@@ -1161,9 +1144,9 @@ function p_block(s, p_toplevel) {
   // \cmd <stuff> ;;
   // Consumes to EOF
   else if (s.text.startsWith(';;', s.i)) {
-    p_consume(s, ';;');
+    p_take(s, ';;');
     p_spaces(s);
-    p_consume(s, '\n');
+    p_take(s, '\n');
     const done = s => s.i >= s.text.length;
     return p_toplevel(s, done);
   }
@@ -1192,7 +1175,7 @@ function p_inline(s, p_toplevel) {
 
   const done = s => s.text.startsWith(close, s.i);
   const r = p_toplevel(s, done)
-  p_consume(s, close);
+  p_take(s, close);
 
   return r;
 }

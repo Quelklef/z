@@ -38,13 +38,24 @@ function p_whitespace(s) {
   while (/\s/.test(s.text[s.i])) s.i++;
 }
 
-const p_consume =
-exports.p_consume =
-function p_consume(s, str) {
+const p_take =
+exports.p_take =
+function p_take(s, str) {
   if (!s.text.startsWith(str, s.i))
     throw mkError(s.text, [s.i, s.i + str.length], `Expected '${str}'`);
   s.i += str.length;
   return str;
+}
+
+const p_takeTo =
+exports.p_takeTo =
+function p_takeTo(s, str) {
+  const i = s.text.indexOf(str, s.i);
+  if (i === -1)
+    throw mkError(s.text, s.i, `Expected '${str}' at some point ahead`);
+  const r = s.text.slice(s.i, i);
+  s.i = i;
+  return r;
 }
 
 const p_word =
