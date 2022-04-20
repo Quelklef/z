@@ -14,8 +14,11 @@ const Rep =
 exports.Rep =
 class Rep {
 
+  // Expected methods:
   // .toHtml : () -> string | Cats
   // .children : () -> Iterable<Rep>
+
+  // Derived methods:
 
   *tree() {
     for (const elem of this.children()) {

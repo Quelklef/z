@@ -175,7 +175,7 @@ function p_noteMetadata(s) {
   s.i += 'meta:'.length;
   p_spaces(s);
 
-  const expr = p_dhallExpr(s);
+  const expr = p_dhallExpr(s, { takeToEol: true });
   return evalDhall(expr, s.env);
 }
 
@@ -183,7 +183,7 @@ function p_noteMetadata(s) {
 // Because Dhall uses whitespace to juxtapose, it's not possible to
 // know whan an expression has ended.
 // If your expressions are being cut off, wrap them in parens.
-function p_dhallExpr(s) {
+function p_dhallExpr(s, { takeToEol }) {
 
   let delims = [];
 
@@ -292,8 +292,8 @@ function p_dhallExpr(s) {
 
   }
 
-  // Scan to line end
-  s.i = indexOf(s.text, '\n', s.i);
+  if (takeToEol)
+    s.i = indexOf(s.text, '\n', s.i);
 
   return s.text.slice(i0, s.i);
 
@@ -716,11 +716,30 @@ commands.ref = function(s) {
   sr.doImplicitReferences = false;
   const body = p_inline(sr, p_toplevel_markup);
   Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
-    // ^ TODO: Technically, this is bugged!
+    // ^ TODO: Technically, this is bugged! (B*)
     //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
 
   const toNote = s.graph.notesById[toNoteId];
   return new Rep.Explicit({ toNoteId, toNote, body });
+}
+
+// Local evaluator modification
+commands.scope = function(s) {
+  p_spaces(s);
+  const expr = p_dhallExpr(s, { takeToEol: false });
+  const json = evalDhall(expr, s.env);
+
+  const srec = s.clone();
+
+  if ('infer-references' in json)
+    srec.doImplicitReferences = !!json['infer-references'];
+
+  const [r, _] = p_enclosed(srec, p_toplevel_markup);
+
+  Object.assign(s, { ...srec, doImplicitReferences: s.doImplicitReferences });
+    // ^ TODO: bugged; see (B*)
+
+  return r;
 }
 
 // External (hyper-)reference
@@ -1010,21 +1029,6 @@ function p_jargon(s) {
 
 function p_jargonAux(s) {
 
-  // Noun combinator -- N:noun
-  if (s.text.startsWith('N:', s.i)) {
-    s.env.log.warn('use of deprecated N: combinator in jargon');
-    s.i += 2;
-    return p_jargonAux(s).flatMap(j => {
-      j = j.toString();
-      if (j.endsWith('y'))
-        return [j, j.slice(0, j.length - 1) + 'ies'];
-      else if (j.endsWith('s'))
-        return [j];
-      else
-        return [j, j + 's'];
-    });
-  }
-
   // Disjunctive combinator -- (this|that)
   if (s.text.startsWith('(', s.i)) {
     s.i++;
@@ -1084,7 +1088,11 @@ function p_jargonAux(s) {
 
 // Parse block or inline
 function p_enclosed(s, p_toplevel) {
-  if (s.text[s.i] === ':' || s.text.startsWith('==', s.i)) {
+  if (
+      s.text.startsWith(':', s.i)
+      || s.text.startsWith('==', s.i)
+      || s.text.startsWith(';;', s.i)
+  ) {
     const r = p_block(s, p_toplevel);
     return [r, 'block'];
   } else {
@@ -1127,6 +1135,8 @@ function p_block(s, p_toplevel) {
     }
   }
 
+  // \cmd <stuff> ==WORD==
+  // Consumes to ==/WORD==
   else if (s.text.startsWith('==', s.i)) {
     p_consume(s, '==');
 
@@ -1146,6 +1156,16 @@ function p_block(s, p_toplevel) {
     p_consume(srec, `==/${sentinel}==`);
     Object.assign(s, { ...srec, indents: s.indents });
     return result;
+  }
+
+  // \cmd <stuff> ;;
+  // Consumes to EOF
+  else if (s.text.startsWith(';;', s.i)) {
+    p_consume(s, ';;');
+    p_spaces(s);
+    p_consume(s, '\n');
+    const done = s => s.i >= s.text.length;
+    return p_toplevel(s, done);
   }
 
   else {
