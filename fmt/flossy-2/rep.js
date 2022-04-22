@@ -352,9 +352,9 @@ class Explicit extends Rep {
   toHtml(env) {
     if (!this.toNote) env.log.warn(`Reference to nonexistent note '${this.toNoteId}'`);
     if (this.toNote)
-      return new Cats(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(), '</a>');
+      return new Cats(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(env), '</a>');
     else
-      return new Cats(`<a class="reference explicit invalid">`, this.body.toHtml(), '</a>');
+      return new Cats(`<a class="reference explicit invalid">`, this.body.toHtml(env), '</a>');
   }
 
   children() {
