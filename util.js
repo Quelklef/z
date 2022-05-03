@@ -31,7 +31,18 @@ class Cats {
 }
 
 
-// Lazy assignment
+/*
+Lazy assignment
+
+  lazyAss(obj, k, () => exp)
+
+is morally equivalent to
+
+  obj[k] = exp
+
+Except that 'exp' is computed only
+when obj[k] is first accessed.
+*/
 exports.lazyAss =
 function lazyAss(obj, key, lz) {
   Object.defineProperty(obj, key, {

@@ -1,7 +1,7 @@
 const clc = require('cli-color');
 
 const { squire } = require('../../squire.js');
-const { Cats } = squire('../../util.js');
+const { Cats, lazyAss } = squire('../../util.js');
 const { indexOf } = require('./util.js');
 
 /*
@@ -106,15 +106,23 @@ function p_backtracking(s, parser) {
 }
 
 
-// mkError(text, idx, err)
-// mkError(text, [i0, iF], err)    range is [inc, exc]
+// mkError(text, idx, msg)
+// mkError(text, [i0, iF], msg)    range is [inc, exc]
 const mkError =
-exports. mkError =
-function mkError(text, loc, err) {
+exports.mkError =
+function mkError(...args) {
 
-  // TODO: p_backtracking will cause creation and then disposal
-  //       of errors, so calculating the error message will be a waste.
-  //       Benchmark to see if it's worth to calculate lazily.
+  const err = new ParseError();
+
+  lazyAss(err, 'message', () => mkErrorMsg(...args))
+  // nb Compute lazily in case error is swallowed without
+  // observing its message (eg when backtracking)
+
+  return err;
+
+}
+
+function mkErrorMsg(text, loc, err) {
 
   const linesAround = 2;
   const wrapWidth = 85;
@@ -170,7 +178,7 @@ function mkError(text, loc, err) {
     result.add(strRep(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
   result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
 
-  return new ParseError('\n' + result.toString());
+  return '\n' + result.toString();
 
   function toCoords(idx) {
     idx = Math.min(Math.max(idx, 0), text.length - 1);
