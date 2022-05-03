@@ -12,6 +12,8 @@ const main =
 exports.main =
 function main(args) {
 
+  const callTime = Date.now();
+
   let { websocketPort } = args ?? {};
   websocketPort ??= null;
 
@@ -190,7 +192,9 @@ function main(args) {
     env.cache.put('notes', [note.hash], note);
   }
 
-  env.log.success('Done!');
+  const doneTime = Date.now();
+  const tookSecs = ((doneTime - callTime) / 1000).toFixed(1);
+  env.log.success(`Done! (${tookSecs}s)`);
 
 }
 
