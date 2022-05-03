@@ -136,9 +136,6 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
     katexPrefix: new Cats(),
     texPrefix: new Cats(),
 
-    // TODO: should the gensym/prefix/annotation/etc interpreting be moved
-    //       into the semrep?
-
     clone() {
       const c = { ...this };
       c.indents = [...c.indents];
@@ -569,8 +566,6 @@ function p_indent(s) {
 
   } else {
 
-    // TODO: instead of making indentation first-class, couldn't this
-    //       just set a done = s => s.startsWith('\n' + strRep(' ', newIndent)) ?
     s.indents.push(newIndent);
     body = p_toplevel_markup(s);
     s.indents.pop();

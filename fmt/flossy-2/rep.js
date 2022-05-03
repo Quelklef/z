@@ -350,7 +350,7 @@ class Explicit extends Rep {
   }
 
   toHtml(env) {
-    if (!this.toNote) env.log.warn(`Reference to nonexistent note '${this.toNoteId}'`);
+    if (!this.toNote) env.log.error(`Reference to nonexistent note '${this.toNoteId}'`);
     if (this.toNote)
       return new Cats(`<a href="${this.toNote.href}" class="reference explicit">`, this.body.toHtml(env), '</a>');
     else
@@ -384,7 +384,7 @@ class ReferencedBy extends Rep {
     html.add('<hr />');
     html.add('<p>Referenced by:</p>');
     html.add('<ul>');
-    for (let refBy of this.referencedBy) {
+    for (const refBy of this.referencedBy) {
       html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
     }
     html.add('</ul>');
