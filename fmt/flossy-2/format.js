@@ -131,6 +131,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
     // annotation-related state
     annotNameQueue: [],
+    annotNameStack: ['*', '†', '‡', '♥', '♦', '♣'],
 
     // tex-related state
     katexPrefix: new Cats(),
@@ -140,6 +141,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
       const c = { ...this };
       c.indents = [...c.indents];
       c.annotNameQueue = [...c.annotNameQueue];
+      c.annotNameStack = [...c.annotNameStack];
       c.katexPrefix = c.katexPrefix.clone();
       c.texPrefix = c.texPrefix.clone();
       return c;
@@ -658,7 +660,7 @@ commands.aref = function(s) {
   p_spaces(s);
 
   let name;
-  if (!"[{(<:".includes(s.text[s.i])) {
+  if (!";[{(<:".includes(s.text[s.i])) {
     name = p_word(s).toString();
   } else {
     name = s.gensym('annot');
@@ -667,7 +669,18 @@ commands.aref = function(s) {
 
   p_spaces(s);
 
-  return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, p_inline(s, p_toplevel_markup), '</span>');
+  let body;
+  if (s.text[s.i] === ';') {
+    if (s.annotNameStack.length === 0)
+      throw mkError(s.text, [s.i, s.i + 1], 'Out of footnote symbols!');
+    s.i++;
+    body = s.annotNameStack[0];
+    s.annotNameStack = s.annotNameStack.slice(1);
+  } else {
+    body = p_inline(s, p_toplevel_markup)
+  }
+
+  return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, body, '</span>');
 }
 
 // Annotation definition
