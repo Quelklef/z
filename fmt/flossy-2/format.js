@@ -670,17 +670,25 @@ commands.aref = function(s) {
   p_spaces(s);
 
   let body;
+  let bracketed;
   if (s.text[s.i] === ';') {
     if (s.annotNameStack.length === 0)
       throw mkError(s.text, [s.i, s.i + 1], 'Out of footnote symbols!');
     s.i++;
     body = s.annotNameStack[0];
+    bracketed = false;
     s.annotNameStack = s.annotNameStack.slice(1);
   } else {
     body = p_inline(s, p_toplevel_markup)
+    bracketed = true;
   }
 
-  return new Rep.Seq(`<span class="annotation-reference" id="${s.gensym('annot-id')}" data-refers-to="${name}">`, body, '</span>');
+  const brackClass = bracketed ? 'bracketed' : '';
+  return new Rep.Seq(
+    `<span class="annotation-reference ${brackClass}" id="${s.gensym('annot-id')}" data-refers-to="${name}">`,
+    body,
+    '</span>'
+  );
 }
 
 // Annotation definition
@@ -1405,8 +1413,8 @@ const annotationsImplementation = String.raw`
 
 * { box-sizing: border-box; }
 
-.annotation-reference:before { content: '['; }
-.annotation-reference:after { content: ']'; }
+.annotation-reference.bracketed:before { content: '['; }
+.annotation-reference.bracketed:after { content: ']'; }
 
 .annotation-reference:before,
 .annotation-reference:after,
