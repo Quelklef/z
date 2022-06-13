@@ -202,31 +202,33 @@ function main(args) {
 function renderIndex(graph) {
   const html = new Cats();
 
-  html.add('<table>');
+  html.add('<table>\n');
 
-  html.add('<tr>');
-  html.add('<th>Note</th>');
-  html.add('<th>Jargon</th>');
-  html.add('<th>Format</th>');
-  html.add('<th>Refs</th>');
-  html.add('<th>Ref&nbsp;by</th>');
-  html.add('</tr>');
+  html.add('<tr>\n');
+  html.add('<th>Note</th>\n');
+  html.add('<th>⭐</th>\n');
+  html.add('<th>Refs</th>\n');
+  html.add('<th>Ref&nbsp;by</th>\n');
+  html.add('</tr>\n');
 
   for (
     const note of
       [...graph.notes]
-        .sort((na, nb) => nb.referencedBy.size - na.referencedBy.size)
+        .sort((na, nb) =>
+          !!nb.starred === !!na.starred
+          ? nb.referencedBy.size - na.referencedBy.size
+          : +!!nb.starred - +!!na.starred
+        )
   ) {
-    html.add('<tr>');
-    html.add(`<td><a href="${note.href}">${note.id}</a></td>`);
-    html.add(`<td><center>${[...note.defines].join(', ')}</center></td>`);
-    html.add(`<td><center style="white-space: nowrap">${note[t].format.name}</center></td>`);
-    html.add(`<td><center>${note.references.size}</center></td>`);
-    html.add(`<td><center>${note.referencedBy.size}</center></td>`);
-    html.add('</tr>');
+    html.add('<tr>\n');
+    html.add(`<td style="width: 100%"><a href="${note.href}">${note.id}</a></td>\n`);
+    html.add(`<td><center>${note.starred ? '⭐' : ''}</center></td>\n`);
+    html.add(`<td><center>${note.references.size}</center></td>\n`);
+    html.add(`<td><center>${note.referencedBy.size}</center></td>\n`);
+    html.add('</tr>\n');
   }
 
-  html.add('</table>');
+  html.add('</table>\n');
 
   return withTemplate(html);
 }

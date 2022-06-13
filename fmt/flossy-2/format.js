@@ -46,8 +46,12 @@ function mkNote(floc, source, graph, env) {
     });
   });
 
+  lazyAss(note, 'starred', () => {
+    return note[t].phase1.meta?.starred === true;
+  });
+
   lazyAss(note, 'defines', () => {
-    const rep = note[t].phase1;
+    const rep = note[t].phase1.rep;
     const defines = new Set();
     rep.traverse(node => {
       if (node instanceof Rep.Jargon) {
@@ -69,7 +73,7 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'references', () => {
-    const rep = note[t].phase2;
+    const rep = note[t].phase2.rep;
     const references = new Set();
     rep.traverse(node => {
       if (node instanceof Rep.Implicit) {
@@ -83,7 +87,7 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'html', () => {
-    const rep = note[t].phase2;
+    const rep = note[t].phase2.rep;
 
     const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
     rep.traverse(node => {
@@ -151,8 +155,8 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
   // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
-  note.meta = p_noteMetadata(s);
-  if (note.meta) s.env.log.info('metadata is', note.meta);
+  const meta = p_noteMetadata(s);
+  if (meta) s.env.log.info('metadata is', meta);
   if (s.text[s.i] === '\n') s.i++;
 
   const rep = new Rep.Seq();
@@ -162,7 +166,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
   rep.add(new Rep.ReferencedBy());
 
-  return template(rep);
+  return { rep: template(rep), meta };
 
 }
 
