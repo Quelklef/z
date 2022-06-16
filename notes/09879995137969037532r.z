@@ -1,0 +1,6 @@
+format=compat-1
+
+[:uncountability via isolated points:]
+
+- [[JRM:Top.2]] §27.7
+- Take a [[topological space]] $$X$$. If $$X$$ is [[Hausdorff]], [[compact]], nonempty, and has no [[isolated point]]s, then $$X$$ is uncountable. 

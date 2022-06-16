@@ -1,0 +1,9 @@
+format=compat-1
+
+[:coding function:]
+
+- A __coding function__ for a set $$S$$ is a function $$f : S \to \mathbb N$$ which is [[computable]] with [[computable]] inverse.
+- Intuitively, if we are able to give a set $$S$$ a coding function, that means that we are able to do computation on it despite our computation model only being able to work with $$\mathbb N$$
+- 
+- Remark: given that Turing machines are often constructed as machines that work only on naturals, I'm not even sure what exactly it's supposed to mean for a function to/from $$S$$ to be computable.
+- Remark: I'm not really sure why we require $$f$$ to be computable. It seems to me that if I have a set $$S$$ that I want to perform computations on, but my TM can only work on natural numbers, then it's __my__ responsibility to encode my $$s \in S$$ into $$f(s) \in \mathbb N$$ before handing it to the TM, and then again my responsibility to decode the resultant $$n \in \mathbb N$$ into a $$f^{-1}(n) \in S$$ once the computation is complete. Given that, then, these operations are not to be performed by the TM, I don't know why we would require them to be computable.

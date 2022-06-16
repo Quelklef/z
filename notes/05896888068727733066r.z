@@ -1,0 +1,10 @@
+format=compat-1
+
+[:T1 axiom:]
+
+- On some [[topology]], the __T1 axiom__ is the property that every one-point set is closed
+- This is not satisfied by all topologies. As an easy example, the [[trivial topology]] on any nonempty set will not satisfy $$T_1$$.
+- 
+- For a [[topology]] satisfying $$T_1$$, [[limit point]]s have the following property:
+    - $$x$$ is a limit point of $$A$$ iff every [[neighborhood]] of $$x$$ contains infinitely many points of $$A$$
+    - Proof: thm 17.9

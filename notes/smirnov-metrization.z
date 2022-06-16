@@ -1,0 +1,5 @@
+format=flossy-2
+
+\jarg <Smirnov metrization theorem> [Smirnov metrization theorem]: a topological space $$X$$ is metrizable iff it is paracompact, Hausdorff, and locally metrizable
+
+Gives necessary \i[and] sufficient conditions for metrizability

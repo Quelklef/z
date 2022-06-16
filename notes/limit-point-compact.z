@@ -1,0 +1,9 @@
+format=flossy-2
+
+\sec: Definition
+
+A topological space $X$ is said to be \jarg <limit( |-)point compact> [limit point compact] if every infinite subset has a limit point
+
+\sec: Properties
+
+- Weaker than (implied by) compactness

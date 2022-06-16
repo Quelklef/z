@@ -1,0 +1,5 @@
+format=flossy-2
+
+Theorem: an order topology with the least upper bound property has doubly-closed intervals compact
+
+Take an order topology $X$ with the least upper bound property. Then all doubly-closed intervals $[a, b] \subseteq X$ are compact.

@@ -1,0 +1,41 @@
+format=flossy-2
+
+\title: Orbits of a Group Action
+
+\sec: Definition
+
+If $G$ acts on $A$ then the \jarg <orbit(|s)> [orbit] of $a \in A$ is defined to be the set $\{ g \bull a : g \in G \}$.
+
+The orbit within $G$ of $a$ is denoted $G \bull a$ or $\text{orbit}_G(a)$.
+
+
+\sec: Example
+
+If we let $\mathbb Z / 4$ act on length-4 bitstrings by rotation (so $1 \bull 1011 = 1101$), then
+
+\katex:
+  \begin{align*}
+     & \text{orbit}(0111) = \{ 0111, 1011, 1101, 1110 \}
+  \\ & \text{orbit}(1010) = \{ 1010, 0101 \}
+  \end{align*}
+
+
+\sec: Properties
+
+> The collection of orbits forms a partition of $A$
+  We can prove this by showing that (1) every $a \in A$ belongs to an orbit, and (2) orbits are disjoint.
+
+  (1) Since $1 \in G$, then $a = 1 \bull a$ is in the orbit $G \bull a$
+
+  (2) As follows
+
+  First note that for any $g_0 \in G$ and $a \in A$ we have that $G \bull (g_0 \bull a) = G \bull a$. This is because $G \bull (g_0 \bull a) = \{ g \bull (g_0 \bull a) : g \in G \} = \{ gg_0 \bull a : g \in G \} = \{ g' \bull a : g' \in g_0G \} = (g_0G) \bull a$. Note $g_0G$ is a left coset of $G$; since $g_0 \in G$ then $g_0G = G$. Thus $(g_0G) \bull a = G \bull a$.
+
+  Now note that any orbit $G \bull a$ is decided fully by a single element. If an orbit $G \bull a$ contains some element $x \in A$, then exists some $g_0 \in G$ where $x = g_0 \bull a$. Thus $G \bull x = G \bull (g_0 \bull a) = G \bull a$.
+
+  Now take two orbits $G \bull a_1$ and $G \bull a_2$. If some element $x \in A$ belongs to both, then $G \bull a_1 = G \bull x = G \bull a_2$, so they are the same. Thus orbits are disjoint.
+
+- For $H$ a subgroup of $G$ acting by $h \bull g = hg$, then the orbits $g \bull H$ are the left cosets $gH$.
+
+- For $H$ a subgroup of $G$ acting by $h \bull g = gh^{-1}$ \aref[rk], then the orbits $g \bull H$ are the right cosets $Hg$.
+  \adef: Note that using $h \bull g = gh$ doesn't work because it doesn't form a group action

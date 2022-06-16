@@ -1,0 +1,42 @@
+format=flossy-2
+
+\sec: Definition
+
+For a function $f : X \to Y$ between two topological spaces, TFAE:
+
+  1. $f$ is \jarg <(|topologically )continuous> <(|topological )continuity> [continuous]  (by def'n)
+
+  2. For each $x \in X$ and open $V \ni f(x)$, exists open $U \ni x$ with $f(U) \subseteq V$
+     - If this holds for a particular $x_0 \in X$, we say that $f$ is \i[continuous at] $x_0$
+     - Reminiscent of epsilon-delta
+     - Read: "no matter what $V \ni f(x)$ you want to land in, you can do so with some $U \ni x$"
+
+  3. For every $V$ open in $Y$, we have that $f^{-1}(V)$ is open in $X$
+     - The reverse of an open map
+
+  4. For each $A \subseteq X$ we have that $f(\bar A) \subseteq \overline{ f(A) }$
+
+  5. For each closed $A \subseteq Y$ we have that $f^{-1}$ is closed in $X$
+
+
+\sec: Constructions
+
+Some continuous constructions:
+  - Constant functions $f : X \to Y = x \mapsto y_0$
+  - Inclusion functions $X \to Y$ (using the subspace topology $X \subseteq Y$)
+  - Continuity is preserved by:
+    - Restricting domain
+    - Restricting range
+    - Expanding range
+    (All using the subspace topology)
+  - The set of continuous functions for a fixed space is closed under:
+    - Composition $f \circ g$
+    - Addition $f + g$
+    - Subtraction $f - g$
+    - Mulitplication $f \cdot g$
+    - Division $f/g$, assuming $0 \notin \text{im}(g)$
+
+
+\sec: Properties
+
+- Preserves compactness: if $X$ is compact and $f : X \to Y$ is continuous, then $f(X)$ is compact

@@ -1,0 +1,18 @@
+format=compat-1
+
+[:topology fineness via bases:]
+
+- As it turns out, there are necessary and sufficient conditions to determine the relative [[fineness]] of two [topologies]([[topology]]) based on their [bases]([[topological basis]])
+- Given two topologies $$T_-$$ and $$T_+$$ on $$X$$ with respective bases $$\mathcal B_-$$ and $$\mathcal B_+$$, the following are equivalent:
+    - $$T_+$$ is finer than $$T_-$$
+    - For each $$x \in X$$ and each basis element $$B_- \in \mathcal B_-$$ containing $$x$$, there exists $$B_+ \in \mathcal B_+$$ such that $$x \in B_+ \subseteq B_-$$
+- Proof:
+    - $$(\Longrightarrow)$$
+        - Assume: $$T_+$$ is finer than $$T_-$$.
+        - Now take an $$x \in X$$ and $$B_-$$ containing $$x$$. Then because $$B_-$$ is open in $$T_-$$ then it is open in $$T_+$$ too, meaning that there exists some basis element $$B_+$$ containing $$x$$ where $$B_+ \subseteq B_-$$
+    - $$(\Longleftarrow)$$
+        - Assume: For each $$x \in X$$ and each basis element $$B_- \in \mathcal B_-$$ containing $$x$$, there exists $$B_+ \in \mathcal B_+$$ such that $$x \in B_+ \subseteq B_-$$
+        - WTS that $$T_+$$ is finer than $$T_-$$, i.e. every set open ala $$T_-$$ is also open ala $$T_+$$.
+        - Take an arbitrary open set $$U \in T_-$$. WTS that $$U \in T_+$$.
+        - Take an arbitrary $$x \in U$$. Since $$U$$ is open, then there is some basis element $$B_- \subseteq U$$ containing $$x$$. By assumption, there is a $$B_+$$ such that $$x \in B_+ \subseteq B_-$$. And since $$B_- \subset U$$ then $$B_+ \subseteq U$$.
+        - Thus each $$x \in U$$ has a containing $$B_+ \subseteq U$$, i.e., $$U$$ is open

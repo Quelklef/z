@@ -1,0 +1,11 @@
+format=flossy-2
+
+\title: Linear Functions
+
+\sec: Definition
+
+A \jarg <linear(| function)> [linear function] is a function $f$ of the form
+
+\katex: f(x) = mx + y_0
+
+for fixed $m, y_0$.

@@ -1,0 +1,8 @@
+format=compat-1
+
+[:T2 17.11:]
+
+- Thm 17.11 in [[JRM:Top.2]]
+- Any [[total order]] is [[Hausdorff]] in the [[order topology]]
+- The [[product topology]] of two [[Hausdorff]] spaces is Hausdorff
+- The [[subspace topology]] of a [[Hausdorff]] space is Hausdorff

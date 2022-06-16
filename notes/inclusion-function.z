@@ -1,0 +1,5 @@
+format=flossy-2
+
+\title: Inclusion function
+
+An \jarg <inclusion (function|map)(|s)> [inclusion function] is a function which only widens the codomain of a function. That is, any function $f : A \to X$ of the form $f(x) = x$ with $X \subseteq A$.

@@ -1,0 +1,7 @@
+format=compat-1
+
+[:continuity of coordinate functions:]
+
+- Take $$f : A \to X \times Y$$ where $$X$$ and $$Y$$ are both [[topological space]]s and where $$f$$ has [[coordinate function]]s $$f_1$$ and $$f_2$$
+    - Then $$f$$ is [[continuous]] iff $$f_1$$ and $$f_2$$ are both continuous
+- Note that this generalizes to arbitrary finite products (I think), as well as to infinite products via the [[infinite product topology]]

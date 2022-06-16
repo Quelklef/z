@@ -1,0 +1,5 @@
+format=compat-1
+
+[:topological convergence:]
+
+- In some [[topological space]], we say that a sequence of points $$\{ x_n \}$$ __converges__ to $$x_f$$ iff for every [[neighborhood]] $$U \ni x_f$$ there is some $$N \in \mathbb N_{>0}$$ s.t. for every $$n > N$$, have that $$x_n \in U$$

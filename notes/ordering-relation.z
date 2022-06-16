@@ -1,0 +1,30 @@
+format=compat-1
+
+[:order relation:] [:ordering relation:]
+
+There are a number of mathematical concepts which act to define some semblance of an "order" on a set. I organize these concepts here and collectively refer to them as \i[ordering relations].
+
+Formally, I require an ordering relation to be a binary relation which is at least reflexive and transitive. (I.e., at least a preorder.)
+
+Diagram of order relations with arrows in direction of strength / subsumation ($$\supseteq$$):
+<div style="line-height: 1em">
+            ┌► directed set ──┐
+  preorder ─┤                 ├► upper semilattice ──► lattice ──► linear order
+            └► partial order ─┘
+</div>
+(Incidentlaly, the relation underlying this diagram is a partial order and a directed set but not a semilattice)
+
+Characterization table:
+  Order          Added conditions             Example
+  preorder       reflexivity, transitivity    
+  directed set   upper bounds on finite sets  $$\mathbb R$$ under $$(a, b) \mapsto \lvert a \rvert \leq \lvert b \rvert$$
+  partial order  antisymmetry                 nonempty words under "has as a prefix" ($$\lvert \Sigma \rvert \geq 2$$)
+  semilattice    least upper bounds           words under "has as a prefix" ($$\lvert \Sigma \rvert \geq 2$$)
+  lattice        greatest lower bounds        subsets of a set under $$\subseteq$$
+  linear order   totality                     $$\mathbb N$$/$$\mathbb Z$$/$$\mathbb Q$$/$$\mathbb R$$ under $$\leq$$
+Examples are from me, Mason Mackaman (thanks!), and online. Some may be incorrect.
+
+Viewed as graphs,
+  preorders correspond to directed graphs
+  partial orders correspond to directed acyclic graphs
+Graph conditions corresponding to the other relations have no good names as far as I know.

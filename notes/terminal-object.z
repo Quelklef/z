@@ -1,0 +1,13 @@
+format=flossy-2
+
+\title: Terminal Object
+
+\sec: Definition
+
+With a category $C$, an object $1$ is called \jarg <terminal(| object)> [terminal] iff for every object $x \in C$ exists a unique morphism $m_x : x \to 1$.
+
+
+\sec: Examples
+
+- Within Set, every one-element set is a terminal object \aref[why]
+  \adef: For a one-element codomain $1 = \{1\}$, every function $f : X \to 1$ must be the constant function $f(x) = 1$. Thus morphisms to one-element sets are both guaranteed and unique.

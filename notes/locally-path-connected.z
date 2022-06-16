@@ -1,0 +1,13 @@
+format=compat-1
+
+[:locally path connected:] [:local path connectedness:]
+
+We call a topological space $$X$$ locally path connected at $$x$$ if for each open $$U \ni x$$ there exists a path connected neighborhood $$V \ni x$$ where $$V \subseteq U$$
+
+If $$X$$ is locally path connected at every $$x \in X$$, we simply call it "locally path connected"
+
+Local path connectedness is akin to local connectedness but for path connectedness instead of plain connectedness.
+
+Theorem (JRM:Top.2 §25.4). TFAE:
+  1. $$X$$ is locally path connected
+  2. For each open $$U \subseteq X$$ every path compnent of $$U$$ is open in $$X$$

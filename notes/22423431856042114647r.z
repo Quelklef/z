@@ -1,0 +1,7 @@
+format=compat-1
+
+title: compositionality of expressions vs values
+
+- Python comprehensions (composing expressions) vs map, filter, etc (composing values)
+    - [twitter thread](https://twitter.com/Quelklef/status/1216421923955134469)
+- Pointful notation (composing expressions) vs point-free (composing values)

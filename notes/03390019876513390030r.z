@@ -1,0 +1,9 @@
+format=compat-1
+
+[:orders as graphs:]
+
+- A [[preorder]] is a (reflexive, connected) directed graph
+- A [[partial order]] is a (reflexive, connected) directed acyclic graph
+- A [[total order]] is a (reflexive, connected) linear directed graph
+- An [[equivalence relation]] is a (reflexive) graph wherein all components are connected
+- (These definitions are not checked)

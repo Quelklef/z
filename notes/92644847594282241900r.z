@@ -1,0 +1,10 @@
+format=compat-1
+
+[:second-countable:]
+
+- A [[topological space]] $$X$$ is called __second-countable__ iff it has a [[topological basis]] which is countable
+- 
+- Examples:
+    - $$\mathbb R$$ -- take the collection of all open intervals with rational endpoints; this is a countable basis
+    - Similarly, $$\mathbb R^n$$ and even $$\mathbb R^\omega$$
+- Easily stronger than being [[first-countable]]

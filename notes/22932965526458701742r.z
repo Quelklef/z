@@ -1,0 +1,6 @@
+format=compat-1
+
+[:diameter:]
+
+- For some [[bounded]] set, we define its diameter to be the supremum of distances between elements, i.d.
+    - $$\text{diam}(A) := \sup_{a_1, a_2 \in A} d(a_1, a_2)$$

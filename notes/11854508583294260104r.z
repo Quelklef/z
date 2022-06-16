@@ -1,0 +1,19 @@
+format=compat-1
+
+[:partial recursive:]
+
+- A function is __partial recursive__ if it is primitive recursive, but we also include:
+    - (unbounded search or $$\mu$$-recursion) for some partial recursive $$\theta(x_1, \dots, x_n, y)$$, consider the [[partial function]] $$\psi(x_1, \dots, x_n)$$ giving the least $$y$$ where $$\theta(x_1, \dots, x_n, y) = 0$$ and each $$\theta(x_1, \dots, x_n, z)$$ [converges]([[partial function]]) for each $$z < y$$. Then $$\psi$$ is partial recursive.
+- Remark: we're basically adding the following
+    - ```javascript
+function psi(theta, ...xs) {
+  for (let y = 0; true; y++)
+    if (theta(...xs, y) === 0)
+      return y;
+}```
+- Remark: while [[primitive recursive]] functions are all total, partial recursive functions may be [[partial function]]s
+- Remark: it seems that the set of partial recursive functions is of equal power to the set of [[turing machine]]s; i.e., to say something is [[computable]] is to say that it is partial recursive
+- Another way of writing this is with the $$\mu$$ quantifier, which is defined as follows:
+    - $$\mu x : \phi(x)$$ for some formula $$\phi(x)$$ is the least $$x \in \mathbb N^{\geq 0}$$ such that $$\phi(x)$$ holds
+    - Then we can define $$\psi(x_1, \dots, x_n, y) = \mu y : \theta(x_1, \dots, x_n, y) = 0 \land \forall z < y : \theta(x_1, \dots, x_n)\downarrow$$
+        - Where $$\downarrow$$ is used for [convergence]([[partial function]])

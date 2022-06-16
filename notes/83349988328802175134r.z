@@ -1,0 +1,7 @@
+format=compat-1
+
+[:variance:]
+
+- For a [[random variable]] $$X$$ with expected value $$\mu = \mathbb E X$$ the variance $$\sigma^2(X)$$ is defined to be
+    - $$\sigma^2(X) = \mathbb E((X - \mu)^2)$$
+- Why squared? Don't ask, asshole. (I don't know why)

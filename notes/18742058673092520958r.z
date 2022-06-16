@@ -1,0 +1,9 @@
+format=compat-1
+
+[:nonexistence assumption:]
+
+- Examples:
+    - Windows' versions went from 8 to 10, skipping 9. This was because some code existed that assumed that if the version contained a `'9'`, then it was either 95 or 98. They assumed nonexistence of other versions containing `'9'`.
+    - An API that exposes `ParseErrA`, `ParseErrB`, `DataErrA`, `DataErrB`. You've caught an error and want to classify it as either a parse or data error. You do this by checking `e instanceof ParseErrorA || e instanceof ParseErrB`. This is broken! It assumes nonexistence of `ParseErrorC`.
+    - The JS code `"number string".includes(typeof x)` assumes nonexistence of a type called, say, `"r str"`.
+    - 

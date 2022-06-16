@@ -1,0 +1,6 @@
+format=compat-1
+
+[:independent random variables:]
+
+- Two [[random variable]]s $$X$$ and $$Y$$ are said to be __independent__ if:
+    - $$\forall x, y \in \text{ran}(X), \text{ran}(Y) : P(X = x \text{ and } Y = y) = P(X = x) \cdot P(Y = y)$$

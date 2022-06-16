@@ -1,0 +1,8 @@
+format=compat-1
+
+[:sequence lemma:]
+
+- [[JRM:Top.2]] lemma 21.2 (generalized in §30)
+- Take a [[topological space]] $$X$$ and some $$A \subseteq X$$. Then:
+    - If there is some sequence of points in $$A$$ which converges to $$x$$, then $$x \in \bar A$$
+    - The converse holds if $$X$$ is [[first-countable]]

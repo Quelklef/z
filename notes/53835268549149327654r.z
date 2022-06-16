@@ -1,0 +1,6 @@
+format=compat-1
+
+[:T2 17.3:]
+
+- Take $$Y$$ a [[subspace topology]] of $$X$$ where $$Y$$ is [[closed]] in $$X$$. Then $$A$$ closed in $$Y$$ is also closed in $$X$$.
+- Dual to [[T2 16.2]]

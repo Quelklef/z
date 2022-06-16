@@ -1,0 +1,16 @@
+format=compat-1
+
+[:uniqueness of factorization:]
+
+- Generally speaking, we do not get unique factorizations of polynomials in [[ring]]s
+- For instance, in $$\mathbb Z / 6$$ we have
+    - $$x^2 - 5x = x(x - 5) = (x-2)(x-3)$$
+    - Which means, yes, $$x^2 - 5x$$ has all of $$0, 5, 2, 3$$ as roots
+    - But no $$x(x-2)(x-3)(x-5)$$ does not divide $$x^2 - 5x$$
+- However, for $$\mathbb Z/p$$ with $$p$$ prime, we __do__ get unique factorizations!
+    - True in general for [[field]]s
+    - The actual statement is that for $$f \in \mathbb F[x]$$ for some field $$\mathbb F$$ if $$\ell$$ has distinct roots $$\{ \alpha_n \}$$, then we can write $$f(x) = (x-\alpha_1)(x-\alpha_2)\cdots(x-\alpha_\ell)g(x)$$ with $$g \in \mathbb F[x]$$ and $$\text{deg}(g) = \text{deg}(f) - \ell$$
+- We kind of have
+    - integers ↔ polynomials
+    - primes ↔ irreducible polynomials
+    - fundamental theorem of algebra ↔ uniqueness of factorization

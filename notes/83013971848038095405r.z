@@ -1,0 +1,8 @@
+format=compat-1
+
+title: convergent sequences under continuous functions
+
+- [[JRM:Top.2]] thm 21.3 (generalized in §30)
+- Take $$f : X \to Y$$.
+    - If $$f$$ is continuous, then for each convergent sequence $$x_n \to x$$ in $$X$$, the sequence $$f(x_n)$$ converges to $$f(x)$$
+    - If $$X$$ is [[first-countable]], then the converse holds

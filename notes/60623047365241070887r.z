@@ -1,0 +1,6 @@
+format=compat-1
+
+[:Urysohn lemma:]
+
+- For $$X$$ a [[normal]] space and $$A$$, $$B$$ disjoint [[closed]] subsets of $$X$$, and for $$[a, b] \subseteq \mathbb R$$, exists [[continuous]] $$f : X \to [a, b]$$ where $$f(A) = \{a\}$$ and $$f(B) = \{b\}$$.
+- Essentially, if $$X$$ is normal and $$A, B$$ are disjoint and closed, then they can be [[separated by a continuous function]]

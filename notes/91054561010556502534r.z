@@ -1,0 +1,13 @@
+format=compat-1
+
+[:abstraction is forgetting:]
+
+- an abstraction over X is a new structure A wherein the elements of A are those from X, with something forgotten
+- examples
+    - $$\mathbb N$$ is abstracting over sets, forgetting all but size
+    - `String` is an abstraction over written text, forgetting all but characters and order
+    - Type variables are forgetting which type in particular
+    - Typeclasses are forgetting which type in particular
+    - Sets are abstracting over groups of objects, forgetting order and multiplicity
+- Note that this kinda works best if we consider ground-0 truth to be the physical world. Then sets are able to __forget__ multiplicity because every group of things in the physical world __has__ multiplicity
+    - (Do note that creating the group is abstraction in itself... where does the glass end and the table begin?)

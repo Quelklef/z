@@ -1,0 +1,30 @@
+format=flossy-2
+
+\sec: Order of a group element
+
+\sec: Definition
+
+Given a group $G$, the \jarg <(| element)order> [order] of an element $g \in G$ is the lowest power to which it must be raised to obtain the group identity. That is, the order of $g$ is the minimum $n \in \mathbb N_{> 0}$ such that $g^n = 1$. If there is no such $n$, we say that the order of $g$ is $0$, or equivalently that it is $\infty$.
+
+The order of an element $g$ is denoted $\lvert g \rvert$. (Remark: to motivate this notation, note that in call cases except order-$0$, the order of $g$ is the cardinality of $\{ g^n : n \in \mathbb Z \}$)
+
+
+\sec: Examples
+
+- In $(\mathbb Z/2n, +)$, $\lvert 1 \rvert = 2n$ and $\lvert 2 \rvert = n$ and $\lvert 0 \rvert = 1$.
+
+- In $(\mathbb Z, +)$, $\lvert 0 \rvert = 1$ and otherwise $\lvert n \rvert = 0$.
+
+
+\sec: Properties
+
+- $\lvert g^{-1}xg \vert = \lvert x \rvert$ \aref[pf]
+\adef:
+  \i[Proof]. We will show that $x^n = 1$ exactly when $(g^{-1}xg)^n = 1$, which implies that their order is the same.
+
+  $(\Rightarrow)$ Assume $x^n = 1$; then $(g^{-1}xg)^n = g^{-1}x^ng = g^{-1}g = 1$
+  $(\Leftarrow)$ Assume $(g^{-1}xg)^n = 1$; then $x^n = gg^{-1}x^ngg^{-1} = g(g^{-1}xg)^ng^{-1} = gg^{-1} = 1$
+
+- $\lvert ab \rvert = \lvert ba \rvert$ \aref[pf]
+\adef:
+  Know that $\lvert x \rvert = \lvert g^{-1}xg \rvert$. Letting $x = ab$ and $g = a$ we get $\lvert ab \rvert = \lvert a^{-1}aba \rvert = \lvert ba \rvert$.

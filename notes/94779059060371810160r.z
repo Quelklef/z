@@ -1,0 +1,7 @@
+format=compat-1
+
+title: metric spaces are complete if every Cauchy sequence has a convergent subsequence
+
+- [[JRM:Top.2]] 43.1
+- If $$X$$ is a [[metric space]] where ever [[Cauchy sequence]] has a convergent subsequence, then $$X$$ is a [[complete metric space]]
+- Relaxes the standard requirement for completeness that Cauchy sequences themselves must converge

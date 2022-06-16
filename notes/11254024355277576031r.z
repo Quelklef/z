@@ -1,0 +1,6 @@
+format=compat-1
+
+[:Euler phi function:]
+
+- Link: [[Z/m]], [[units of a ring]]
+- We have $$\varphi(m) := \lvert (\mathbb Z / m)^\times \rvert$$ just for funsies (?)

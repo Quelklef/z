@@ -1,0 +1,8 @@
+format=compat-1
+
+title: equivalence of product and metric topologies on R
+
+- The following topologies on $$\mathbb R^n$$ are equivalent:
+    - That induced by the [[euclidean metric]]
+    - That induced by the [[square metric]]
+    - The [[product topology]]

@@ -1,0 +1,6 @@
+format=compat-1
+
+[:interior:]
+
+- Given a [[topological space]] $$X$$ and set $$A \subseteq X$$, the __interior__ of $$A$$ is defined as the union of all [[open set]]s contained ($$\subseteq$$) in $$A$$
+- Denoted $$\text{Int }A$$

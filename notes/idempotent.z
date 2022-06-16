@@ -1,0 +1,9 @@
+format=flossy-2
+
+\title: Idempotency
+
+\sec: Definition
+
+An operation $f : X \to X$ is called \jarg <idempoten(t|cy)> [idempotent] if doing it more than once has no extra effect; that is, if
+
+\katex: (f \circ f)(x) = f(x)

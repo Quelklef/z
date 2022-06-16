@@ -1,0 +1,7 @@
+format=flossy-2
+
+\title: Magmas
+
+\sec: Definition
+
+A \jarg <magma(|s)> [magma] $X = (X, \times)$ is an algebraic structure consisting of a set and an some operation $\times : X^2 \to X$.

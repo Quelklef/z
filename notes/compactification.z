@@ -1,0 +1,11 @@
+format=compat-1
+
+If:
+  1. $$Y$$ is a compact Hausdorff topological space
+  2. $$X \subsetneq Y$$ is a proper subspace topology of $$Y$$
+  3. The closure $$\bar X$$ is equal to $$Y$$ (i.e. $$X$$ is dense in $$Y$$)
+
+Then we call $$Y$$ a [:compactification:] of $$X$$
+
+
+Two compactifications $$Y_1$$ and $$Y_2$$ are considered equivalent if there's a homeomorphism $$f : Y_1 \to Y_2$$ between them such that $$f$$ is the identity function on $$X$$.

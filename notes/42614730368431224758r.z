@@ -1,0 +1,9 @@
+format=compat-1
+
+[:hamming code:]
+
+- Watch this: https://www.youtube.com/watch?v=X8jsijhllIA
+- Basic idea:
+    - Given some collection of bits, we can add an extra bit onto it, called the __parity bit__, to ensure that the bits sum to 0 (mod 2). Then if a single error occurs when transmitting these bits, it will sum to 1, and we will know that we have an error. This is called [[parity checking]]
+    - Given some message $$M$$, we can attach $$\log_2 \lvert M \rvert$$ parity bits where each parity bit guards exactly half of the message, and where these bits form a certain structure. Then if a single error occurs during transmission, this structure allows us to binary-search our way back to knowing exactly which bit was corrupted, and therefore fix it.
+    - As an added bonus, if we place these bits on the powers of two, then the computation to find the corrupted bit boils down to a single xor.

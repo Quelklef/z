@@ -1,0 +1,7 @@
+format=compat-1
+
+[:regular:]
+
+- a [[topological space]] $$X$$ is said to be __regular__ if it satisfies the [[T1 axiom]] and if for each $$x \in X$$ and closed $$Y \subseteq X$$ not containing $$x$$, there are disjoint open sets respectively containing $$x$$ and $$Y$$
+- 
+- Subspaces of regular spaces are regular; products of regular spaces are regular ([[JRM:Top.2]] §31.2)

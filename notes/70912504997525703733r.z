@@ -1,0 +1,9 @@
+format=compat-1
+
+[:tube lemma:]
+
+- [[JRM:Top.2]] §26.8
+- Take two [[topological space]]s $$X$$ and $$Y$$ with $$Y$$ compact
+    - Take some $$x_0 \in X$$ and $$N \supseteq x_0 \times Y$$
+    - Then exists an open $$W \ni x_0$$ s.t. $$N \supseteq W \times Y$$
+- ![](https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2Fplace%2FlfXHlFAIgG.png?alt=media&token=de1c7a0b-17b7-4297-ad2a-d7284821135e)

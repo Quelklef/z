@@ -1,0 +1,6 @@
+format=compat-1
+
+title: connectedness is preserved by finite cartesian product
+
+- Title: if $$X_n$$ are all connected, then $$\prod_n X_n$$ is, as well, ala the [[product topology]]
+    - [[JRM:Top.2]] §23.6

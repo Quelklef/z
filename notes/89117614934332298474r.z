@@ -1,0 +1,10 @@
+format=compat-1
+
+[:universal primitive recursive function:]
+
+- The set of [[primitive recursive]] functions is simple enough that it is [[effectively countable]]
+- Call that enumeration $$\{ p_i \}$$ and define $$u(n, x) = p_n(x)$$. Then $$u$$ is a universal primitive recursive function (i.e., it emulates all p.r. functions) and is [[computable]]
+- However, $$u$$ is not itself primitive recursive.
+    - Let $$g(n) = u(n, n) + 1$$. Then $$g$$ is a [[total function]], but it cannot itself be primitive recursive, because it differs from the $$n$$th of the (countable) primitive recursive functions on input $$n$$
+    - Basically, a diagonalization argument
+    - Now, $$g$$ is just a composition of $$u$$ with a successor function. Composition and succession are allowed in primitive recursive functions, which means that the problematic part of $$g$$ preventing it from being primitive recursive must be the inclusion of $$f$$.

@@ -1,0 +1,168 @@
+format=compat-1
+
+Typically, monoids are presented as 3-tuples $$(X, \times, e)$$ of a set $$X$$ equipped with an associative operation $$\times$$ which has a two-sided identity $$e$$.
+
+This presentation works fine, but has always striked me as somewhat opaque: what does it \i[mean]? To me, the essential defining feature of a monoid is its relation with lists. So I offer the following re-presentation of the concept of a monoid which promotes lists to a first-class discussion topic.
+
+First, let us note that given a monoid $$(X, \times, e)$$, there is a canonical way to lift the binary operator $$\times$$ into a function $$F$$ on lists:
+$[ \begin{align*}
+   & F : X^\star \to X
+\\ & F([x_1, \dots, x_n]) = e \times x_1 \times \cdots \times x_n
+\end{align*} ]$
+(This function is called \c[mconcat] in Haskell.) $$F$$ has the following identities with $$\times$$ and $$e$$:
+$[ \begin{align*}
+   F([]) &= e
+\\ F([a, b]) &= a \times b &&\forall a,b
+\end{align*} ]$
+These identities motivate a reverse construction: given a set $$X$$ and function $$F : X^\star \to X$$, we can then define $$\times, e$$ like so:
+$[ \begin{align*}
+   e &:= F([])
+\\ a \times b &:= F([a, b]) &&
+\end{align*} ]$
+Such a construction induces a structure $$(X, \times, e)$$; however, this structure is not, in general, a monoid. For example:
+  - Choosing $$X \supseteq \mathbb N$$ and $$F([x_1, \dots, x_n]) = n$$, we get $$e = 0$$ and $$a \times b = 2$$. This gives associativity on $$\times$$, but $$e$$ is not an identity.
+  - Choosing $$X \supseteq \mathbb N$$ and $$F([x_1, \dots, x_n]) = 1x_1 + 2x_2 + \cdots + nx_n$$, we have $$e = 0$$ and $$a \times b = a + 2b$$. Then $$e$$ is an identity but $$\times$$ is not associative.
+
+The problem, then, is to find conditions on $$F$$ such that:
+  (1) The induced $$(X, \times, e)$$ is guaranteed to be a monoid
+  (2) We guarantee that $$F([x_1, \dots, x_n]) = e \times x_1 \times \cdots \times x_n$$
+      That is, we induce "the right" monoid
+      (Somewhat surprisingly, this condition doesn't follow from (1). More on this later.)
+  (3) The conditions feel a little bit more meaningful/evocative than assocativity and identity
+  (4) The conditions are necessary (as well as sufficient)
+
+I offer the following conditions:
+  (A) $$F(\mathbf x \oplus \mathbf y \oplus \mathbf z) = F(\mathbf z \oplus [F(\mathbf y)] \oplus \mathbf z)$$
+      (Bold indicates that the symbol represents a sequence $$\in X^\star$$ rather than an element $$\in X$$, and $$\oplus$$ is sequence concatenation.)
+      This condition gives associativity on $$\times$$
+      Interpretation: when calculating $$F(\mathbf s)$$, one may first calculate $$F$$ on any subsequence. (This is essentially a rephrasing of generalized associativity.) For example, with $$X = \mathbb R$$ and $$F$$ is summation, we equivalently have:
+$[ \begin{align*}
+           1 + 2 + 3 + 4 + 5 &= 1 + 2 + (3 + 4) + 5
+        \\ F([1, 2, 3, 4, 5]) &= F([1, 2, F([3, 4]), 5])
+        \end{align*} ]$
+  (B) $$F$$ is surjective
+      This condition gives identity on $$e$$    
+
+Let us see that conditions (A) and (B) satisfy properties (1)--(4) above.
+
+Take an $$F : X^\star \to X$$ satisfying (A) and (B), and let $$e = F([])$$ and $$a \times b = F([a, b])$$.
+
+First note that associativity of $$\times$$ falls out of (A):
+$[
+  \begin{align*}
+  & a \times (b \times c)
+  \\ &= F([a, F([b, c])])
+  \\ &= F([a] \oplus [F([b, c])] \oplus [])
+  \\ &= F([a] \oplus [b,c] \oplus []) &&(A)
+  \\ &= F([a, b, c])
+  \\ &= F([] \oplus [a, b] \oplus [c]) &&(A)
+  \\ &= F([] \oplus [F([a, b])] \oplus [c])
+  \\ &= F([F([a, b]), c])
+  \\ &= (a \times b) \times c
+  \end{align*}
+]$
+The combination of (A) and (B) together give identity on $$e$$:
+$[
+\begin{align*}
+& x \times e
+\\ &= F([x, e])
+\\ &= F([x] \oplus [e] \oplus [])
+\\ &= F([x] \oplus [] \oplus []) &&(A)
+\\ &= F([] \oplus [x] \oplus [])
+\\ &= F([] \oplus [F(\mathbf x)] \oplus []) &&\text{where } \mathbf x \text{ is guaranteed by } (B)
+\\ &= F([] \oplus \mathbf x \oplus []) &&(A)
+\\ &= F(\mathbf x)
+\\ &= x
+\end{align*}
+]$
+Thus we have that $$(X, \times, e)$$ is a monoid, so we satisfy property (1).
+
+Now also note that:
+$[
+\begin{align*}
+& F([x] \oplus \mathbf y)
+\\ &= F([x] \oplus \mathbf y \oplus [])
+\\ &= F([x] \oplus [F(\mathbf y)] \oplus []) &&(A)
+\\ &= F([x, F(\mathbf y)])
+\\ &= x \times F(\mathbf y)
+\end{align*}
+]$
+Applying this inductively we get that
+$[ F([x_1, \dots, x_n]) = x_1 \times \cdots \times x_n \times e ]$
+meaning we satisfy property (2).
+
+I will skip over property (3), as it is rather subjective, but say that, at the very least, \i[I] find conditions (A) and (B) to be somewhat evocative. (That's why I went about discovering them, after all.)
+
+Finally, property (4), that given a monoid $$(X, \times, e)$$, its induced $$F$$ satisfies (A) and (B). Generalized associativity gives (A), and for (B) we need only note that $$F([a]) = a$$ and thus $$F$$ is surjective.
+
+
+=== Post-script ===
+
+If we have an $$F : X^\star \to X$$ which satisfies (A) but not (B), we can do \i[most] of the proof given above, but end up stuck. In particular, our results are that:
+  1. $$\times$$ is associative
+  2. $$x \times e = F([x])$$
+  3. $$F([x_1, \dots, x_n]) = x_1 \times \cdots \times x_n \times e$$
+This is close, but we are missing that $$F([a]) = a$$, which I conjecture to be equivalent to surjectivity when given (A). (Probably not hard to prove this one way or another, but I don't want to at the moment)
+
+
+=== Post-script ===
+
+A similar condition to (A) is to ask that $$F$$ form a magma homomorphism $$(X^\star, \oplus) \to (X, \times)$$; i.e.,
+$[ F(\mathbf x \oplus \mathbf y) = F(\mathbf x) \times F(\mathbf y) ]$
+Call this condition (M).
+
+Interestingly, (M) is not as strong as we would like. If we ask for $$F$$ to satisfy (M) and (B) rather than (A) and (B), we get that:
+
+  1. $$\times$$ is associative
+$[ \begin{align*}
+& (x\times y)\times z
+\\ &= (F(\mathbf x) \times F(\mathbf y)) \times F(\mathbf z) &&(B)
+\\ &= F(\mathbf x \oplus \mathbf y)\times F(\mathbf z) &&(M)
+\\ &= F((\mathbf x \oplus \mathbf y) \oplus \mathbf z) &&(M)
+\\ &= F(\mathbf x \oplus (\mathbf y \oplus \mathbf z))
+\\ &= F(\mathbf x)\times (F(\mathbf y) \times F(\mathbf z)) &&(M)
+\\ &= x\times (y\times z)
+\end{align*} ]$
+
+  2. $$e$$ is a two-sided identity
+$[ \begin{align*}
+& x \times e
+\\ &= F(\mathbf x) \times e &&(B)
+\\ &= F(\mathbf x) \times F([])
+\\ &= F(\mathbf x \oplus []) &&(M)
+\\ &= F(\mathbf x)
+\\ &= x
+\end{align*} ]$
+
+Thus we get that inducing $$(X, \times, e)$$ from $$F$$ produces a monoid; however, it might actually not be the monoid we had in mind. The strongest we can get is:
+
+  3. $$ F([x_1, \dots, x_n]) = \begin{cases} x_1 \times \cdots \times x_n & 2 \mid n \\ x_1 \times \cdots \times x_{n-1} \times F([x_n]) & 2 \nmid n \end{cases} $$
+
+     Illustrative example:
+$[ \begin{align*}
+    & F([q, r, s, t, u])
+\\ &= F([q, r] \oplus [s, t] \oplus [u])
+\\ &= F([q, r]) \times F([s, t]) \times F([u]) &&(M)
+\\ &= (q \times r) \times (s \times t) \times F([u])
+\\ &= q \times r \times s \times t \times F([u])
+\end{align*} ]$
+
+I believe that this somewhat-bizarre result essentially boils down to the fact that $$e = F([])$$ is defined in terms of the length-0 list $$[]$$ and $$a \times b := F([a, b])$$ is defined in terms of the length-2 list $$[a, b]$$, so how $$F$$ acts on lists of non-even length is irrelevant to the monoid $$(X, \times, e)$$.
+
+What we are missing is that $$F([a]) = a$$, and this is not guaranteed by (M) and (B). Counter-example (thanks to Mason Mackaman for helping me find this!): Take $$X = \mathbb Z / 2$$ and define $$F([x_1, \dots, x_n]) = x_1 + \cdots + x_n + n$$. Then:
+
+  $$F$$ satisfies (M):
+$[
+\begin{align*}
+& F([x_1, \dots, x_k] \oplus [x_{k+1}, \dots, x_n])
+\\ &= F([x_1, \dots, x_n])
+\\ &= (x_1 + \cdots x_n) + n
+\\ &= (x_1 + \cdots + x_k + x_{k+1} + \cdots x_n) + (k + (n-k))
+\\ &= (x_1 + \cdots + x_k + k) + (x_{k+1} + \cdots + x_n + (n-k))
+\\ &= F([x_1, \dots, x_k]) + F([x_{k+1}, \dots, x_n])
+\end{align*}
+]$
+  $$F$$ satisfies (B), since $$F([x, 0]) = x + 0 = x$$
+  $$F$$ does not satisfy $$F([a]) = a$$: we have $$F([x]) = x + 1 \neq x$$!
+
+#onwards

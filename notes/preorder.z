@@ -1,0 +1,11 @@
+format=compat-1
+
+[:preorder:] [:preorders:] [:quasiorder:] [:quasiorders:] [:quasi-order:] [:quasi-orders:] [:quasi order:] [:quasi orders:]
+
+Preorders are a kind of ordering relation. In fact, they are the most general kind.
+
+Preorders are partial orders without antisymmetry.
+
+Formally, a we define a preorder to be binary relations $$\leq$$ satisfying:
+  1. Reflexivity: always $$a \leq a$$
+  2. Transitivity: if $$a \leq b$$ and $$b \leq c$$ then $$a \leq c$$

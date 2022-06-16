@@ -1,0 +1,5 @@
+format=compat-1
+
+[:units of a ring:]
+
+- For some [[ring]] $$R$$, the units $$R^\times$$ is the set of all elements $$x \in R$$ which have a multiplicative inverse

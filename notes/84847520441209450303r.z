@@ -1,0 +1,6 @@
+format=compat-1
+
+[:metrizable spaces are first-countable:]
+
+- every [[metrizable]] space is [[first-countable]]
+- see [[JRM:Top.2]] §21

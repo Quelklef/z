@@ -1,0 +1,17 @@
+format=compat-1
+
+title: reality is the terminal object in the category of logics
+
+- Modified from something I sent to Karthik
+- [Originally from Morgan Thomas](https://chat.platonic.systems/platonic/pl/nfntshhe1fgemyzt5oizk6spch)
+- My coworker said some things that I think you'd find interesting.
+
+"[What] happened with Russel's paradox [...] led to Western logicians missing a truth that Indian philosophers have known for thousands of years". He said that he is referencing "maya", the idea that there is only one thing in existence and distinction and separation is all illusion. "From this," he says, "it follows that truth and falsehood are the same property", which is exactly what Russell's paradox, and all other trivial logics, conclude.
+
+I am currently reading Zen and the Art of Motorcycle Maintenance, which touches, I think, on a similar idea. Namely, it seems to point out that there is only one truth--what **is**--but an infinite number of ways to slice it up.
+
+We can view constructing logics, says my coworker, as a way of viewing the world. What is is "an amorphous oneness which we slice up into pieces in order to make some things be false from the lens [we are using]. When we are able to deny some things, then it becomes meaningful to assert things."
+
+Interestingly, there is some connection to math here. To paraphrase, we can construct the [[category]] of all logics. in this category, the [[terminal object]] is the logic wherein there is only one value and all statements are both true and false--sounds familiar. Other logics will not be so trivial, containing more than one value and both true and false statements, but will always have a [[morphism]] to the aforementioned trivial logic. In some sense, we could interpret moving away from the terminal object as narrowing our view on the world, and moving towards the terminal object as widening our view.
+
+I'm sure this line of reasoning has some flaws, mathematical and philosophical, but I think it's an interesting connection.

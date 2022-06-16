@@ -1,0 +1,5 @@
+format=compat-1
+
+[:convex:]
+
+- A set $$X$$ is __convex__ if for each two points $$x, y \in X$$, the entire line spanning between $$x$$ and $$y$$ is also in $$X$$

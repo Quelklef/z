@@ -1,0 +1,6 @@
+format=compat-1
+
+[:Urysohn metrization theorem:]
+
+- If a [[topological space]] $$X$$ is [[regular]] and [[second-countable]], then $$X$$ is [[metrizable]]
+- [[JRM:Top.2]] §34.1

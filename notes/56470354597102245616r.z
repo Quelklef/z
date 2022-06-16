@@ -1,0 +1,9 @@
+format=compat-1
+
+[:metrizability of R^ω:]
+
+- Claim: the [[product topology]] on $$\mathbb R^\omega$$ is [[metrizable]]
+- The metric is this:
+    - $$D(x, y) = \sup_i \left( \frac{\bar d(x_i, y_i)} i \right)$$
+    - Where $$\bar d(a, b) = \min(\lvert a - b \rvert, 1)$$ is the [[standard bounded metric]] on the [[euclidean metric]]
+    - Some motivation: this is in some sense a generalization of the [[uniform topology]] to 

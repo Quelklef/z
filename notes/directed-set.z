@@ -1,0 +1,7 @@
+format=flossy-2
+
+\sec: Directed set
+
+A \jarg <directed(| set)> [directed set] is a 2-tuple $(J, \leq)$ where $\leq$ is some kind of odering relation over $J$ and where for every pair of elements $\alpha, \beta \in J$ exists an upper bound, i.e., a $\gamma$ s.t. $\alpha \leq \gamma$ and $\beta \leq \gamma$)
+
+Some texts rquire that $\leq$ form a partial order; others require it form a preorder.

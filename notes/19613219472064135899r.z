@@ -1,0 +1,6 @@
+format=compat-1
+
+[:finite complement topology:]
+
+- Given a set $$X$$, we can form the __finite complement__ [[topology]] where we define a set $$U$$ to be open iff $$U^C$$ is finite
+- I.e, we define the topology to be the set of all subsets of $$X$$ with finite complements. Note that if we asked for the subsets themselves to be finite, not their complements, that would __not__ form a complement.

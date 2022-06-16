@@ -1,0 +1,51 @@
+format=flossy-2
+
+\title: \jarg <Skolem's paradox> [Skolem's paradox]
+
+#notes on \href <https://plato.stanford.edu/entries/paradox-skolem> [this]
+
+- As a consequence of Cantor's theorem, there exists a set of uncountable cardinality
+- Löwenheim-Skolem theorem: if a first-order theory has an infinite model, then it has a countable model
+- Seems to be a paradox!
+  - Let $T$ denote some standard axiomatization of set theory
+  - Assuming $T$ has a model, Löwenheim-Skolem theorem asserts existence of some countable model $\mathbf M$ for $T$
+  - Let $\Omega(x)$ be the assertion, expressed using first-order logic, that $x$ is uncountable
+  - By Cantor's theorem we have that $T \vdash \exists m\ \Omega(m)$ and so there is a $m \in \mathbf M$ where $\mathbf M \vDash \Omega(m)$
+  - But since $\mathbf M$ is countable then there are only countably many $n \in \mathbf M$ such that $n \in m$!
+  - Contradiction?
+
+- Resolution
+  - When evaluating the semantics of a first-order sentence such as $\Omega(m)$, we must recognize that the meaning of first-order language is relative to the model in which we interpret it
+  - For instance, $\forall$- and $\exists$- bindings quantify exactly over the domain of $\mathbf M$ rather than any other domain that we had in mind. Likewise, the inclusion relation $\in$ need not represent "genuine" inclusion but need only be some binary relation between elements of $\mathbf M$ which satisfies the appropriate properties
+  - Though we have some intention for what first-order sentences "ought" to mean, $\mathbf M$ has no mandate to respect that intention.
+  - As humans, we have a certain sense and intuition around what it means for a set to be uncountable. Guided by that sense and intuition, we write the definition of $\Omega$ as a first-order expression of uncountability
+  - But this definition was predicated on a certain understanding of first-order logic which $\mathbf M$ need not follow
+  - As such, the fact that $\mathbf M \vDash \Omega(m)$ may have a meaning far differing from $m$ being uncountable.
+  - (For what it's worth, I think the article does a better job explaining this than me. Go read it! {sec}2.2)
+
+- Details on how $\mathbf M$ has "strange interpretations"
+  - Transitive models
+    - A model $\mathbf X$ is called \i[transitive] if (1) every member of $\mathbf X$ is a set and any every member of a member of $\mathbf X$ is also a member of $\mathbf X$; and (2) the relation $\in$ in $\mathbf X$ is the same as $\in$ in the language being used to describe $\mathbf X$
+    - Stronger, if $\mathbf X$ is a transitive model and if $f, m \in \mathbf X$ then $\mathbf X \vDash ``f : \omega \to m \text{ is bijective}"$ if and only if $f$ is a bijection in the metalanguage
+    - Conceptually, in a transitive model the interpretations of membership and bijectivity are "correct" (relative to the metalanguage)
+  - An example of how a transitive model can "misinterpret" axioms
+    - Take $\mathbf Z$ a transitive model of ZFC
+    - Powerset axiom is $\forall x\ \exists y\ \forall z \mid z \subseteq x \leftrightarrow z \in y$
+    - But $\forall$ only quantifies over members of $\mathbf Z$
+    - So for a given $x$ its powerset $y$ only contains sets $z$ where $z \subseteq x \land z \in \mathbf Z$
+    - If $\mathbf Z$ is countable, then $x$ contains at most a countable number of sets
+    - (In {sec}2.4{para}4 they say that the source Resnik 1966 follows "this phenomenon through the case of the real numbers". Seems interesting! #onwards)
+  - In non-transitive models we get even more ways to misinterpret!
+  - Assuming is $\mathbf M$ is transitive, where can it differ from the metalanguage for Skolem's paradox to arise?
+    - $\mathbf M$ can differ on $\exists$
+    - The form of $\Omega$ is $\Omega(m) = \neg \exists f : \omega \to m \text{ bijective}$
+    - Since they agree on "bijective", then they must differ on "$\exists$"
+    - This is exactly the case. Since $\mathbf M$ is countable, then $m = \{ n \mid \mathbf M \vDash n \in m \}$ is countable, so there exists at least one bijection $\tilde f : \omega \to m$. But any such bijection is not a member of $\mathbf M$, so $\mathbf M$ considers $m$ to be uncountable. That is, whereas $\exists$ in the metalanguage can "see" $\tilde f$, $\exists$ in $\mathbf M$ cannot.
+
+- Skolem's paradox is intimately tied to first-order logic
+  - Does not arise in second-order settings
+  - Standard proofs fail in constructivist settings
+
+- Personally, it seems that this situation suggests that the semantics of first-order logic are not strong enough. If we are confident that we know what uncountability means, and we are confident that $\Omega$ is a proper expression of uncountability in first-order logic, then it seems that any appropriately-faithful interpretation of $\Omega$ would demand an uncountable model.
+
+- The source also includes some discussion of philosophical consequences of Skolem's paradox ({sec}3) which I chose to skip/skim for now (#onwards?)

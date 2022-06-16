@@ -1,0 +1,504 @@
+format=flossy-2
+
+#onwards
+
+
+\title: Structural Strength
+
+\sec: Intro
+
+Intuitively, the structures \c[Set], \c[Bag], and \c[List] each encode "more structure" than the last, respectively introducing membership, multiplicity, and order.
+
+Can we formalize this intuition?
+
+Will use $\sqsubseteq$ to variously denote "has leq structure than"
+
+
+\sec: Various thoughts
+
+> Attempt via set cardinality
+  Inuitive that \c[Set ⊑ List] because exists a canonical injection \c[forall a. List a → Set a]. Canonicity does not a definition make, but we can do the following.
+
+  For sets $S,T$, define $S \sqsubseteq T$ iff $\lvert S \rvert \leq \lvert T \rvert$. Think, for instance, of $(S, T) = (\text{FinSet Int}, \text{FinList Int})$. Alternatively, for functions $S, T$, define $S \sqsubseteq T$ iff $\forall \alpha.\ \lvert S(\alpha) \rvert \leq \lvert T(\alpha) \rvert$. The core concept is the same.
+
+  We have
+  \katex:
+    \begin{align*}
+      \text{FinList}\ \alpha &\cong 1 + \alpha + \alpha^2 + \cdots &&= \sum_{n=0}^{\lvert \alpha \rvert} \alpha^n
+      \\ \text{FinSet}\ \alpha &\cong \binom \alpha 0 + \binom \alpha 1 + \binom \alpha 2 + \cdots &&= \sum_{n=0}^{\lvert \alpha \rvert} \binom \alpha n
+    \end{align*}
+
+  When $\alpha$ is finite, then $\text{FinSet}\ \alpha \lneq \text{FinList}\ \alpha$, since there are an infinite number of finite lists over $\alpha$, but only a finite number of finite sets over $\alpha$.
+
+  When $\alpha \cong \aleph_0$, then we have that $\binom \alpha n = \aleph_0$, meaning that $\text{FinSet}\ \alpha \cong \text{FinList}\ \alpha$.
+
+  Thus, somewhat surprisingly, the set-theoretic conclusion is that the collection $\text{FinList}\ \alpha$ "contains more information" than $\text{FinSet}\ \alpha$ \i[only] in the case of finite $\alpha$.
+
+  (Ignoring the case of $\lvert \alpha \rvert > \aleph_0$ because who cares)
+
+  ---
+
+  Attacking this problem set-theoretically partially difficult because structure can be spoofed via set-isomorphism; for instance, given sets $X \cong Y$ witnessed by a bijective $f : X \to Y$ and considering the group $(X, \times)$, we can define $y_1 \star y_2 := f(f^{-1}(y_1) \times f^{-1}(y_2))$ and then we have $(X, \times) \cong (Y, \star)$.
+
+> Shannon entropy
+  Could try view the self-information gained by observing an element $s \in S$, such as $[1, 2] \in \text{List}\ \text{Int}$ and turn this into an order relation
+
+  Would only make sense for uniform distributions, which would only work for finite $\alpha$
+
+  I think would correspond exactly to set-theoretic conclusions
+
+  A bit of a conceptual stretch
+
+- Probably $\sqsubseteq$ will form a partial order
+
+> Vague attempt algebraically
+  Note that
+    - List ~ monoid
+    - Bag ~ commutative monoid
+    - Set ~ commutative idempotent monoid
+  Perhaps we can just order by the axiom sets of algebraic structures?
+
+> Thoughts with cat thy
+  \href <https://ncatlab.org/nlab/show/stuff,+structure,+property> [Possibly relevant nLab page]
+
+  Cat thy has concept off "forgetful functor", but this concept seems to be colloquial and ad-hoc
+
+  Algebra + cat thy view objects \i[equipped with] structure, i.e., as more than just cardinality, lending more tools to attack this problem. However, if we are allowed to attach structure, then we may as well just attach to eat set the "structure" of its place in the $\sqsubseteq$ partial order. If we do use structure, we need to take care not to "cheat" in this manner and accidentally beg the question.
+
+
+\sec: Uniformity
+\katex pre:
+  \def\card#1{\lvert #1 \rvert}
+  \def\con{\ \vert\vert \ }
+  \def\lra{\leftrightarrow}  % "between"
+  \def\then{\ ;\,}
+  \def\from{\leftarrow}
+
+The fact that $\text{FinSet Int} \cong \text{FinList Int}$ seems kind of strange, since sets and lists don't "feel" isomorphic. However, imaging actually constructing the bijection: it makes heavy use of the enumeration of $\text{Int}$ itself, and this only works for $\alpha = \text{Int}$ in particular. It can be extended to any $\alpha \cong \aleph_0$, but each bijection would still be fundamentally $\alpha$-specific. That is, even though we have a bijection $f : \forall \alpha.\ \text{FinSet }\alpha \to \text{FinList }\alpha$ when $\alpha \cong \aleph_0$, this bijection is in some sense not "uniform" wrt $\alpha$ but instead has a "different implementation" for each $\alpha$.
+
+If we can define what it means for a polymorphic function to be "uniform", then we can reject this bijection on the basis that it is not uniform.
+
+Our goal is to find a suitable notion of \i[uniformity]. Intuitively, a polymorphic term is uniform if it "does the same thing" for every type instantiation. For instance, the parametric function $\text{id} : \forall \alpha.\ \alpha \to \alpha$ defined in the usual way is uniform, but the below parametric function is not
+
+\katex:
+  f_\alpha(x) = \begin{cases}
+    0 & \alpha = \mathbb N \\
+    x & \text{otherwise}
+  \end{cases}
+
+because it "acts differently" when $\alpha = \mathbb N$.
+
+\b[Defn]. A \i[structure] is a type-level function $S : \text{Type} \to \text{Type}$. For instance, $\text{List}$ is a structure.
+
+\i[Assuming] we are able to find a suitable mathematical definition for uniformity, then we can define $\sqsubseteq$ on structures as: $S \sqsubseteq T$ iff there exists a uniform injection $S \to T$.
+
+\b[Defn]. A \i[polymorphic term] is a type-indexed family of terms $\{ x_\alpha : \tau(\alpha) \}$, written as $x : \forall \alpha.\ \tau(\alpha)$. For instance, $[\,] : \forall \alpha.\ \text{List }\alpha$ is a polymorphic term.
+
+\b[Defn]. \ref functional-track {Tracks}
+
+\b[Defn]. Over a structure $\chi$, a \i[mapper] is a function $\mu : \forall \alpha, \beta.\ \chi(\alpha) \times (\alpha \lra \beta) \to \chi(\beta)$.
+
+\b[Defn]. A mapper $\mu$ is called \i[functorial] if both hold:
+
+- $\mu_{\alpha, \alpha}(-, \text{id} : \alpha \lra \alpha) = \text{id} : \chi(\alpha) \to \chi(\alpha)$
+- $\mu_{\alpha, \gamma}(-, f \con g : \alpha \lra \gamma) = \mu_{\alpha, \beta}(-, f : \alpha \lra \beta) \then \mu_{\beta, \gamma}(-, g : \beta \lra \gamma)$
+
+> Motivation
+  For a given structure, we usually have a particular mapper in mind.
+
+  For instance, for $\chi(\alpha) = \alpha \to \alpha$ the canonical mapper is given by
+
+  \katex: \mu(f : \alpha \to \alpha, t : \alpha \lra \beta) = t_{\beta \to \alpha} \then f \then t_{\alpha \to \beta}
+
+  Another example: for $\chi(\alpha) = \text{List }\alpha \to \text{Maybe }\alpha$ the canonical mapper is
+
+  \katex: \mu(h, t) = \text{fmap}\ t_{\alpha \to \beta} \circ h \circ \text{fmap}\ t_{\beta \to \alpha}
+
+  The functorial conditions for mappers say respectively that:
+
+  - Mapping the identity track over a structure should do nothing
+  - Mapping with one track and then another should do the same thing as mapping with their composition
+
+  Which hold for the canonical mappers we have in mind, and in general intuitively make sense for the mappers we have in mind.
+
+  As such, the functorial conditions are an attempt to pin down these canonical mappers.
+
+> \b[Defn]. A polymorphic term $x : \forall \alpha.\ \chi(\alpha)$ is called \i[uniform] if exists a functorial mapper $\mu$ over $\chi$ such that for every two types $\alpha, \beta$ and left-preserving track $t$ between them, we have that $\mu_{\alpha, \beta}(x_\alpha, t) = x_\beta$.
+  Let us investigate this definition with the particular case of $\chi(\alpha) = \alpha \to \text{Maybe }\alpha$.
+
+  First of all, we have a canonical mapper in mind; namely,
+
+  \katex: \mu(f, t) = (t_{\beta \to \alpha} \then f \then \text{fmap } t_{\alpha \to \beta}) : \chi(\beta)
+
+  This mapper satisfies the functorial conditions, and--fingers crossed--the functorial conditions guarantee its uniqueness. Thus the funtorial conditions have pinned down use of \i[the] canonical mapper for $\chi$.
+
+  Now let's choose a polymorphic term for this type; I choose $j = \text{Just } : \forall \alpha.\ \alpha \to \text{Maybe }\alpha$
+
+  By definition, we have that $j$ is uniform if and only if for every $\alpha, \beta$ and left-preserving track $t$ between them we have that $\mu(j_\alpha, t) = j_\beta$.
+
+  Ignoring the condition of $t$ being left-preserving, the definition is essentially that $\mu(j_\alpha, t) = j_\beta$. In other words, $j$ can't "do anything weird" with its type variable because the result $j_\beta$ \i[must] be the same as if we had mapped over $j_\alpha$ with $t$, and we know by the functorial conditions that the process of mapping is "nice".
+
+  The reason we only concern ourselves with left-preserving tracks $t$ is somewhat technical. Loosely, we expect the mapper $\mu$ to use $t_{\beta \to \alpha}$ for values "going into" $t_\alpha$, and use $t_{\alpha \to \beta}$ for values "coming out of" $t_\alpha$ (see the above definition of $\mu$ for what I mean).
+
+  Thus, requiring that $t_{\alpha \to \beta} \then t_{\beta \to \alpha}$ allows for the mapping $\mu(-, t)$ to be "information-preserving".
+
+  \b[Note:] I'm not actually convinced that this condition makes sense. Perhaps we can just quantify over \i[all] tracks?
+
+  Fucking damnit, we actually want \i[right]-preserving; consider the case of $x = \text{id} : \alpha \to \alpha$.
+
+  ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^ ^
+
+\fold [Previous definition attempts] ==previous attempts==
+- $x$ uniform iff exists functorial $\mu$ st. forall all isomorphism tracks $t$ the uniformity condition holds \aref [more]
+  \adef ====
+Only enforces uniform behaviour \i[within] isomorphism classes; the following is wrongly considered uniform:
+
+\katex:
+  \begin{align*}
+    \delta &: \forall \alpha.\ \text{Int} \\
+             &= \begin{cases}
+      -1 & \alpha \cong 1 \\
+      +1 & \text{otherwise} 
+    \end{cases}
+  \end{align*}
+==/==
+
+- $x$ uniform iff exists functorial $\mu$ st. the uniformity condition holds on $t = (x \mapsto 1, \text{id})$ \aref[more]
+  \adef ====
+The idea here was that we'd be asking for all instantiations $t_\tau$ to "act the same" as $t_1$ and thus they'd all act the same as each other.
+
+But this definition wrongly considers the following to be uniform:
+
+\katex:
+  \begin{align*}
+    \sigma & : \forall \alpha.\ \alpha^2 \to \alpha^2 \\
+           & = \begin{cases}
+      [a, b] \mapsto [b, a] & \alpha \cong \text{Int} \\
+      [a, b] \mapsto [a, b] & \text{otherwise} 
+    \end{cases}
+  \end{align*}
+
+This is essentially because the mapping $[a, b] \mapsto [b, a]$ is "invisible" when $\alpha \cong 1$.
+==/==
+
+- $x$ uniform iff exists some (possibly non-functorial) $\mu$ s.t. the uniformity condition holds on all left-preserving $t$ \aref[more]
+  \adef ====
+This is the same as the definition given except that we don't require $\mu$ to be functorial. Fails as follows.
+
+Let $\zeta$ be a polymorphic term defined as
+
+\katex:
+  \zeta : \forall \alpha.\ \text{List }\alpha
+        = \begin{cases}
+              [] & \alpha \ncong 1 \\
+              [1] & \alpha \cong 1
+        \end{cases}
+
+Clearly, $\zeta$ ought not to be considered uniform, but, in fact, it is, as follows.
+
+Choose $\mu$ for the structure $\text{List}$ to be defined as
+
+\katex:
+  \mu_{\alpha, \beta}(x : \text{List }\alpha, t : \alpha \leftrightarrow \beta) := \begin{cases}
+    \text{fmap } t_{\alpha \to \beta}\ x & \beta \ncong 1 \\
+    [1] & \beta \cong 1 
+  \end{cases}
+
+Now $\mu$ will act as witness to the uniformity of $\zeta$ since we will find that always $\mu(\zeta_\alpha, t) = \zeta_\beta$.
+
+Observe that:
+
+\katex:
+  \begin{align*}
+
+    \mu(\zeta_\alpha, t) &= \begin{cases}
+      [1] & \beta \cong 1  \\
+      \text{fmap } t_{\alpha \to \beta}\ \zeta_\alpha & \beta \ncong 1
+    \end{cases}
+
+    \\ &= \begin{cases}
+      [1] & =\zeta_\beta && \beta \cong 1 \\
+      \text{fmap } t_{\alpha \to \beta}\ [1] & =[t_{\alpha \to \beta}(1)] && \beta \ncong 1, \alpha \cong 1 \\
+      \text{fmap } t_{\alpha \to \beta}\ [] & =\zeta_\beta && \beta \ncong 1, \alpha \ncong 1
+    \end{cases}
+
+  \end{align*}
+
+Thus $\mu(\zeta_\alpha, t) = \zeta_\beta$ in all cases except for when $\beta \ncong 1, \alpha \cong 1$. But this case is impossible, since by $\phi$ we require that $t_{\alpha \to \beta}$ be surjective, and there is no surjection $(\alpha \cong 1) \to (\beta > 1)$. So in all non-contradictory cases the uniformity condition holds, and thus $\zeta$ is (wrongly) considered uniform.
+==/==
+==/previous attempts==
+
+\fold [Failed attempt to find a counter-example to this definition]:
+  An example follows. This example will be of a polymorphic term $x$ which has \i[multiple] valid choices for $\mu$, which differ from each other, but in the end agree on uniformity of $x$ \aref[rk]
+  \adef:
+    Perhaps it's possible to prove even if there are multiple valid $\mu$ that they will always agree on uniformity of $x$?
+
+  Let $x$ be the polymorphic term $x : \forall \alpha.\ \text{Int} = 0$
+
+  The obvious valid $\mu$ for this $x$ is the canonical which one ignores $\alpha$; it is given by
+
+  \katex: \mu(n, t : \alpha \leftrightarrow \beta) = 0
+
+  However, another $\mu$ can be given as
+
+  \katex:
+    \bar \mu(n, t : \alpha \leftrightarrow \beta) = \begin{cases}
+      n & t \text{ is two-way track-invertible}
+      \\ 1 & \text{otherwise}
+    \end{cases}
+
+  This definition definitely \i[feels] wrong and naughty, which gives me pause.
+
+  However, it (A) satisfies the given functorial conditions (proven below), which makes me concerned; but (B) in the end agrees with $\mu$ on uniformity of $x$.
+
+  Proof that $\bar \mu$ satisfies the functorial conditions:
+
+    1. Since $\text{id} : \alpha \leftrightarrow \alpha$ is invertible, the first condition is trivially satisfied as we get that $\bar \mu(x_\alpha, \text{id}) = 0 = x_\beta$
+    2. See below
+
+  Want to show that always $\bar \mu(x_\alpha, f\ ||\ g) = \bar \mu(\bar \mu(x_\alpha, f), g)$.
+
+  To do so, we will split on the following cases:
+    1. $f, g$ both two-way invertible
+    2. $g$ two-way invertible,
+        2a. $f$ not left-invertible
+        2b. $f$ not right-invertible
+    3. $f$ two-way invertible
+        3a. $g$ not left invertible
+        3b. $g$ not right invertible
+
+  With respective proofs:
+
+    1. Then $f\ ||\ g$ two-way invertible, so $\bar \mu(x_\alpha, f\ ||\ g) = x_\alpha = x_\beta$.
+       And $\bar \mu (\bar \mu (x_\alpha, f), g) = x_\alpha = 0 = x_\beta$.
+
+    2a. ?
+
+    2b. Then $f\ ||\ g$ is not two-way invertible, so $\bar \mu(x_\alpha, f\ ||\ g) = 1$.
+        And $\bar \mu (\bar \mu (x_\alpha, f), g) = \bar \mu (1, g) = 1$.
+
+    3a. ?
+
+    3b. Then $f\ ||\ g$ is not two-way invertible, so $\bar \mu(x_\alpha, f\ ||\ g) = 1$.
+        And $\bar \mu (\bar \mu (x_\alpha, f), g) = 1$.
+
+  In all cases, we have that $\bar \mu(x_\alpha, f\ ||\ g) = \bar \mu(\bar \mu(x_\alpha, f), g)$.
+
+
+  \b[Wrong!] Exists a track which is left-invertible \aref[ex] but \i[not] right-invertible and therefore for which we have both
+  \adef: In particular, here is such a track: $f = (\text{length}, \text{length}^{-1}) : \mathbb N^* \leftrightarrow \mathbb N$
+
+  \katex: \bar\mu(x_\alpha, f^{-1}\ ||\ f) = \bar \mu(x_\alpha, \text{id}) = x_\alpha = 0 = x_\beta
+
+  but also
+
+  \katex: \bar\mu(\bar\mu(x_\alpha, f^{-1}), f) = 1 \neq x_\beta
+
+  And so the axiom of functoriality is violated.
+
+\b[Note: I should read through these findings carefully again to check if the fact is relevant that uniformity is only defined for tracks consisting of a surjection and its inverse]
+
+\b[Defn]. For a structure $\chi$, we say $\chi$ (cardinality-)monotonic if $\lvert \tau \rvert \leq \lvert \sigma \rvert$ implies $\lvert \chi(\tau) \rvert \leq \lvert \chi(\sigma) \rvert$.
+
+\b[Lemma]. For two types $\alpha, \beta$ have $\lvert \alpha \rvert \leq \lvert \beta \rvert$ iff exist tracks $f : \alpha \leftrightarrow \beta$ and $g : \beta \leftrightarrow \alpha$ with $f\ \mid\mid\ g = \text{id} : \alpha \leftrightarrow \alpha$.
+\b[Proof]. Elided.
+
+> \b[Lemma]. For a fixed structure $\chi$, if exists a functorial $\mu$ for $\chi$, then $\chi$ is monotonic.
+  Fix $\chi$ and assume existence of $\mu : \forall \alpha, \beta.\ \chi(\alpha) \times (\alpha \leftrightarrow \beta) \to \chi(\beta)$ satisfying the functorial conditions.
+
+  Now assume for contradiction that $\chi$ is not monotonic. Then by definition exists $\alpha, \beta$ with $\card{\alpha} \leq \card{\beta}$ but $\card{\chi(\alpha)} > \card{\chi(\beta)}$.
+
+  Because $\card\alpha \leq \card\beta$ we know exists some tracks $f : \alpha \lra \beta$ and $g : \beta \lra \alpha$ with $f \con g = \text{id}$.
+
+  By the functorial conditions, we have, then, that:
+
+  \katex:
+    \begin{align*}
+      & \text{id} : \chi(\alpha) \to \chi(\alpha)
+      \\ &= \mu(-, \text{id} : \alpha \lra \alpha)
+      \\ &= \mu(-, f \con g)
+      \\ &= \underbrace {\mu(-, f)}_{\chi(\alpha) \to \chi(\beta)} \then \underbrace {\mu(-, g)}_{\chi(\beta) \to \chi(\alpha)}
+      \\ &\neq \text{id} : \chi(\alpha) \to \chi(\alpha)
+    \end{align*}
+
+  To expound on the last step: since $\card{\chi(\alpha)} > \card{\chi(\beta)}$ then the composition of a function $\chi(\alpha) \to \chi(\beta)$ into a function $\chi(\beta) \to \chi(\alpha)$ cannot be the identity, since in general one cannot form the identity by going $a \to b \to a$ with $b$ smaller than $a$.
+
+  Thus we have reached a contradiction!
+
+\b[Corollary]. If $\chi$ is not monotonic, then every term $x : \forall \alpha.\ \chi(\alpha)$ is not uniform.
+
+\b[Defn]. A mapper $\mu$ over $\chi$ is called \i[pre-baked] if exists some family of functions $\varphi_{\alpha, \beta} : \chi(\alpha) \to \chi(\beta)$ such that
+
+\katex: \mu_{\alpha, \beta}(x : \chi(\alpha), t : \alpha \lra \beta) = \varphi_{\alpha, \beta}(x)
+
+Intuition: $\mu$ is pre-baked iff it "ignores" the track $t$.
+
+\fold ====
+\b[Lemma]. A functorial mapper $\mu$ is pre-baked iff exists a family of functions $\varphi_{\alpha, \beta} : \chi(\alpha) \to \chi(\beta)$ such that both hold:
+
+- $\varphi_{\alpha, \alpha} = \text{id}_{\chi(\alpha)}$
+- $\varphi_{\alpha, \beta} \then \varphi_{\beta, \gamma} = \varphi_{\alpha, \gamma}$]:
+==/== :
+  $(\Rightarrow)$ Assume we have a sufficient family $\varphi$. Now let
+
+  \katex:
+    \begin{align*}
+      \mu &: \forall\alpha, \beta.\ \chi(\alpha) \times (\alpha \lra \beta) \to \chi(\beta)
+      \\ \mu_{\alpha, \beta} &= (x, t) \mapsto \varphi_{\alpha, \beta}(x)
+    \end{align*}
+
+  And note that this construction of $\mu$ indeed satisfies the functorial conditions:
+
+  - $\mu_{\alpha,\alpha}(-, \text{id}) = \varphi_{\alpha, \alpha} = \text{id}$ by assumption
+  - $\mu_{\alpha,\gamma}(-, f \con g) = \varphi_{\alpha, \gamma} = \varphi_{\alpha, \beta} \then \varphi_{\beta, \gamma} = \mu_{\alpha,\beta}(-, f) \then \mu_{\beta,\gamma}(-, g)$
+
+  $(\Leftarrow)$ Assume we have a functorial mapper $\mu$ pre-baked by $\varphi$. Fix any family of left-preserving tracks $\{t_{\alpha, \beta} : \alpha \lra \beta\}$ \b[TODO: this cannot be constructed unless $\card\beta \geq \card\alpha$]. Then:
+
+  - $\varphi_{\alpha, \alpha} = \mu_{\alpha, \alpha}(-, t_{\alpha, \alpha}) = \text{id}$
+  - $\varphi_{\alpha, \beta} \then \varphi_{\beta, \gamma} = \mu_{\alpha, \beta}(-, t_{\alpha, \beta}) \then \mu_{\beta, \gamma}(-, t_{\beta, \gamma}) = \mu_{\alpha, \gamma}(-, t_{\alpha, \gamma}) = \varphi_{\alpha, \gamma}$
+
+\b[Defn]. We call a structure $\chi$ (cardinality-)constant if $\card{\chi(\tau)}$ is the same for all types $\tau$.
+
+> \b[Lemma]. If $\chi$ is cardinality-constant then (1) it has a pre-baked functorial mapper $\mu$; and (2) every term $x : \forall \alpha.\ \chi(\alpha)$ is uniform
+  Fix $\chi$. Assume that $\card{\chi(\tau)}$ is always the same; then all types are set-isomorphic under $\tau$.
+
+  Now choose your favorite type $\pi$ and term $x : \forall \alpha.\ \chi(\alpha)$.
+
+  For every type $\tau$ fix a bijection $f : \chi(\tau) \to \chi(\pi)$ such that $f(x_\tau) = x_\pi$ and call this bijection $\Pi_{\tau}$. We are associating all types $\chi(\tau)$ bijectively with an "anchor" type $\chi(\pi)$ like so:
+
+  \tikz:
+    \begin{scope}[shift={(-7.5, 0)}]
+      \node at (90:3) (a) { $\chi(\alpha)$ };
+      \node at (30:3) (b) { $\chi(\beta)$ };
+      \node at (-30:3) (g) { $\chi(\gamma)$ };
+
+      \node at (0, 0) (pi) { $\chi(\pi)$ };
+
+      \foreach \deg
+        [evaluate=\deg as \pdeg using {\deg - 20}]
+        in {90,30,...,-30}
+      { \node at (\pdeg:1.5) { $\Pi$ }; }
+
+      \foreach \deg in {-50,-55,...,-250}
+      { \node at (\deg:3) { $\cdot$ }; }
+
+      \begin{scope}[bend left=15, shorten >=5pt, shorten <=5pt, >={latex}]
+      \draw[->] (a)  to (pi);
+      \draw[->,dashed] (pi) to (a) ;
+
+      \draw[->] (b)  to (pi);
+      \draw[->,dashed] (pi) to (b) ;
+
+      \draw[->] (g)  to (pi);
+      \draw[->,dashed] (pi) to (g) ;
+      \end{scope}
+    \end{scope}
+    
+    \begin{scope}
+      \node at (90:3) (a) { $x_\alpha$ };
+      \node at (30:3) (b) { $x_\beta$ };
+      \node at (-30:3) (g) { $x_\gamma$ };
+
+      \node at (0, 0) (pi) { $x_\pi$ };
+
+      \foreach \deg
+        [evaluate=\deg as \pdeg using {\deg - 20}]
+        in {90,30,...,-30}
+      { \node at (\pdeg:1.5) { $\Pi$ }; }
+
+      \foreach \deg in {-50,-55,...,-250}
+      { \node at (\deg:3) { $\cdot$ }; }
+
+      \begin{scope}[bend left=15, shorten >=5pt, shorten <=5pt, >={latex}]
+      \draw[->] (a)  to (pi);
+      \draw[->,dashed] (pi) to (a) ;
+
+      \draw[->] (b)  to (pi);
+      \draw[->,dashed] (pi) to (b) ;
+
+      \draw[->] (g)  to (pi);
+      \draw[->,dashed] (pi) to (g) ;
+      \end{scope}
+    \end{scope}
+
+  Here each $\Pi$ stands for a particular $\Pi_{\tau}$ and the dashed arrows represent the bijection inverses $\Pi_{\tau}^{-1}$
+
+  Such association only goes between types $\chi(\tau)$ and $\chi(\pi)$, but we can extend it to go between \i[all] types like so: let
+
+  \katex: \varphi_{\alpha, \beta} = \Pi_{\alpha} \then \Pi_{\beta}^{-1}
+
+  Note that our family of functions $\varphi$ exhibit the following properties:
+
+  > $\varphi_{\alpha, \alpha} = \text{id}_{\chi(\alpha)}$
+    $\varphi_{\alpha, \alpha} = \Pi_{\alpha} \then \Pi_{\alpha}^{-1} = \text{id}_{\chi(\alpha)}$
+  > $\varphi_{\alpha, \beta} \then \varphi_{\beta, \gamma} = \varphi_{\alpha, \gamma}$
+    $\varphi_{\alpha, \beta} \then \varphi_{\beta, \gamma} = \Pi_{\alpha} \then \Pi_{\beta}^{-1} \then \Pi_{\beta} \then \Pi_{\gamma}^{-1} = \Pi_{\alpha} \then \Pi_{\gamma}^{-1} = \varphi_{\alpha, \gamma}$
+
+  > rk
+    Property one uses injectivity of $\Pi_\tau$ and property two uses surjectivity. As such, this proof cannot be generalized by dropping either requirement.
+
+  By previous work, this means there is a functorial $\mu$ over $\chi$ pre-baked by $\varphi$.
+
+  Additionally, we also have the property that:
+
+  > $\varphi_{\alpha, \beta}(x_\alpha) = x_\beta$
+    $\varphi_{\alpha, \beta}(x_\alpha) = (\varphi_{\alpha, \pi} \then \varphi_{\pi, \beta})(x_\alpha) = \varphi_{\pi, \beta}(\varphi_{\alpha, \pi}(x_\alpha)) = \varphi_{\pi, \beta}(x_\pi) = x_\beta$
+
+  And thus that $\mu_{\alpha,\beta}(x_\alpha, t) = \varphi_{\alpha,\beta}(x) = x_\beta$, implying that $x$ is uniform.
+
+> \b[Corollary]. Functorial mappers are not unique. Uh-oh!
+  Choose some constant-cardinality $\chi$ with $\card{\chi(\tau)} > 2$. Read again through the proof above and note that for each $\tau$ the only constraints on $\Pi_\tau$ necessary for the proof to work are that (1) $\Pi_\tau$ is bijective; and (2) $\Pi_\tau(x_\tau) = x_\pi$.
+
+  Because we've assumed that $\card{\chi(\tau)} > 2$, there are multiple choices for bijections $\Pi_\tau$. Each choice will produce its own functorial mapper $\mu$. Thus, functorial mappers are not unique--at least, not in the case of cardinality-constant structures.
+
+\b[Corollary]. With the type $\forall \alpha.\ \text{Int}$, the term
+
+\katex: x_\alpha = \begin{cases} 0 & \alpha \cong 0 \\ 1 & \text{else} \end{cases}
+
+is uniform, since $\chi(\alpha) = \text{Int}$ is cardinality-constant. This is concerning!
+
+> \b[Lemma]. If a structure $\chi$ is not cardinality-constant then no pre-baked functorial mapper $\mu$ exists for $\chi$.
+  Assume that $\card{\chi(\tau)}$ is not constant; then exists some $\alpha, \beta$ with $\card{\chi(\alpha)} \leq \card{\chi(\beta)}$.
+
+  Now assume existence of a functorial $\mu$ for $\chi$ pre-baked by $\varphi$. Then we would have that
+
+  \katex:
+    \begin{align*}
+      & \text{id}_{\chi(\alpha)}
+      \\ &= \varphi_{\alpha, \alpha}
+      \\ &= \varphi_{\alpha, \beta} \then \varphi_{\beta, \alpha}
+      \\ &\neq \text{id}_{\chi(\alpha)}
+    \end{align*}
+
+  The last step happens because the composition of a function $\chi(\alpha) \to \chi(\beta)$ into a function $\chi(\beta) \to \chi(\alpha)$ cannot be the identity since $\card{\chi(\alpha)} \leq \card{\chi(\beta)}$.
+
+\b[Corollary]. $\chi$ is cardinality-constant iff it admits a pre-baked functorial mapper $\mu$.
+
+
+\sec: Morgan
+
+Seems to think this math, if ironed out, could be publication-worthy. He seems excited by the prospect.
+
+Seems worth a shot.
+
+He originally phrased things with the language of cat thy. If that ends up being useful, I have a lot of cat thy to learn.
+
+I expect to find that this math does not work out, but I can still learn a lot in the meantime.
+
+\href <https://chat.platonic.systems/platonic/pl/igbi5h48j3nuurro6c55xojyzc> [Original conversation]
+
+
+\sec: Also see
+
+- \href <https://people.mpi-sws.org/~dreyer/tor/papers/wadler.pdf> [Free theorems]
+
+- Reynolds abstraction theorem
+
+I think both of these work in intensional systems (e.g. System F) and thus this work is still novel
+
+
+\sec: Future work
+
+- Once a proper definition for $\sqsubseteq$ is found, explore what kind of ordering relation it forms
+
+- Once a proper definition for parametricity is found, see if it can be used to prove free theorems as well

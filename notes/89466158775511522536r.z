@@ -1,0 +1,8 @@
+format=compat-1
+
+[:closures in subspace topologies:]
+
+- Theorem 17.4 in T2
+- Given $$Y$$ a [[subspace topology]] of $$X$$ and some $$A \subseteq X$$,
+    - $$\text{Cl}_Y\ A = Y \cap \text{Cl}_X\ A$$
+- Proof elided

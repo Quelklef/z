@@ -1,0 +1,12 @@
+format=compat-1
+
+[:limit point:] [:limit points:]
+
+Within a topological space $$X$$, a point $$x \in X$$ is called a \i[limit point] of $$A \subseteq X$$ iff every open $$U \ni x$$ intersects $$A$$ at a point other than $$x$$; that is,
+$[ \forall \text{open } U \ni x : (U \cap A) \setminus \{x\} \neq \varnothing ]$
+
+The set of limit points of $$A \subseteq X$$ is sometimes denoted $$A'$$.
+
+In general, $$x \in A$$ and $$x \in A'$$ don't have any bearing on each other. For instance, within $$\mathbb R$$,
+  With $$A = (0, 1]$$, we have $$A' = [0, 1]$$ and so $$A \subsetneq A'$$
+  With $$A = \{\frac 1 n : n \in \mathbb Z\}$$, we have $$A' = \{0\}$$ and so $$A \cap A' = \varnothing$$

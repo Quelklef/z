@@ -1,0 +1,7 @@
+format=compat-1
+
+title: doubly-closed intervals in order topologies need not be compact
+
+- Take $$X$$ in the [[order topology]]. Consider any doubly-closed interval $$[a, b] \subseteq X$$. Need $$[a, b]$$ be [[compact]]?
+- Answer: No! For instance, with $$X = \mathbb Q$$, we can let $$[a, b] = [0, 2]$$ and then consider the open covering which approaches $$\sqrt 2$$ asymptotically; this has no finite subcover.
+- However, if $$X$$ has the [[least upper bound property]], then doubly-closed intervals are compact; see [[an order topology with the least upper bound property has doubly-closed intervals compact]]

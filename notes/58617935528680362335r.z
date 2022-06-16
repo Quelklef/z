@@ -1,0 +1,6 @@
+format=compat-1
+
+[:minimum distance decoding:]
+
+- When you receive a word, to decode it by choosing the codeword with minimum [[hamming distance]]
+- If there are multiple, choose randomly

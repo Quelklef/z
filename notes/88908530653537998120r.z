@@ -1,0 +1,5 @@
+format=compat-1
+
+[:parity checking:]
+
+- parity checking is a way of doing error detecting on a [[noisy channel]]. Basically, the idea is to, every $$n$$ bits, send an extra bit called the __parity bit__, which is set to 0 or 1 in order to ensure that the sum of the $$n + 1$$ bits is 0 (mod 2). Then if the receiver sees a block of $$n + 1$$ bits with parity 1, it is known to have an error (or any odd number of errors).

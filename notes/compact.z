@@ -1,0 +1,12 @@
+format=compat-1
+
+[:compact:] [:compactness:]
+
+We call a topological space $$X$$ \i[compact] iff every open covering of $$X$$ contains a finite subcollection $$A \subseteq X$$ which also covers $$X$$ (i.e., a finite subcovering)
+
+Theorem (JRM:Top.2 §26.9). $$X$$ is compact if and only if:
+  For every collection $$\mathcal C$$ of sets closed in $$X$$,
+      if taking intersections of finite subcollections $$\mathcal A \subseteq \mathcal C$$ always produces a nonempty result
+    then $$\bigcap \mathcal C$$ is nonempty
+
+Stronger than (implies) normal

@@ -1,0 +1,5 @@
+format=compat-1
+
+[:path:]
+
+- For a [[topological space]] $$X$$ and two points $$x, y \in X$$, a __path__ in $$X$$ from $$x$$ to $$y$$ is a [[continuous]] function $$f$$ from a closed interval $$[a, b] \subseteq \mathbb R$$ such that $$f(a) = x$$ and $$f(b) = y$$

@@ -1,0 +1,18 @@
+format=compat-1
+
+[:topological subbasis:]
+
+- A topological subbasis is much like a [[topological basis]], except that we freely take intersections as well as unions
+- 
+- The definition is as follows: for a set $$X$$, we call $$\mathcal S$$ a subbasis for the topology on $$X$$ if:
+    - $$\bigcup \mathcal S = X$$
+- 
+- We create the generated [[topology]] as follows:
+    - A set is considered to be open iff it is a union of finite intersections of subbasis elements $$S \in \mathcal S$$
+    - Question: is this the the same as just allowing arbitrary unions and intersections? I think so, but I'm not positive.
+- 
+- We ought to verify that this is a topology... take set $$X$$, subbasis $$\mathcal S$$, and generated topology $$\mathcal T$$
+    - $$\varnothing \in \mathcal T$$? Yes; it's the empty union
+    - $$X \in \mathcal T$$? Yes, it's the union of all subbasis elements, as per requiring $$\bigcup \mathcal S = X$$
+    - Closed under union? Take $$\mathcal U$$ a set of open sets. Then each $$U \in \mathcal U$$ is a union of finite intersections of subbasis elements. Then so is $$\bigcup \mathcal U$$. So $$\bigcup \mathcal U$$ is open.
+    - Closed under finite intersection? Take $$\mathcal U$$ a set of open sets. WTS $$\bigcap \mathcal U$$ is open. Each $$U \in \mathcal U$$ is open, and thus a union of finite intersections of subbasis elements; taking an intersection of two will distribute over the unions cartesian product style, and thus also produce a union of finite intersections.

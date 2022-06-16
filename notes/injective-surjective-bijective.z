@@ -1,0 +1,22 @@
+format=flossy-2
+
+\title: Injectivity
+
+\sec: Definitions
+
+A function $f : A \to B$ is called:
+
+- \jarg <injectiv(e|eness|ity)> <injection(|s)> <injects> [Injective] if $a \neq b \implies f(a) \neq f(b)$
+
+- \jarg <surjectiv(e|eness|ity)> <surjection(|s)> <surjects> [Surjective] if $f(A) = B$
+
+- \jarg <bijectiv(e|eness|ity)> <bijection(|s)> [Bijective] if it is both injective and surjective
+
+
+\sec: Interpretations
+
+- A function which is injective preserves inequality, meaning that distinct elements remain distinct. This can be thought of as the function $f : A \to B$ "embedding" the set $A$ into the set $B$
+
+- A function which is surjective hits every element in its codomain
+
+- A function $f : A \to B$ which is bijective places $A$ and $B$ in "one-to-one correspondence", meaning that for each $a \in A$ there is a unique $b \in B$ such that $f(a) = b$, and for each $b \in B$ there is a unique $a \in A$ such that $f(a) = b$.

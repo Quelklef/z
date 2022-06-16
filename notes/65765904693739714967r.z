@@ -1,0 +1,10 @@
+format=compat-1
+
+[:fineness:]
+
+- For a set $$X$$ and two [topologies]([[topology]]) $$T$$ and $$T'$$, we often compare the topologies via the [[partial order]]s $$\subsetneq$$ and $$\subseteq$$. We say:
+    - $$\subseteq$$ -- coarser
+    - $$\subsetneq$$ -- strictly coarser
+    - $$\supseteq$$ -- finer
+    - $$\supsetneq$$ -- strictly finer
+- The intuition here is that a finer topology "breaks down" the existing open sets into more open sets, like crushing rocks. (Isee [[topology fineness via bases]] for a justification of this intuition)

@@ -1,0 +1,17 @@
+format=compat-1
+
+[:Frobenius map:]
+
+- The __Frobenius map__ on a [[finite field]] $$\mathbb F_q$$ is given by
+    - $$\Phi(\alpha) := \alpha^p$$ where $$p$$ is the [[characteristic]] of $$\mathbb F_q$$
+    - Consider repeatedly applying $$\Phi$$ to each element $$\alpha \in \mathbb F_q$$ to form sequences $$\alpha \to \Phi(\alpha) \to \Phi(\Phi(\alpha)) \to \cdots$$. As it turns out, this partitions $$\mathbb F_q$$ into cycles!
+        - Example: consider $$\mathbb F_q = \mathbb F_2[x]/(x^3+x+1)$$ which has $$\Phi(\alpha) = \alpha^2$$
+        - Cycles formed: $$0 \overset \Phi \to 0$$ and $$1 \to 1$$ and $$\alpha \to \alpha^2 \to \alpha^2 + \alpha \to \alpha$$ and $$\alpha+1 \to \alpha^2+1 \to \alpha^2+\alpha+1 \to \alpha+1$$
+    - This map has the following interesting properties:
+        - (1) $$\Phi$$ is bijective
+            - This is a consequence of being a partition into cycles
+        - (2) $$\Phi$$ distributes over $$+$$ and $$\cdot$$
+        - (3) $$\Phi$$ is the identity on $$\mathbb F_p \subseteq \mathbb F_q$$
+            - In our example we have $$\Phi(0) = 0$$ and $$\Phi(1) = 1$$
+        - (4) $$\Phi^d(\alpha) = \alpha$$
+        - **(5)** The products of cycles form the irreducibles! That is, if you use $$\Phi$$ to partition $$\mathbb F_q[x]$$ into a `partition :: Set Polynomial`, then the irreducibles are exactly `product <$> partition`.

@@ -1,0 +1,6 @@
+format=compat-1
+
+[:countable basis:]
+
+- A [[topological space]] is said to have a __countable basis__ at a point $$x$$ if:
+    - exists a countable collection $$\{ U_n \}$$ of [[neighborhood]]s of $$x$$ such that for every [[neighborhood]] $$U \ni x$$, some $$U_n \subseteq U$$

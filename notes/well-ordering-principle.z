@@ -1,0 +1,10 @@
+format=flossy-2
+
+\title: Well-Ordering Principle
+
+\sec: Statement
+
+The \jarg <well-ordering principle> <WOP> [well-ordering principle], is a common axiom stating that any nonempty subset of the natural numbers has a least element.
+
+Formally,
+\katex: \forall S \subseteq \mathbb N\ ( S \neq \varnothing \implies \exists m \in S : \forall a \in S : m \leq a )

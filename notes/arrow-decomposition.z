@@ -1,0 +1,26 @@
+format=flossy-2
+
+\title: \jarg <arrow decompos(e|ition|ing)(|s)> [Arrow decomposition]
+
+\sec: Definition
+
+A general pattern wherein one begins has a monolithic "arrow" $A \to B$ and decomposes it into smaller arrows, for instance into
+
+\katex: A \to X \hspace{20pt} X \to B
+
+or
+
+\katex:
+  \begin{gather*}
+    A \to X_1
+    \\ A \to X_2
+  \end{gather*} \hspace{20pt} X_1 \land X_2 \to B
+
+(A vague definition for a vague idea)
+
+
+\sec: Examples
+
+- With arrows representing implication, arrow decomposition is the process of doing mathematics, \ref 38025068987426347854r [as per Proofs and Refutations]
+- Telling a story or giving an explanation to someone who continues to ask for clarification, breaking your monolithic story/explanation down into increasingly refined and precise sub-stories/explanations
+- Addressing a TODO in a codebase, but only partially, so that a smaller TODO is left behind

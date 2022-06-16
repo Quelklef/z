@@ -1,0 +1,8 @@
+format=compat-1
+
+[:boundary:]
+
+Within a topological space $$X$$, the \i[boundary] of a set $$A \subseteq X$$ is its closure intersected with the closure of its complement; that is,
+$[ \text{Bd}(A) = \bar A \cap \overline{X - A} ]$
+
+The boundary of a set is empty iff the set is clopen.

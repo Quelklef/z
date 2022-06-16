@@ -1,0 +1,5 @@
+format=flossy-2
+
+\sec: Coprime:
+
+We say that two integers are \jarg <coprime> <relatively prime> [coprime] iff their greatest common divisor is $1$; i.e., if their prime factorization shares only the factor $1$.

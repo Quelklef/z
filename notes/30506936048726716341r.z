@@ -1,0 +1,14 @@
+format=compat-1
+
+[:primitive recursive:]
+
+- A function is __primitive recursive__ if it is one of the following:
+    - the successor function $$x \mapsto x + 1$$
+    - a constant function $$(x_1, x_2, \dots, x_n) \mapsto c$$
+    - a projection $$(x_1, x_2, \dots, x_n) \mapsto x_k$$ with $$1 \leq k \leq n$$
+    - a composition of primitive recursive functions $$(x_1, x_2, \dots, x_n) \mapsto f(g_1(x_1, \dots, x_n), \dots, g_m(x_1, \dots, x_n))$$
+    - (primitive recursion) a function $$f$$ of the following form:
+        - $$f(x_1, \dots, x_n, 0) = g(x_1, \dots, x_n)$$
+        - $$f(x_1, \dots, x_n, y+1) = h(x_1, \dots, x_n, y, f(x_1, \dots, x_n, y))$$
+        - For $$g, h$$ primitive recursive
+        - Remark: this is the "recursive" in "primitive recursive"

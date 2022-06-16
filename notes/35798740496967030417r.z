@@ -1,0 +1,7 @@
+format=compat-1
+
+[:one-point compactification:]
+
+- $$Y$$ is said to be a __one-point compactification__ of $$X$$ if it is a [[compactification]] of $$X$$ and $$\lvert Y - X \rvert = 1$$
+- As per [[locally compact Hausdorff via compactification]], a space $$X$$ has a one-point compactification if and only if it is [[locally compact]], [[Hausdorff]], but not [[compact]]
+    - Further, all such one-point compactifications are homeomorphic, so we may speak of "the" one-point compactification

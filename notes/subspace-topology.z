@@ -1,0 +1,10 @@
+format=compat-1
+
+[:subspace topology:]
+
+Given a topological space $$(X, \tau_X)$$ and some $$Y \subseteq X$$, then the collection
+$[ \tau_Y = \{ Y \cap U : U \in \tau_X \} ]$
+is a topology on $$Y$$ which we call the \i[subspace topology].
+
+Given a topological basis $$\mathcal B_X$$ for $$\tau_X$$, the following is a basis for $$\tau_Y$$.
+$[ \mathcal B_Y = \{ Y \cap B : B \in \mathcal B_X \} ]$

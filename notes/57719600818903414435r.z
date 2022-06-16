@@ -1,0 +1,18 @@
+format=compat-1
+
+[:locally finite:]
+
+- For a [[topological space]] $$X$$, we call a collection $$\mathcal A$$ of subsets $$\mathcal A \ni A \subseteq X$$ __locally finite__ if every $$x \in X$$ has some [[neighborhood]] $$U_x \ni x$$ such that $$U_x$$ intersects only finitely many elements of $$\mathcal A$$ (possibly zero)
+- [[JRM:Top.2]] §39.1
+- 
+- Example: $$\{(n, n + 2) : n \in \mathbb Z\}$$ is locally finite in $$\mathbb R$$
+    - Each $$x \in \mathbb R$$ has the [[neighborhood]] $$(x - \frac12, x + \frac12)$$ which intersects exactly two elements
+- Example: $$\{ (0, 1/n) : n \in \mathbb Z \}$$ is locally finite in $$(0, 1)$$ but not in $$\mathbb R$$
+    - For $$x = 0$$, every neighborhood has infinite intersections
+- 
+- Properties:
+    - $$\{\bar A : A \in \mathcal A\}$$ is also locally finite
+    - $$\overline {\bigcup_{A \in \mathcal A} A} = \bigcup_{A \in \mathcal A}\bar A$$
+- 
+- Worth noting: if we index our collection to get $$\{A_\alpha\}_{\alpha \in J}$$, the analogous statement is that every $$x \in X$$ has some open $$U_x \ni x$$ such that $$U_x$$ intersects $$A_\alpha$$ for finitely many $$\alpha$$
+    - This is equivalent to local finiteness as a collection __assuming__ that each nonempty open $$A \subseteq X$$ equals $$A_\alpha$$ for finitely many $$\alpha$$, possibly zero (in other words, while the map $$\alpha \mapsto A_\alpha$$ need not be injective, it must map at most finitely many $$\alpha$$ to any single $$A_\alpha$$)

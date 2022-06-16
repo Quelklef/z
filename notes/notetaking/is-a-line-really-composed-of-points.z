@@ -1,0 +1,12 @@
+format=flossy-2
+
+\title: Is a Line Really Composed of Points?
+
+#notes on \href <https://www.themathpage.com/aCalc/apoint.htm> [this]
+
+- A continuum (such as $\mathbb R$) does not "actually contain" an uncountable number of points, but merely lies witness to the uncountable number of points we could \i[potentially] create, on-demand
+
+- This is all caluclus requires, anyway
+
+- A really nice quote:
+  \quote: Points are like pitches on a guitar string. A pitch does not exist until it is sounded; a guitar string is not composed of pitches.

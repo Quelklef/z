@@ -1,0 +1,5 @@
+format=compat-1
+
+[:discrete topology:]
+
+- For any set $$X$$, the [[topology]] $$\mathcal T = \mathcal P(X)$$ is called the __discrete topology__

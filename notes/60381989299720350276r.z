@@ -1,0 +1,8 @@
+format=compat-1
+
+[:uniform metric:]
+
+- Given some [[metric space]] $$(X, d)$$ and index set $$J$$, define the following [[metric]] on $$X^J$$ as:
+    - $$\bar \rho(x, y) = \sup_{\alpha \in J}\bar d(x_\alpha, y_\alpha)$$
+    - with $$\bar d(a, b)$$ the [[standard bounded metric]]
+- Then $$\bar \rho$$ gives a [[metric topology]]; namely, the [[uniform topology]]

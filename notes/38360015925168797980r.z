@@ -1,0 +1,6 @@
+format=compat-1
+
+[:26.6:]
+
+- [[JRM:Top.2]] §26.6
+- For some $$f : X \to Y$$ bijective and [[continuous]] with $$X$$ [[compact]] and $$Y$$ [[Hausdorff]], $$f$$ is a [[homeomorphism]]

@@ -1,0 +1,59 @@
+format=flossy-2
+
+\title: Multiplicative group of integers
+
+\sec: Summary
+
+Although $\mathbb Z / n$ does not generally form a group under multiplcation, $(\mathbb Z / n)^\times$--i.e., only those $a \in \mathbb Z / n$ coprime with $n$--does.
+
+This group is called the \jarg <multiplicative group of integers(| mod(|ulo)(| n))> [multiplicative group of integers mod $n$] and is denoted $(\mathbb Z / n)^\times$.
+
+\sec: Idea
+
+Generally we know that the structure $(\mathbb Z / n, +)$--that is, integers modulo $n$ under addition--forms a group.
+
+What about $(\mathbb Z / n, \cdot)$, the integers modulo $n$ under multiplication? No: inverses will be lacking for $\bar 0$ as well as every element $a \in \mathbb Z / n$ sharing a factor with $n$ \aref[pf]. Perhaps, then, if we take only the subset of $\mathbb Z / n$ consisting of elements coprime with $n$, we would get a group?
+\adef:
+  Fix $n$, $a$. Want to show that it's contradictory for $a$ to be coprime with $n$ and yet not have an inverse (mod $n$). This entails that $a$ is coprime with $n$ iff it has an inverse (mod $n$).
+
+  Assume $a$ and $n$ are not coprime. Then exists some $c \neq 1, c_a, c_n$ with $a = c \cdot c_a$ and $n = c\cdot c_n$.
+  Also assume that $a$ has an inverse (mod $n$); that is, that exists some $p$ with $a^p \equiv_n 1$. By definition of $\equiv_n$, this means that there is some $k$ where $a^p = 1 + kn$.
+  Then we have:
+
+  \katex:
+    \begin{align*}
+      a^p &= 1+kn
+    \\ (cc_a)^p &= 1 + kcc_n
+    \\ (cc_a)^p - kcc_n &= 1
+    \\ c(c^{p-1}c_a^p - kc_n) &= 1
+    \end{align*}
+
+  Since both terms in the left-hand side product are integral, and since their product is one, then they must both be one. However, by assumption, $c \neq 1$. Contradiction.
+
+As it turns out, this works! Proof below.
+
+\sec: Proof
+
+Fix $n$. Let $(\mathbb Z / n)^\times$ denote the set of integers $1 \leq a < n$ coprime with $n$, all taken modulo $n$. We claim that $(\mathbb Z / n)^\times$ forms a group under multiplication:
+
+  1. Closure: given $\bar a, \bar b$ in $(\mathbb Z / n)^\times$ that $\bar a \cdot \bar b$ is also in $(\mathbb Z / n)^\times$ \aref closure [pf].
+  \adef closure:
+    \i[Intuition]. The product of two integers coprime with $n$ is still coprime with $n$, and that holds in modular systems as well.
+
+    \i[Proof]. Take $\bar a, \bar b \in (\mathbb Z / n)^\times$. Let $a, b$ be the unique representatives of $\bar a, \bar b$ that lie within $[0, n)$. Since $\bar a, \bar b \in (\mathbb Z / n)^\times$ then $a,b$ are coprime with $n$, and thus so is $ab$ \aref r-1 [pf]. Since $ab$ is coprime with $n$, then $\text{mod}(ab, n)$ is, as well \aref r-2 [pf]. Since $\text{mod}(ab, n)$ is coprime with $n$, and since $0 \leq \text{mod}(ab, n) < n$, we have that $\overline{\text{mod}(ab, n)} \in (\mathbb Z / n)^\times$. Finally, by rules of modular arithmetic, $\bar a \cdot \bar b = \overline{ab} = \overline{\text{mod}(ab, n)}$; thus, $\overline{ab} \in (\mathbb Z / n)^\times$.
+    \adef r-1:
+      \i[Prop]. If $a, b \in \mathbb Z$ are coprime with $n$, then $ab$ is coprime with $n$.
+      \i[Proof]. Take $a, b$. Assume for contradiction that $ab$ is not coprime with $n$. Then exists some $f \geq 2$ dividing both $ab$ and $n$. Since $f$ divides $ab$, then it must divide either $a$ or $b$, which makes either $a$ or $b$ share a factor with $n$; contradiction.
+    \adef r-2:
+      \i[Prop]. If $x$ is coprime with $n$, then $\text{mod}(x, n)$ is coprime with $n$.
+      \i[Proof]. Note that for some $k$ we have $x = nk + \text{mod}(x, n)$. Now assume for contradiction that $\text{mod}(x, n)$ shares a factor $f$ with $n$. Then we have $\text{mod}(x, n) = f\kappa_1$ and $n = f\kappa_2$ for some $\kappa_1, \kappa_2$. Plugging this into $x = nk + \text{mod}(x, n)$ we get $x = (f\kappa_2)k + f\kappa_1 = f(\kappa_2k+\kappa_1)$. Thus $f \mid x$, meaning that it is not coprime with $n$; contradiction.
+
+  2. Associativity: $(\bar a \cdot \bar b) \cdot \bar c = \bar a \cdot (\bar b \cdot \bar c)$ \aref[pf].
+  \adef: Know by properties of modular arithmetic that $\bar a \cdot \bar b = \overline{a \cdot b}$; associativity follows.
+
+  3. Identity: for every $a \in (\mathbb Z / n)^\times$ we have $\bar 1 \cdot \bar a = \bar a \cdot \bar 1 = \bar a$ \aref[pf].
+  \adef: This follows from the fact that $\bar a \cdot \bar b = \overline{a \cdot b}$.
+
+  4. Inverses: given any $\bar a \in (\mathbb Z / n)^\times$ exists a $\bar b$ such that $\bar a \cdot \bar b = \bar b \cdot \bar a = \bar 1$ \aref[pf].
+  \adef:
+    Take $\bar a \in (\mathbb Z /n)^\times$, and let $a \in \bar a$ be your choice of representative. We know that $a$ is coprime with $n$, which by Bezout's identity guarantees $x, y \in \mathbb Z$ such that $ax + ny = 1$. This rearranges to $ax = (-ny) + 1$, meaning that $ax \equiv_n 1$ since $n \mid -ny$. Likewise, $xa \equiv_n 1$; thus $\bar x$ is the inverse of $\bar a$.

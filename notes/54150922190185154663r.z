@@ -1,0 +1,7 @@
+format=compat-1
+
+[:capacity:]
+
+- For a [[discrete memoryless channel]] with random variable $$X$$ being the messages sent and $$Y$$ the messages received, define:
+    - $$\text{capacity}(C) = \max I(X \mid Y)$$
+        - I think this is, $$\max_{x, y} I(x\text{ was sent} \mid \text{received }y)$$

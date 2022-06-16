@@ -1,0 +1,15 @@
+format=compat-1
+
+[:Post correspondence system:]
+
+- A post correspondence system is an alphabet $$A$$ and a finite set of ordered pairs $$(h_i, k_i) \in A^2$$ with $$1 \leq i \leq m$$.
+- We call a word $$u$$ a __solution__ to $$A$$ if exists a sequence of indices $$\iota \in \{1\dots m\}^\star$$ such that $$u$$ is equal to both $$h_{\iota_1}h_{\iota_2}\cdots$$ and $$k_{\iota_1}k_{\iota_2}\cdots$$
+    - I.e., if we can pick "parallel" sequences $$\{h_n\}$$ and $$\{k_n\}$$ which both concatenate to $$u$$
+- 
+- Example:
+    - Take $$A = \{ (aa, aaa), (b, ab), (aba, ba), (abbb, bbbb), (abba, bb) \}$$
+    - Then $$u = aaabbabaaaba$$ is a solution to $$A$$ given by:
+        - $$\begin{aligned} u &= aa &&\oplus abba &&\oplus b &&\oplus aa &&\oplus aba \\ &= aaa &&\oplus bb &&\oplus ab &&\oplus aaa &&\oplus ba \end{aligned}$$
+- 
+- Post correspondence systems are strong enough to emulate [[semi-Thue system]]s, so the task of finding if a Post correspondence system has a solution or not is not generally [[computable]]
+    - More specifically: "Given a semi-Thue system $$S$$ and a word $$v$$, we can construct a Post correspondence system that has a solution if and only if $$v$$ is a theorem of $$S$$"

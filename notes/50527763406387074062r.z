@@ -1,0 +1,5 @@
+format=compat-1
+
+[:first-countable:]
+
+- a [[topological space]] $$X$$ is said to be __first-countable__ if every $$x \in X$$ has a [[countable basis]]

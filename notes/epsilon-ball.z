@@ -1,0 +1,5 @@
+format=compat-1
+
+[:epsilon ball:] [:epsilon balls:] [:epsilon-ball:] [:epsilon-balls:]
+
+Within some metric space $$(X, d)$$, an \i[epsilon ball] $$B(x_0, \varepsilon)$$ with radius $$\varepsilon$$ around a point $$x_0$$ is the set of points within that radius; i.e., $$B(x_0, \varepsilon) = \{ y : d(x_0, y) < \varepsilon \}$$.

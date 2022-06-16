@@ -1,0 +1,9 @@
+format=compat-1
+
+[:intermediate value theorem:]
+
+- Take $$f : X \to Y$$ with: $$f$$ [[continuous]], $$X$$ [[connected]], and $$Y$$ an [[ordered set]] in the [[order topology]]
+- Then take $$a, b \in X$$ and $$r \in Y$$ where $$f(a) < r < f(b)$$. Then exists some $$c \in X$$ s.t. $$f(c) = r$$.
+- 
+- [[JRM:Top.2]] §24.3
+- The analytical IVT is a special case of this where $$Y = \mathbb R$$ and $$X$$ is some closed interval in $$\mathbb R$$

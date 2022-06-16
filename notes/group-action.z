@@ -1,0 +1,93 @@
+format=flossy-2
+
+\title: Group actions
+
+\sec: Definition
+
+A \jarg <(group |)action(|s)> [group action] of a group $G$ onto a set $A$ is a mapping
+
+\katex: \bullet : G \times A \to A
+
+such that
+
+- $g_1 \bull (g_2 \bull a) = g_1 g_2 \bull a$
+- $1_G \bull a = a$
+
+
+\sec: Definition
+
+A group action of a group $G$ onto a set $A$ is a group homomorphism $G \to S(A)$
+
+> Proof of equivalence
+  First, note that every group action $\bull$ induces a morphism. Take a group action $\bull$ and let
+
+  \katex:
+    \begin{align*}
+      &\phi : G \to S(A) \\
+      &\phi(a) = (x \mapsto a \bull x)
+    \end{align*}
+
+  The function $\phi$ is a morphism;
+
+  - It preserves identities: $\phi(1_G) = (x \mapsto 1_G \bull x) = (x \mapsto x) = 1_{S(A)}$
+
+  - It respects composition:
+
+    \katex:
+      \begin{align*}
+        & \phi(ab)
+        \\ &= x \mapsto (ab) \bull x
+        \\ &= x \mapsto a \bull (b \bull x)
+        \\ &= (x \mapsto a \bull x) \circ (x \mapsto b \bull x)
+        \\ &= \phi(a) \circ \phi(b)
+        \\ &= \phi(a)\phi(b)
+      \end{align*}
+
+  Now take a morphism $\phi : G \to S(A)$, and define $g \bull a = \phi(g)(a)$. This is a group action:
+
+  - First axiom satisfied
+
+    \katex:
+      \begin{align*}
+        & g_1 \bull (g_2 \bull a)
+        \\ &= \phi(g_1)\ [\ \phi(g_2)(a)\ ]
+        \\ &= \ [\ \phi(g_1)\phi(g_2)\ ]\ (a) &&\text{group operation of $S(A)$ is function composition}
+        \\ &= \phi(g_1g_2)(a) &&\text{group homomorphism property}
+        \\ &= g_1g_2 \bull a
+      \end{align*}
+
+  - Second axiom satisifed
+
+    \katex: e_G \bull a = \phi(e_G)(a) = \text{id}(a) = a
+
+
+\sec: Notation + Terminology
+
+- One may say "let $G$ \jarg <act(|ing)(| on)> [act on] $A$" to mean "given a group action of $G$ onto $A$". This is denoted in a number of ways, such as $G \curvearrowright A$, $G \circlearrowright A$, and similar. (I try to prefer the words)
+
+\sec: Examples
+
+> We can have $(\mathbb Z / n, +)$ act on the set of length-$n$ bitstrings $\mathbf 2^n$ by rotation
+  So, for instance,
+
+  \katex:
+    \begin{align*}
+         & 0 \bull 1000 = 1000
+      \\ & 1 \bull 1000 = 0100
+      \\ & 2 \bull 1000 = 0010
+      \\ & 3 \bull 1000 = 0001
+    \end{align*}
+
+  This does indeed form a group action. We have that $n \bull (k \bull b) = (n + k) \bull b$ because a rotation by $k$ followed by a rotation by $n$ is the same as a rotation by $n + k$, and we have that $0 \bull b = b$ because a rotation by $0$ does nothing.
+
+- The dihedral group $D_{2n}$ can act on the set of vertices (or edges!) of a regular $n$-gon by rotating/reflecting them
+
+> For a group $G$, let $A = G$ and $g \bull a = gag^{-1}$: then $\bull$ is a group action (called \jarg <conjugation> [conjugation])
+  Note that $g_1 \bull (g_2 \bull a) = g_1 (g_2\ a\ g_2^{-1}) g_1^{-1} = (g_1 g_2) a (g_2^{-1} g_1^{-1}) = (g_1 g_2) a (g_1 g_2)^{-1} = g_1g_2 \bull a $
+  And that $1 \bull a = 1a1^{-1} = a$
+
+
+\sec: Properties
+
+> For every $g \in G$, the map $(x \mapsto g \bull x) : (A \to A)$ is bijective
+  Pf. Note that $x \mapsto g^{-1} \bull x$ is a two-sided inverse!

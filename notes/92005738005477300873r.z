@@ -1,0 +1,10 @@
+format=compat-1
+
+[:extreme value theorem:]
+
+- [[JRM:Top.2]] §27.4
+- Take [[continuous]] $$f : X \to Y$$ with $$Y$$ an [[order topology]] and $$X$$ [[compact]]. Then:
+    - Exists $$a, b \in X$$ such that for each $$x \in X$$ we have $$f(a) \leq f(x) \leq f(b)$$
+- We can think of this as a generalization of the same fact for $$\mathbb R$$, which says that the image of a closed interval under a continuous function is bounded.
+- Proof sketch. Since $$f$$ is continuous and $$X$$ compact, then $$f(X)$$ is compact. Since $$f(X)$$ is compact and in an order topology, we can show that it is bounded*. Call (elements from) the bounds' preimages $$a$$ and $$b$$.
+    - * Assume that $$f(X)$$ has no upper bound. Then $$\{ (-\infty, a_i) \}$$ forms an open covering $$f(X)$$; compactness guarantees a finite subcovering $$\{ a_k \}$$ which has upper bound $$\max_k a_k$$; contradiction

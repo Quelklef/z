@@ -1,0 +1,10 @@
+format=compat-1
+
+[:linear basis:]
+
+- A __linear basis__ is a set of vectors $$V$$ in a [[linear space]] which are [[linearly independent]] and whose [[span]] is $$V$$
+- 
+- Fun basis facts, which are true in generic fields, not just $$\mathbb R^n$$
+    - Every linearly independent set of vectors can have vectors added to it to form a basis.
+    - Every set of vectors which spans a linear space can have vectors removed to form a basis.
+    - Bases all have the same cardinality

@@ -1,0 +1,8 @@
+format=compat-1
+
+[:path connected spaces are connected:]
+
+- Take a [[path connected]] space $$X$$. Then $$X$$ is [[connected]].
+- 
+- [[JRM:Top.2]] §24 between 3 and 4
+- Proof. Assume that $$X$$ is path-connected but has a [[separation]] $$X = Z \cup W$$, and take some [[path]] $$f : [a, b] \to X$$. Since $$[a, b]$$ is [[connected]] and $$f$$ is [[continuous]], then $$f([a, b])$$ [is connected]([[continuous functions preserve connectedness]]), meaning that it lies entirely within $$Z$$ or $$W$$. Thus there is no path that goes between $$Z$$ and $$W$$; contradiction with $$X$$ being path-connected.

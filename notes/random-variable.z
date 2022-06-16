@@ -1,0 +1,41 @@
+format=flossy-2
+
+\title: Random Variable
+
+\sec: Definition
+
+A \jarg <random variable(|s)> [random variable] $X$ on a probability space $(\Omega, P)$ is a function $X : \Omega \to \mathbb R$ assigning to each event $\omega \in \Omega$ some value $X(\omega) \in \mathbb R$ \aref rk [rk].
+\adef rk:
+  \i[Remark]. The choice of codomain $\mathbb R$ is not required. Conceptually, we could have, for instance, a random variable
+
+  \katex: \text{Mood} : \{ \text{sun}, \text{rain} \} \times \{ \text{cold}, \text{warm} \}
+
+  given by
+
+  \katex:
+    \text{Mood}(\text{weather}, \text{temperature}) := \begin{cases}
+      \text{good} & \text{weather} = \text{rain} \lor \text{temperature} = \text{warm} \\
+      \text{bad} & \text{otherwise}
+    \end{cases}
+
+  However, $\mathbb R$ is almost always used because it allows for numerical analysis.
+
+
+\sec: Example
+
+Let $\Omega = \{1, 2, \dots, 6\}^2$ be the sample space of ways to roll two six-sided dice. One could define the random variable $S : \Omega \to \mathbb R$ which gives the sum of the two dice. This is given by
+
+\katex:
+  \begin{align*}
+    & S : \Omega \to \mathbb R
+    \\ & S(d_1, d_2) = d_1 + d_2
+  \end{align*}
+
+\sec: Notation
+
+- $x_i$ means $X(\omega_i)$
+
+- For a predicate $\phi$, the formula $P(\phi(X))$ means $P(\{ \omega \in \Omega : \phi(X(\omega)) \})$ \aref[ex]
+  \adef: For instance, $P(X = x) = P(\{ \omega \in \Omega : X(\omega) = x \})$
+
+- For a constant value $c$, define $(cX)(\omega) := c\cdot X(\omega)$

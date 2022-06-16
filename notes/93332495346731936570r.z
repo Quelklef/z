@@ -1,0 +1,7 @@
+format=compat-1
+
+[:extended euclidean algorithm:]
+
+- Look it up pog
+- Computes the GCD $$gcd(n, m)$$ __and__ supplies $$a, b$$ where $$gcd(n, m) = an + bm$$
+- Works generally on any field, which means we can use it on like $$\mathbb F_2[x]$$ etc

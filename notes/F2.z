@@ -1,0 +1,9 @@
+format=flossy-2
+
+\title: $\mathbb F_2$
+
+\sec: Definition
+
+\jarg <F2> <f2> <Z/2> <Z/2Z> <GF(2)> [$\mathbb F_2$] denotes the unique (up to isomorphism) field with two elements.
+
+\katex: (\mathbb Z / 2, +, \times) \cong (\text{Bool}, \underline\lor, \land) \cong (\{\text{even}, \text{odd}\}, +, \times)

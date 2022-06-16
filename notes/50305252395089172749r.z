@@ -1,0 +1,6 @@
+format=compat-1
+
+[:open coverings of paracompact spaces:]
+
+- Take $$X$$ [[paracompact]] and [[Hausdorff]]. Take $$\{U_\alpha\}_{\alpha\in J}$$ an indexing of an [[open covering]] of $$X$$. Then there exists a [[partition of unity]] on $$X$$ dominated by $$\{U_\alpha\}$$
+- [[JRM:Top.2]] §41.7

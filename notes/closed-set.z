@@ -1,0 +1,11 @@
+format=compat-1
+
+[:closed:] [:closed set:] [:closed sets:]
+
+Within a topological space $$(X, \tau)$$, a set $$U \subseteq X$$ is called \i[closed] iff its complement $$X - U$$ is an open set.
+
+One can rewrite the topology axioms in terms of closed sets as follows:
+  1. $$\varnothing$$ and $$X$$ are closed
+  2. The space is closed under arbitrary intersection
+  3. The space is closed under finite union
+Note the duality!

@@ -1,0 +1,10 @@
+format=compat-1
+
+[:primitive irreducible polynomial:]
+
+- Link: [[finite field]]
+- Prop: for $$g \in \mathbb F_p[x]$$ irreducible:
+    - $$\bar x$$ is a primitive root in $$\mathbb F_p[x] / g$$
+    - __iff__
+    - If we want to find the smallest $$N$$ for which $$g \mid x^N - 1$$ is as large as possible, this is given by $$N = p^{\text{deg}(g)}-1$$
+    - If this is true, we call $$g$$ a __primitive__ irreducible polynomial

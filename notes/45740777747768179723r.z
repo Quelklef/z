@@ -1,0 +1,6 @@
+format=compat-1
+
+[:square metric:]
+
+- The square metric is a [[metric]] defined on $$\mathbb R^n$$ by
+    - $$\rho(x, y) = \max(\lvert x_1 - y_1 \rvert, \dots, \lvert x_n - y_n \rvert)$$

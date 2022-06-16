@@ -1,0 +1,10 @@
+format=compat-1
+
+[:compact in R^n iff closed + bounded:]
+
+- [[JRM:Top.2]] §27.3
+- Take some [[subspace topology]] $$A \subseteq \mathbb R^n$$. Then [[TFAE]]:
+    - $$A$$ is [[compact]]
+    - $$A$$ is [[closed]] and $$A$$ is [[bounded]] using the [[euclidean metric]] $$d$$
+    - $$A$$ is [[closed]] and $$A$$ is [[bounded]] using the [[square metric]] $$\rho$$
+- Equivalence of the final two essentially come from that $$\rho \leq d \leq \rho \sqrt n$$; "the two metrics dominate each other" and so boundedness is biconditional

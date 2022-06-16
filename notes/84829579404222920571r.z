@@ -1,0 +1,5 @@
+format=compat-1
+
+[:noisy channel:]
+
+- A __noisy channel__ is an abstraction of a process which transmits data, but where the data is not transmitted perfectly

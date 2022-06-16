@@ -1,0 +1,7 @@
+format=compat-1
+
+[:topological property:]
+
+- A predicate $$P$$ defined on [[topological space]]s is called a __topological property__ if it is invariant under [[homeomorphism]], i.e.:
+    - For two homeomorphic spaces $$X$$, $$Y$$, have $$P(X) \iff P(Y)$$
+- An informal view is that a property is a topological property if it "only relies on the definition of 'open' for the given topology", i.e., does not rely on "specifics" of the topology beyond its open sets

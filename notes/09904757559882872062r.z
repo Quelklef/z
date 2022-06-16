@@ -1,0 +1,5 @@
+format=compat-1
+
+[:path connected:]
+
+- A [[topological space]] $$X$$ is said to be __path connected__ if every two pair of points has a [[path]] between them

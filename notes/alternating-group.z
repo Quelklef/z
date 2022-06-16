@@ -1,0 +1,36 @@
+format=flossy-2
+
+\title: Alternating Group
+
+
+\sec: Definition
+
+The \jarg <alternating group(|s)> [alternating group] $A_n$ is the subset $A_n \subseteq S_n$ of the symmetric group consisting of only even elements.
+
+
+\sec: Properties
+
+- The alternating group $A_n$ accounts for exactly half of the elements of $S_n$ (and thus the other half are odd). That is, $\lvert A_n \rvert = \frac 1 2 \lvert S_n \rvert$ \aref[pf]
+  \adef ====
+Fix $n$. Let $A_n$ and $B_n$ respectively denote the even and odd elements of $S_n$.
+
+We will show that $A_n \cong B_n$; since together they form a partition of $S_n$, this implies that each contains exactly half of the elements.
+
+That $A_n \cong B_n$ is witnessed by the following two injections:
+
+\katex:
+  \begin{align*}
+    f : A_n \to B_n &= (\sigma \mapsto (1\ 2)\sigma)
+    \\ \tilde f : B_n \to A_n &= (\sigma \mapsto (1\ 2)\sigma)
+  \end{align*}
+
+Both of these are injective because
+\katex:
+  \begin{align*}
+    (1\ 2)\sigma &= (1\ 2)\rho
+    \\ (1\ 2)(1\ 2)\sigma &= (1\ 2)(1\ 2)\rho
+    \\ \sigma &= \rho
+  \end{align*}
+
+Since there is an injection in both directions $A_n \leftrightarrow B_n$, we have that $A_n \cong B_n$.
+==/==

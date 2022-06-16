@@ -1,0 +1,6 @@
+format=compat-1
+
+[:path components lie in components:]
+
+- [[JRM:Top.2]] §25.5
+    - For some [[topological space]] $$X$$, every [[path component]] of $$X$$ lies within ($$\subseteq$$) a [[component]] of $$X$$

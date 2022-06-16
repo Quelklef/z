@@ -1,0 +1,36 @@
+format=compat-1
+
+[:recursively enumerable:]
+
+- A set $$S$$ is called __recursively enumerable__ (r.e.) if there is a [[turing machine]] which enumerates $$S$$, i.e., outputs exactly the elements of $$S$$ (in whatever order it pleases)
+- Equivalently, $$S$$ is recursively enumerable if there is a TM which halts exactly when its input is in $$S$$
+    - This equivalence may seem surprising at first; let's consider why it's true
+    - $$(\Rightarrow)$$
+        - Assume we have an enumeration $$e : \mathbb N \to S$$ of $$S$$. Now we want to write a function which halts exactly on values of $$S$$. This is given by:
+        - ```javascript
+for (let i = 0;; i++)
+  if (inputValue === e(i))
+    break;```
+        - If we feed this an `inputValue` in $$S$$, then eventually we will find `inputValue` as an `e(i)` and break
+            - We know we will never get "stuck" looping while calculating `e(i)` because assuming that `e` is an enumeration requires it to be a [[total function]]
+        - If we feed this an `inputValue` not in $$S$$, then we will be stuck in the `for`-loop forever, never matching any `e(i)`, and so will loop forever
+    - $$(\Leftarrow)$$
+        - Assume we have a [[partial function]] $$h$$ with domain $$\{0, 1\}^*$$ which takes a binary string, checks if it's an encoding of some value in $$S$$, and halts exactly if it is
+        - Want to write a function to enumerate $$S$$. Given by:
+        - ```javascript
+for (const binStr of allBinaryStrings())
+  h(binStr).then(() => console.log(binStr))```
+        - In words, what's happening is that we are asynchronously running `h` on every binary string, and outputting each string if `h` halts
+            - In code I express this with `.then` from the ECMAScript promise API
+            - However, on a TM such parallel behaviour could be achieved by running each `h(binStr)` computation one step at a time in a shape similar to the [Cantor pairing function](https://en.wikipedia.org/wiki/Pairing_function#Cantor_pairing_function)
+- 
+- [[TFAE]]:
+    - $$S$$ is r.e.
+    - $$S$$ is the domain of a [partial]([[partial function]]) [[computable]] function
+    - $$S$$ is the range of a partial computable function
+    - $$S = \varnothing$$ or $$S$$ is the range of a [total]([[total function]]) computable function
+    - Exists a total computable $$f$$ of arity 2 such that:
+        - for each $$x$$ we have $$f(x, 0) = 0$$
+        - there is at most one $$s$$ s.t. $$f(x, s + 1) \neq f(x, s)$$
+        - $$\lim_s f(x, s) = \chi_S(x)$$ (see [[characteristic function]])
+    - There is a computable sequence of finite sets $$\{A_s\}_{s \in \mathbb N}$$ forming a [[cover]] of $$A$$ such that always $$A_s \subseteq A_{s + 1}$$

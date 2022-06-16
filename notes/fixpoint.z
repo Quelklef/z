@@ -1,0 +1,45 @@
+format=flossy-2
+
+\title: Fixpoints
+
+\sec: Definition
+
+For a function $f : X \to X$ and $x_0 \in X$, tfae:
+
+  - $f(x_0) = x_0$
+  - $x_0$ is \jarg <fixed (under|by)> [fixed by] $f$
+  - $x_0$ is a \jarg <fix(|ed )point(|s)(| of| under)> [fixpoint of] $f$
+  - $f$ \jarg <fixes> [fixes] $x_0$
+
+
+\sec: Relation to Infinities
+
+\i[Warning:] this section is colloquial rather than mathematical. It is intended to aid cognition and intuition, but does not present rigorous mathematics.
+
+Fixpoints often turn up alongside infinities. For instance, consider the function
+
+\katex:
+  \begin{align*}
+    \text{cons1} &: \mathbb N^* \to \mathbb N^*
+      \\ &= \mathbf x \mapsto 1 \oplus \mathbf x
+  \end{align*}
+
+Taking in a sequence of natural numbers, such as $[5, 0, 2]$ and prepending a $1$, in this case producing $[1, 5, 0, 2]$.
+
+One fixpoint of this function is the list of ininite ones $[1, 1, 1, \dots]$, because prepending a $1$ to this list has no effect.
+
+Loose justification for the presence of infinity with relation to fixpoints is to note that the fixpoint equation
+
+\katex: x = f(x)
+
+is in some sense equivalent to the infinite equation
+
+\katex: x = f(f(\ \cdots\ f(f(x))\ \cdots\ ))
+
+or just
+
+\katex: x = f(f(\ \cdots\ ))
+
+To see why, note that we can go from the first equation to the second with infinitely-repeated substitution, and we can go from the second to the first with a single substitution.
+
+This means we can roughly interpret "fixpoint of $f$" to mean "value obtained by infinitely-repeated applications of $f$".

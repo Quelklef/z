@@ -1,0 +1,7 @@
+format=flossy-2
+
+\title: Unital Structures
+
+\sec: Definition
+
+Over an algebraic structure $S$, an operation $\times$ is called \jarg <(|non-)unita(l|ry)> [unital] if it has a two-sided identity, that is, if exists some $s \in S$ such that for all $x \in S$ we have $e \times x = x \times e = x$.

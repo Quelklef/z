@@ -1,0 +1,6 @@
+format=compat-1
+
+[:universal turing machine:]
+
+- A universal [[turing machine]] is a turing machine that can emulate every other turing machine
+- Given that [[turing machines are effectively countable]], we can create one as follows: let $$U(x, e) = \varphi_e(x)$$, where $$\varphi_e$$ is the turing machine with [[index]] $$e$$

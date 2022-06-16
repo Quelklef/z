@@ -1,0 +1,15 @@
+format=compat-1
+
+[:metric:]
+
+- A __metric__ on some set $$X$$ generalizes the idea of distance.
+- Formally, a metric is a function $$d : X^2 \to \mathbb R$$ such that:
+    - $$d(a, b) \geq 0$$
+    - $$d(a, b) = 0 \iff a = b$$
+    - $$d(a, b) + d(b, c) \geq d(a, c)$$
+        - Called the triangle inequality
+        - Intuition: think of a triangle
+- Often we call $$d(a, b)$$ the __distance__ between $$a$$ and $$b$$
+- 
+- For a set $$A$$ and point $$x_0$$ we define the distance between $$x_0$$ and $$A$$ to be $$d(x_0, A) := \inf_{a \in A} d(x_0, a)$$
+    - For fixed $$A$$, $$d(\cdot, A)$$ is [[continuous]]

@@ -1,0 +1,69 @@
+format=flossy-2
+meta: { starred = True }
+
+\title: My personal values, graphed
+
+... or some kind of attempt thereof. Note: this is a transitive reduction!
+
+\mermaid ==values==
+
+graph RL;
+
+connection --> sensation;
+
+romance --> interaction --> connection;
+romance --> intimacy --> connection;
+            intimacy --> sensation;
+romance --> commitment --> connection;
+romance --> sex;
+
+sex --> fun;
+sex --> connection;
+
+friendship --> interaction;
+friendship --> intimacy;
+friendship --> vulnerability --> dissonance;
+
+dissonance --> learning;
+
+questioning --> dissonance;
+
+learning --> truth;
+
+truth --> truth;
+
+self-honesty --> dissonance;
+self-honesty --> connection;
+self-honesty --> authenticity;
+
+authenticity --> truth;
+authenticity --> authenticity;
+              
+
+fun --> sensation;
+
+exploration --> dissonance;
+exploration --> learning;
+
+philosophy --> exploration;
+mathematics --> exploration;
+art --> exploration;
+reading --> exploration;
+poetry --> art;
+
+empathy --> exploration;
+empathy --> connection;
+
+doing-things[doing things] --> exploration;
+
+spending-energy[spending energy];
+spending-energy --> doing-things;
+spending-energy --> physical-wellness;
+
+physical-wellness[physical wellness];
+physical-wellness --> mental-wellness;
+
+mental-wellness[mental wellness];
+mental-wellness --> learning;
+
+==/values==

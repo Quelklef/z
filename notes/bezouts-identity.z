@@ -1,0 +1,15 @@
+format=flossy-2
+
+\title: Bezout's Identity
+
+\sec: Statement
+
+\jarg<Bezout's Identity> [Bezout's Identity] states, equivalently, that:
+
+  - The gcd of two numbers can be expressed as a linear combination of those numbers
+  - Given $d = \text{gcd}(a, b)$, exists $x, y \in \mathbb Z$ such that $ax + by = d$.
+
+
+\sec: Proof
+
+Special case of \ref gcd-smallest-linear-combination [this theorem].

@@ -1,0 +1,8 @@
+format=compat-1
+
+[:T2 13.2:]
+
+- Lemma 13.2 in [[JRM:Top.2]]. Sometimes useful for proofs.
+- Search terms: proving equality via basis
+- For a [[topological space]] $$\langle X, \mathcal T \rangle$$ and set $$\mathcal B$$ of open sets of $$X$$, if for every $$U$$ open in $$X$$ and every $$x \in U$$ there is a $$B \in \mathcal B$$ such that $$x \in B \subseteq U$$, then $$\mathcal B$$ is a [[topological basis]] for $$\mathcal T$$
+- Proof: (todo???)

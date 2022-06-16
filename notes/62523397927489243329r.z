@@ -1,0 +1,13 @@
+format=compat-1
+
+title: the total computable functions are not effectively countable
+
+- Theorem: the set of all [[computable]] functions which are also [[total function]]s is not [[effectively countable]]
+- Proof
+    - Assume the opposite
+    - Then there exist a computable enumeration $$\{ f_i \}$$ of the computable functions; that is, for each $$i \in \mathbb N$$ we have that $$f_i$$ is computable, and each computable function is some $$f_i$$, and calculating $$f_i$$ from an $$f$$ is computable, and going the other way is as well.
+    - Let $$g(i) = f_i(i) + 1$$
+    - Since $$g$$ is just a composition of $$f_\cdot$$ with the successor function, then $$g$$ is computable
+    - Thus there is some $$i_g$$ where $$f_{i_g} = g$$
+    - Invoking both sides with the argument $$i$$, we get that $$f_{i_g}(i) = g(i)$$; however, $$g(i) = f_{i_g}(i) + 1 \neq f_{i_g}(i)$$; contradiction
+- Apparently this is basically a diagonalization

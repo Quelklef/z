@@ -1,0 +1,74 @@
+format=compat-1
+
+title: Decidable equality on (Nat -> 0|1) -> Y
+
+- Origin: http://math.andrej.com/2007/09/28/seemingly-impossible-functional-programs/
+- In general, equality on function types $$a \to b$$ is undecidable*, as to decide if two functions $$f, g : a \to b$$ are equal requires checking $$f(x) = g(x)$$ on infinite $$x : a$$, which is not possible in a finite amount of time
+    - * terminology may be slightly wrong; what I mean exactly is that there is no always-terminating algorithm for equality on $$a \to b$$
+- Amazingly, for the type $$B = \mathbb N^+ \to \{0,1\}$$ of infinitely-long bitstrings, and for a type $$Y$$ with decidable equality, we have decidable equality on $$B \to Y$$, despite $$B$$ being an infinite domain
+- Apparently, the reason for this is as follows:
+    - Computable functions are [[continuous]]
+    - For continuous functions, "finite amounts of the output depend only on finite amounts of the input", i.e., functions from $$B$$ may only actually observe a finite number of the elements in the given $$b : B$$
+    - $$B$$ is [[compact]]
+    - Continuous functions on compact spaces are uniformly continuous
+    - In this context, uniformly continuous means that for an $$f : B \to X$$, the number of elements that $$f$$ observes when computing $$f(b)$$ is globally bounded. That is, it's not only that for each $$b : B$$ there exists an $$n$$ such that $$f(b)$$ depends only on the first $$n$$ elements of $$b$$; stronger, it's that there exists an $$n$$ such that for each $$b : B$$ we have that $$f(b)$$ depends only on the first $$n$$ elements of $$b$$. Note the quantifier swap.
+    - The upshot of this is that the seemingly-infinite problem of equality on $$B \to Y$$ is actually a finite problem. Also see the Haskell implementation below.
+- Implementation in Haskell. Modified from the implementation in the original post, which I found to be less clear.
+- ```plain text
+{-# LANGUAGE LambdaCase, MultiWayIf #-}
+
+module Main where
+
+data Bit = Zero | One
+  deriving (Eq, Show)
+
+-- Use this synonym to emphasize that we are only considering
+-- the case of infinitely-long lists
+type Inf a = [a]
+
+-- Given a predicate over Inf Bit, return an Inf Bit satisfying
+-- that predicate, if there is one, or some other Inf Bit otherwise.
+find :: (Inf Bit -> Bool) -> Inf Bit
+find p =
+  let p0 = \xs -> p (Zero : xs)
+      p1 = \xs -> p (One  : xs)
+
+      fp0 = find p0
+      fp1 = find p1
+
+  in
+  if p0 fp0
+    then Zero : fp0
+  else if p1 fp1
+    then One : fp1
+  else
+    One : fp1
+
+exists :: (Inf Bit -> Bool) -> Bool
+exists p = p (find p)
+
+-- forall by De Morgan's
+forall :: (Inf Bit -> Bool) -> Bool
+forall p = not $ exists (\x -> not $ p x)
+
+equals :: Eq y => (Inf Bit -> y) -> (Inf Bit -> y) -> Bool
+equals f g = forall (\x -> f x == g x)
+
+main = do
+  print $ equals f f
+  print $ equals f g
+  print $ equals f h
+
+  where
+    get :: Bit -> Int
+    get = \case
+      Zero -> 0
+      One -> 1
+
+    f, g, h :: Inf Bit -> Int
+    f a = get (a !! (7 * get (a !! 4) +  4 * get (a !! 7) + 4))
+    g a = get (a !! (get (a !! 4) + 11 * get (a !! 7)))
+    h a = if a !! 7 == Zero
+          then if a !! 4 == Zero then get (a !!  4) else get (a !! 11)
+          else if a !! 4 == One  then get (a !! 15) else get (a !!  8)
+```

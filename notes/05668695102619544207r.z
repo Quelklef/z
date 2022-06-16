@@ -1,0 +1,7 @@
+format=compat-1
+
+[:cofinal:]
+
+- For some [[directed set]] $$A$$, a subset $$B \subseteq A$$ is called __cofinal__ iff
+    - For each $$a \in A$$ we have some $$b \in B$$ where $$a \leq b$$
+- Remark: I think of "cofinal" as "has the same limit"-ish

@@ -1,0 +1,16 @@
+format=flossy-2
+
+\title: Expected Value
+
+\sec: Definition
+
+For a random variable $X$, the \jarg <expected value(|s)> [expected value] $\mathbb E X$ is defined to be its average value over all possible events; that is,
+
+\katex: \mathbb E X := \sum_{\omega \in \Omega} P(\omega) X(\omega)
+
+
+\sec: Properties
+
+- The expected value is a linear operator with respect to random variables; that is, we have:
+    1. $\mathbb E(X + Y) = \mathbb EX + \mathbb EY$
+    2. $\mathbb E(cX) = c\cdot \mathbb EX$

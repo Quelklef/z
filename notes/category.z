@@ -1,0 +1,25 @@
+format=flossy-2
+
+\title: Category Theory
+
+\sec: Definition
+
+A \jarg <categor(y|ies)> [category] $C$ is a 2-tuple $C = (\text{Ob}(C), \text{Mor}(C))$ of:
+
+  1. A set of "objects" $\text{Ob}(C)$
+
+  2. A set of \jarg <(homo|)morphism(|s)> [homomorphisms] $\text{Mor}(C) \subseteq \text{Ob}(C) \times \text{Ob}(C)$
+     A morphism $m = (a, b)$ may be written as $m : a \to b$.
+
+Satisfying:
+
+  - Composition: given morphisms $f : a \to b$ and $g : b \to c$, exists a morphism $g \circ f : a \to c$
+  - Associativity: $f \circ (g \circ h) = (f \circ g) \circ h$
+  - Identity: for every $a \in \text{Ob}(C)$ exists a morphism $1_a : a \to a$ such that $1_a \circ f = f \circ 1_a = f$
+
+
+\sec: Notation + Terminology
+
+- Something something \jarg <isomorphism(|s)> <isomorphic> [isomorphism]
+
+- The collection of morphisms $\{ f : x \to y \}$ for fixed $x, y$ is variously written as $C(x, y)$, $\text{hom}_C(x, y)$, or $\text{hom}(x, y)$

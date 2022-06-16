@@ -1,0 +1,5 @@
+format=compat-1
+
+[:monic:]
+
+- A polynomial is called __monic__ iff the coefficient of the highest exponent is $$1$$

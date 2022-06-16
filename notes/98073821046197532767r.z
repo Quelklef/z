@@ -1,0 +1,6 @@
+format=compat-1
+
+[:T2 16.2:]
+
+- Take $$Y$$ a [[subspace topology]] of $$X$$ where $$Y$$ is [[open]] in $$X$$. Then $$A$$ open in $$Y$$ is also open in $$X$$.
+- Dual to [[T2 17.3]]

@@ -1,0 +1,5 @@
+format=compat-1
+
+[:countably locally finite:]
+
+- A collection $$\mathcal B$$ of [[open set]]s is called __countably locally finite__ if we can write $$\mathcal B = \bigcup_{n \in \mathbb N} \mathcal A_n$$ where each $$\mathcal A_n$$ is [[locally finite]]

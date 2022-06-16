@@ -1,0 +1,5 @@
+format=compat-1
+
+[:isolated point:]
+
+- Within a [[topological space]] $$X$$, for some $$x \in X$$, if the one-point set $$\{ x \}$$ is an [[open set]], then $$x$$ is said to be an __isolated point__

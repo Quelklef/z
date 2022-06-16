@@ -1,0 +1,5 @@
+format=compat-1
+
+[:binary erasure channel:]
+
+- The __binary erasure__ with probability $$\varepsilon$$ is a [[noisy channel]] that transmits bits where each bit has a $$1 - \varepsilon$$ probability of being transmitted properly, and a $$\varepsilon$$ probability of being erased. We express erasure by including an "erased character" $$*$$ in the output alphabet, so the channel overall is roughly of type $$\{0,1\} \to \{0,1,*\}$$

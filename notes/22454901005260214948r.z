@@ -1,0 +1,11 @@
+format=compat-1
+
+[:homeomorphism:] [:homeomorphic:]
+
+- For a function $$f$$ between two [[topological space]]s, if $$f$$ is bijective and both $$f$$ and $$f^{-1}$$ are [[continuous]], then we say $$f$$ is a __homeomorphism__
+    - Intuition: for $$f : X \to Y$$, continuity of $$f$$ means "$$f$$ may not tear". Continuity of $$f^{-1}$$ means "$$f$$ may not glue"
+- Equivalent to saying: $$f(U)$$ is open iff $$U$$ is open
+    - Since $$f$$ is a bijection, this means that $$f$$ is also giving us a bijection between open sets
+    - Thus, 
+- "The goal of topology is to classify topological spaces up to homeomorphism"
+    - I.e., the set of spaces modulo being homeomorphic

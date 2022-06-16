@@ -1,0 +1,6 @@
+format=compat-1
+
+[:imbeddings of compact manifolds:]
+
+- If $$X$$ is a [[compact]] $$m$$-[[manifold]] then exists some $$N$$ such that we can imbed $$X$$ into $$\mathbb R^N$$
+- [[JRM:Top.2]] §36.2

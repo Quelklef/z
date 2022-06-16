@@ -1,0 +1,8 @@
+format=compat-1
+
+[:fineness by metric:]
+
+- Given a set $$X$$ with two [[metric]]s $$d_1$$ and $$d_2$$, inducing topologies $$\mathcal T_1$$ and $$\mathcal T_2$$, [[TFAE]]:
+    - $$\mathcal T_2$$ is [finer]([[fineness]]) than $$\mathcal T_1$$
+    - for every $$x \in X$$ and $$\varepsilon > 0$$ we have some $$\delta > 0$$ where $$B_{d_2}(x, \delta) \subseteq B_{d_1}(x, \varepsilon)$$
+        - Lemma 20.2 in [[JRM:Top.2]]

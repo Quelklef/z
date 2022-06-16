@@ -1,0 +1,7 @@
+format=compat-1
+
+title: compactnesses in metric-metrizable spaces
+
+- If a [[topological space]] $$X$$ is [[metrizable]], then [[compact]]ness, [[limit point compact]]ness, and [sequential compactness]([[sequentially compact]]) are equivalent
+- A [[metric space]] $$(X, d)$$ is [[compact]] if and only if it is a [[complete metric space]] and is also [[totally bounded]] ([[JRM:Top.2]] §45.1)
+    - Proof sketch. $$(\Leftarrow)$$ Construct some infinite sequences of points. Since $$X$$ is totally bounded, then it is covered by a finite number of balls of size 1. One of these balls contains an infinite number of points of our sequence. Consider just the tail within that ball. Cover $$X$$ by balls of size 1/2; again, one of these balls contains an infinite number of points of our tail. Consider just that tail of the tail. Repeat infinitely and we have constructed a subsequence which is Cauchy. Since $$X$$ is complete, then this subsequence converges. So $$X$$ is sequentially compact, so it is compact. $$(\Rightarrow)$$ idk.

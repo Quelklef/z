@@ -1,0 +1,23 @@
+format=compat-1
+
+[:characteristic:]
+
+- Take $$\mathbb F_q$$ a [[finite field]] with $$q$$ elements. Then:
+    - (1) for some $$p,d$$ with $$p$$ prime we have $$q = p^d$$
+        - $$p$$ is called the **characteristic** of $$\mathbb F_q$$, denoted $$\text{char}(\mathbb F_q)$$
+    - (2) $$p$$ is the smallest integer with $$\underbrace {1 + 1 + \cdots + 1}_{p \text{ times}} \equiv 0$$
+    - (3) $$\mathbb F_q$$ contains $$\mathbb Z/p$$ as a subfield
+        - And thus $$\mathbb F_q$$ is a [[linear space]] of dimension $$d$$ with coefficients in $$\mathbb Z/p$$
+    - (4) Exponentiation by the characteristic distributes over addition
+        - $$(\alpha + \beta)^p \equiv \alpha^p + \beta^p$$
+- 
+- Examples:
+    - $$\text{char}(\mathbb Z/k) = k$$
+    - $$\mathbb F_2[x]/(x^3 + x + 1) = \{0, 1, x, x+1, x^2, \dots\}$$ has characteristic 2
+- 
+- Proofs:
+    - Of (2): first note that since $$\mathbb F_q$$ is finite, then repeatedly adding $$1$$ must eventually hit $$0$$. Let $$m$$ be the minimum number of $$1$$s required. If $$m$$ were nonprime, then we would have $$0 = m = ab = (\underbrace{1 + \cdots + 1}_\text{a \text{ times}})(\underbrace{1 + \cdots + 1}_{b \text{ times}})$$. Because we have $$0 = ab$$ and are working in a field, we may conclude that either $$a = 0$$ or $$b = 0$$, contradicting that $$m$$ is minimal. $$\square$$
+    - Of (3): since $$p < q$$ we may simple take the lowest $$p$$ elements (indexed $$0, 1, 2, \cdots, p-1$$) from $$\mathbb F_q$$ to form a subset; this is a field because, as assumed, $$\underbrace{1 + \cdots + 1}_{p \text{ times}} \equiv 0$$
+        - Skipping over the linear space part
+    - Of (1): this follows from (3); the cardinality of $$\mathbb F_q$$ is $$q$$; viewing it as a linear space $$(\mathbb Z/p)^d$$ we see that the cardinality is also $$p^d$$; thus $$q = p^d$$
+    - Of (4): the binomial theorem gives that $$(\alpha + \beta)^p = \sum_{n=0}^p \binom p k \alpha^k \beta^{p-k}$$. Coefficients are $$\binom p k = \frac {p!}{k!(p-k)!}$$; when $$k \notin \{0, p\}$$ we get a factor of $$p$$ on the top but __not__ the bottom, and since $$p \equiv 0$$ that means that the coefficient vanishes. Thus all we are left with is $$\alpha^p$$ and $$\beta^p$$!

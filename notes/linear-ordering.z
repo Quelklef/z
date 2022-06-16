@@ -1,0 +1,16 @@
+format=compat-1
+
+[:total order:] [:total orders:] [:linear order:] [:linear orders:] [:total ordering:]
+
+Linear orders are a kind of ordering relation.
+
+Loosely, a linear order on a set $$A$$ is a way to put elements of $$A$$ "into a line".
+One example is the integers $$\mathbb Z$$ with their usual ordering:
+$[ \cdots \leq -2 \leq -1 \leq 0 \leq 1 \leq 2 \leq \cdots ]$
+A more exotic example is the natural ordering on $$\mathbb Q$$, wherein between every two elements there are an infinite number of other elements (i.e., $$\mathbb Q$$ has a dense order).
+
+Formally, a we define total orders to be binary relations $$\leq$$ satisfying:
+  1. Reflexivity: always $$a \leq a$$
+  2. Transitivity: if $$a \leq b$$ and $$b \leq c$$ then $$a \leq c$$
+  3. Antisymmetry: if $$a \leq b$$ and $$b \leq a$$ then $$a = b$$
+  4. Totality: always $$a \leq b$$ or $$b \leq a$$

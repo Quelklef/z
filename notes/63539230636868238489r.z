@@ -1,0 +1,6 @@
+format=compat-1
+
+[:uniquely decipherable:]
+
+- A [[message encoding]] is called __uniquely decipherable__ iff it is [[injective]]
+- Note that for a message encoding $$f^*$$ to be [[uniquely decipherable]], $$f$$ itself must also be injective

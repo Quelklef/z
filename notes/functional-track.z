@@ -1,0 +1,160 @@
+format=flossy-2
+
+\title: Functional Tracks
+
+\sec: Definition
+
+Given two sets \aref[rk] $\alpha$ and $\beta$, a \jarg <(functional |)track(|s)> [track] between $\alpha$ and $\beta$ is a 2-tuple
+\adef: Or types, or other suitable notion...
+
+\katex: f = (g : \alpha \to \beta, h : \beta \to \alpha)
+
+of one function going from $\alpha$ to $\beta$ and another going from $\beta$ to $\alpha$
+
+
+\sec: Notation
+
+- The collection of tracks between $\alpha$ and $\beta$ is denoted $\alpha \leftrightarrow \beta$
+
+- $f : \alpha \leftrightarrow \beta$ means $f \in \alpha \leftrightarrow \beta$
+
+- The two functions of a track $f : \alpha \leftrightarrow \beta$ may be written equivalently as $f = (f_{\alpha \to \beta}, f_{\beta \to \alpha})$, as $f = (f_\to, f_\leftarrow)$, or with plain symbols as $f = (g, h)$.
+
+
+\sec: Concepts
+
+- Composition: taking an $f : \alpha \leftrightarrow \beta$ and $g : \beta \leftrightarrow \gamma$ and creating an $h : \alpha \leftrightarrow \gamma$ \aref [more]
+  \adef ==composition==
+Given two tracks $f : \alpha \leftrightarrow \beta$ and $g : \beta \leftrightarrow \gamma$
+
+\tikz:
+  \node at (0, 0) (a) { $\alpha$ };
+  \node at (3, 0) (b) { $\beta$ };
+  \draw[->] (.5, .4) -- (2.5, .4);
+  \node at (1.5, .7) { $f_\to$ };
+  \draw[->] (2.5, -.4) -- (.5, -.4);
+  \node at (1.5, -.7) { $f_\leftarrow$ };
+
+  \begin{scope}[shift={(5,0)}]
+  \node at (0, 0) (a) { $\beta$ };
+  \node at (3, 0) (b) { $\gamma$ };
+  \draw[->] (.5, .4) -- (2.5, .4);
+  \node at (1.5, .7) { $g_\to$ };
+  \draw[->] (2.5, -.4) -- (.5, -.4);
+  \node at (1.5, -.7) { $g_\leftarrow$ };
+  \end{scope}
+
+There is only one obvious way to compose them, namely:
+
+\tikz:
+  \node at (0, 0) (a) { $\alpha$ };
+  \node at (3, 0) (b) { $\beta$ };
+  \draw[->] (.5, .4) -- (2.5, .4);
+  \node at (1.5, .7) { $f_\to$ };
+  \draw[->] (2.5, -.4) -- (.5, -.4);
+  \node at (1.5, -.7) { $f_\leftarrow$ };
+
+  \begin{scope}[shift={(3,0)}]
+  \node at (3, 0) (b) { $\gamma$ };
+  \draw[->] (.5, .4) -- (2.5, .4);
+  \node at (1.5, .7) { $g_\to$ };
+  \draw[->] (2.5, -.4) -- (.5, -.4);
+  \node at (1.5, -.7) { $g_\leftarrow$ };
+  \end{scope}
+
+We write this composition as $f\ ||\ g : \alpha \leftrightarrow \gamma$, defined symbolically as
+
+\katex: f\ ||\ g = (f_\to\ ; g_\to,\ f_\leftarrow \circ g_\leftarrow)
+
+where $;$ denotes reverse-order function composition.
+==/composition==
+
+- Duals: associating tracks $f : \alpha \leftrightarrow \beta$ with their natural partners $\beta \leftrightarrow \alpha$ \aref [more]
+  \adef ====
+Given a track $f = (f_\rightarrow, f_\leftarrow) : \alpha \leftrightarrow \beta$, its \i[dual] is the track $f^\text{swp} := (f_\leftarrow, f_\rightarrow) : \beta \leftrightarrow \alpha$ obtained by swapping the functions.
+==/==
+
+- \jarg <(left|right)-preserving> [Left- and right- preservity]: like injectivity/surjectivity, but for tracks \aref [more]
+  \adef ====
+A track $t : \alpha \leftrightarrow \beta$ is called...
+
+- \i[left-preserving] if $t_\to\ ;\, t_\leftarrow = \text{id}_\alpha$.
+
+- \i[right-preserving] if $t_\leftarrow \circ t_\to = \text{id}_\beta$.
+==/==
+
+
+\sec: Properties
+
+- Composition is associative
+
+- $(f\ ||\ g)^\text{swp} = g^\text{swp}\ ||\ f^\text{swp}$
+
+- Tracks with preservity have inverses.
+  - A track $t$ is left-preserving iff $t\ \vert\vert\ t^\text{swp} = \text{id} : \alpha \leftrightarrow \alpha$
+  - A track $t$ is right-preserving iff $t^\text{swp}\ \vert\vert\ t = \text{id} : \beta \leftrightarrow \beta$
+
+- As a consequence, $t$ is left-preserving iff $t^\text{swp}$ is right-preserving
+
+\b[On inverses]:
+
+- \i[Remark:] There is no one "track identity"; each set pair $\alpha, \beta$ has its own track identity $\text{id}_{\alpha, \beta} : \alpha \leftrightarrow \beta$. As such, although $||$ is associative, it would misleading to say that tracks form a monoid.
+
+- \i[Terminology:] li = left invertible; ri = right invertible; twi = two-way invertible \aref[rk]
+  \adef:
+    A track being "two-way invertible" is, strictly speaking, ambiguous: does that mean that it has a two-way inverse, or that it has a left-inverse and a right-inverse? As it turns out, these cases are the same.
+- \i[Notation:] I use juxtaposition $pq$ to mean composition $p\ ||\ q$.
+
+- (Unified inverse lemma) $f$ li and ri implies all inverses of $f$ are equal \aref[more].
+  \adef:
+    For any $f$, if $f$ has a left-inverse $g$ and right-inverse $h$, then exists $f^{-1}$ which is a two-sided inverse and equivalent to all left- and right- inverses of $f$.
+
+    Proof. Take $f, g, h$. Then:
+
+    \katex:
+      \begin{align*}
+        & g
+        \\ &= g\ \text{id}
+        \\ &= g (f h)
+        \\ &= (g f) h
+        \\ &= \text{id}\ h
+        \\ &= h
+      \end{align*}
+
+    Thus $g = h$ is two-sided; call it $f^{-1}$.
+
+    A nearly-identical line of reasoning shows that all one-sided inverses are equivalent to $f^{-1}$.
+
+- $f = (g, h)$ is left-invertible iff $g$ is surjective and $h$ is injective
+- $f = (g, h)$ is right-invertible iff $g$ is injective and $h$ is surjective
+- As such, every direction of invertibility has examples \aref[more]
+  \adef:
+    - Two-way invertible tracks: $\text{id}_\alpha$ for any given $\alpha$
+
+    - One-way invertible tracks
+        e.g. $(\text{length}, \text{singleton}) : \mathbb N^* \leftrightarrow \mathbb N$
+        has left-inverse $(\text{length}^{-1}, \text{singleton}^{-1}) : \mathbb N \leftrightarrow \mathbb N^*$
+      Note: the inverse given is \i[not] unique.
+      Note: this is a left-invertible track; its left-inverse is an example of a right-invertible track.
+
+    - No-way invertible tracks: any $(f, g)$ with $f$ and $g$ both no-way invertible
+
+- $pq$ li implies $q$ li \aref[pf]
+  \adef:
+    Take $f = pq$ has li $f^{-1}$. Then:
+
+    \katex:
+      \begin{align*}
+        f &= pq
+        \\ f^{-1}f &= f^{-1}(pq)
+        \\ \text{id} &= (f^{-1}p)q
+      \end{align*}
+
+    Thus $f^{-1}p$ is a li for $q$.
+- $pq$ ri implies $p$ ri \aref[pf]
+  \adef: Essentially the same as the proof that $pq$ li implies $q$ li
+- $p, q$ li implies $pq$ li, and $p, q$ ri implies $pq$ ri \aref[pf]
+  \adef:
+    Assume $p, q$ li. Then $(q^{-1} p^{-1})(pq) = \text{id}$, so $pq$ li.
+    Likewise for ri.
+- $p, q$ twi implies $(pq)^{-1} = q^{-1} p^{-1}$

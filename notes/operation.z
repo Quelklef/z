@@ -1,0 +1,8 @@
+format=flossy-2
+
+\title: Operators in Mathematics
+
+The term \jarg <operat(ion|or)> [operator] is generally denotatively equivalent to \i[function]. Connotatively,
+
+- Operators often use symbols instead of letters; we write $a + b$ instead of $f(a, b)$
+- Operators are often of the signature $A^n \to X$ for some $A$ or $A^n \to A$

@@ -1,0 +1,8 @@
+format=compat-1
+
+title: equivalences of regularity and normality
+
+- [[JRM:Top.2]] §31.1
+- take a [[topological space]] $$X$$ satisfying the [[T1 axiom]]. Then:
+    - $$X$$ being [[regular]] is equivalent to: given $$x \in X$$ and open $$U \ni x$$, exists open $$V \ni x$$ where $$\bar V \subseteq U$$
+    - $$X$$ being [[normal]] is equivalent to: given closed $$A \subseteq X$$ and open $$U \supseteq A$$, exists open $$V \supseteq A$$ such that $$\bar V \subseteq U$$

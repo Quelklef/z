@@ -1,0 +1,5 @@
+format=compat-1
+
+[:Lebesgue number lemma:]
+
+- Take $$(X, d)$$ a [[metric space]] with $$X$$ compact and $$\mathcal A$$ an [[open covering]] for $$X$$. Then exists some $$\delta > 0$$ such that for every $$S \subseteq X$$, if $$\text{diam}(S) < \delta$$ (see [[diameter]]), then there is some $$A \in \mathcal A$$ such that $$S \subseteq A$$

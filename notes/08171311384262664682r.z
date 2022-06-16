@@ -1,0 +1,6 @@
+format=compat-1
+
+[:closedness and compactness:]
+
+- [[JRM:Top.2]] §26.2
+    - Every [[closed]] [[subspace topology]] of a [[compact]] [[topological space]] is compact

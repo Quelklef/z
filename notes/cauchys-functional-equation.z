@@ -1,0 +1,116 @@
+format=flossy-2
+meta: { starred = True }
+
+#Notes off of \href <https://twitter.com/speckman_joshua/status/1511435782157848576> [this] Twitter thread and \href <https://maynards.site/items/linearity/linearity.pdf> [this] previous work of mine.
+
+\title: Cauchy's Functional Equation, Hamel Bases
+
+\sec: Ok let's jam
+
+Over any sufficiently well-equipped set, we may consider on a function $f$ the condition
+
+\katex: f(x + y) = f(x) + f(y)
+
+This is called \jarg <Cauchy's functional equation> [Cauchy's functional equation].
+
+
+\sec: Equivalence with linearity over $\mathbb Q$
+
+Linearity of a function $f$ requires that $f$ satisfy the functional equation and also satisfy that $cf(x) = f(cx)$ for fixed scalar $c$.
+
+Note that if $f$ satisfies the functional equation then by induction we have that $f(nx) = nf(x)$ for $n \in \mathbb N$.
+
+Now let us work over $\mathbb Q$ and assume that $f$ satisfies the functional equation. Then:
+
+\katex:
+  \begin{align*}
+    & f(cx) && c \in \mathbb Q, x \in \mathbb R
+    \\ &= f \left( \frac pq \cdot x \right) && c = \frac pq;\; p,q \in \mathbb N
+    \\ &= \left( q \cdot \frac 1q \right) \cdot f \left( p \cdot \frac xq \right)
+    \\ &= \left( p \cdot \frac 1q \right) \cdot f \left( q \cdot \frac xq \right)  && f(nx) = nf(x)
+    \\ &= \frac p q \cdot f(x)
+    \\ &= c f(x)
+  \end{align*}
+
+
+\sec: Non-equivalence with linearity over $\mathbb R$
+
+This proof does \i[not] generalize to $\mathbb R$. It does get close, though. Take an $f$ satisfying the functional equation and an $r \in \mathbb R$. Start with
+
+\katex: f(rx)
+
+Rewrite $r$ as an infinite sum of rational numbers and distribute to obtain
+
+\katex: f(q_1x + q_2x + \cdots)
+
+We can distribute $f$ over any finite number $k$ of terms, over $\mathbb Q$, and then factor to obtain
+
+\katex: (q_1 + q_2 + \cdots + q_k)f(x) + f(q_{k+1}x + q_{k+2}x + \cdots)
+
+Taking the limit \aref[rk], we get
+\adef:
+  This is allowed because every rewrite has implicitly been an equation $f(rx) = \text{RHS}$; we are taking the limit wrt $k$ of both sides of this equation, but that does not affect the LHS $f(rx)$.
+
+\katex: \left( \sum_{k=1}^\infty q_k \right)f(x) + \lim_{K \to \infty} f\left(\sum_{k \geq K} q_{k}x\right)
+
+which is
+
+\katex: rf(x) + \lim_{K \to \infty} f\left(\sum_{k \geq K} q_{k}x\right)
+
+This \i[almost] worked! We've equated $f(rx)$ and $rf(x)$, except that we have an extraneous term (the limit).
+
+The limit looks suspiciously like something that ought to be zero, but this isn't guaranteed. (Unfortunately I do not have a good concrete example).
+
+
+\sec: Intuition
+
+The intuition for this is that the functional equation constrains behaviour of $f$ \i[within] domains of the form $\mathbb Q+c$, but not between them. Since $\mathbb Q$ contains only one such set--namely, $\mathbb Q+0$--we achieve linearity. However, $\mathbb R$ has more than one--for instance, $\mathbb Q+0$ and $\mathbb Q+\sqrt{2}$--and so we don't get linearity.
+
+(Also see the Twitter thread)
+
+Let's learn some more about this.
+
+
+\sec: Hamel Bases etc
+
+A \jarg <Hamel bas(is|es)> [Hamel basis] for some space is just a linear basis for that space. (The term \i[Hamel basis] is used to emphasize that (1) the space is infinite-dimensional; and (2) only \i[finite] linear combinations are considered; see \href <https://math.stackexchange.com/a/2074433/243259> [here]).
+
+As it turns out, if you assume the axiom of choice, then \i[every] linear space has a (Hamel) basis (see \href <http://thales.doa.fmph.uniba.sk/sleziak/texty/rozne/pozn/tm/hamel.pdf> [here]). This includes $\mathbb R$, which has a Hamel basis with coefficients in $\mathbb Q$. My intuition here--which could be wrong!--goes like this: choose $0 \in \mathbb R$ as our first basis element. Then our space is $\mathbb Q + 0$. Choose some $\mathbb r \in \mathbb R$ not contained in this space, such as $\sqrt 2$. Now our space is $(\mathbb Q + 0) \cup (\mathbb Q + \sqrt 2)$. Continue infinitely until we've partitioned $\mathbb R$ into an infinite number of sets of the form $\mathbb Q + c$. Letting $\{b_\kappa\}$ denote the set of basis elements, we can now write every number $r \in \mathbb R$ as $q b_\kappa$ for some unique $q \in \mathbb Q$ and basis element $b_\kappa$.
+
+Great, that's the setup. Now let's show that we can have a function $f$ over $\mathbb R$ which satisfies the functional equation \i[without] being linear.
+
+Assume existence of some Hamel basis $\{b_\kappa\}$ for $\mathbb R$ with coefficients in $\mathbb Q$. We will show that (1) any $f : \mathbb R \to \mathbb R$ satisfying the functional equation is decided by its values on the Hamel basis; and (2) \i[any] choice of values on the Hamel basis induces such a function.
+
+(1) Take $f : \mathbb R \to \mathbb R$ satisfying the functional equation, and take some $r \in \mathbb R$. By previous discussion, we may write $r$ as $r = qb_\kappa$ for some $q \in \mathbb Q$ and $b_\kappa$ basis element. Then we have:
+
+\katex:
+  \begin{align*}
+    & f(r)
+    \\ &= f(qb_\kappa)
+    \\ &= qf(b_\kappa)  && \text{since $f$ satisfies the linear equation}
+  \end{align*}
+
+thus every $f(r \in \mathbb R)$ is decided by the values $f$ takes on the Hamel basis.
+
+(2) Now start with the basis $\{ b_\kappa \}$ and pair each basis element with a value $v_\kappa$. Define a function $f$ as
+
+\katex:
+  f(r \in \mathbb R) := \begin{cases}
+    (r - b_1)v_1 & r \in \mathbb Q + b_1 \\
+    (r - b_1)v_2 & r \in \mathbb Q + b_2 \\
+    \text{so on}
+  \end{cases}
+
+or, in different notation,
+
+\katex: f(r \in \mathbb Q + b_\kappa) = (r - b_\kappa)v_\kappa
+
+or even (my preference)
+
+\katex: f(b_\kappa + (q \in \mathbb Q)) = qv_\kappa
+
+the fact that $\{ b_\kappa \}$ is a basis means that:
+- its elements are linearly independent, so sets of the form $\mathbb Q + b_\kappa$ are disjoint, so $f$ is well-defined; and
+- it spans $\mathbb R$, so $\text{dom}(f) = \mathbb R$ as intended
+
+We have thus, in essence, characterized the set of functions $f : \mathbb R \to \mathbb R$ satisfying the functional equation as being in canonical bijective correspondence with pairings of Hamel basis elements $b_\kappa$ with values $v_\kappa$.

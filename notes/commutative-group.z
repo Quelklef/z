@@ -1,0 +1,17 @@
+format=flossy-2
+
+\sec: Definition
+
+A \jarg <(commutative|abelian) group> [commutative] group is a group whose operation is commutative.
+
+
+\sec: Discussion
+
+The following are equivalent sufficient conditions for commutativity:
+  (1) $\forall x \in G : x^2 = 1$
+  (2) $\forall x \in G : x = x^{-1}$
+
+Proof:
+  (1 => 2) $a = a1 = aaa^{-1} = 1a^{-1} = a^{-1}$
+  (2 => 1) $a^2 = aa = aa^{-1} = 1$ 
+  (2 => commutative) $ab = a^{-1}b^{-1} = (ba)^{-1} = ba$

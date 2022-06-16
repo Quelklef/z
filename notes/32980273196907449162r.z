@@ -1,0 +1,5 @@
+format=compat-1
+
+[:compact metric spaces are complete:]
+
+- Take a [[compact]] metric space. Then it [is]([[compactnesses in metric/metrizable spaces]]) [[sequentially compact]]. Then it [is]([[metric spaces are complete if every Cauchy sequence has a convergent subsequence]]) [complete]([[complete metric space]])

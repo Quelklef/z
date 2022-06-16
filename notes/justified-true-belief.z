@@ -1,0 +1,13 @@
+format=flossy-2
+
+Notes on \href <https://en.wikipedia.org/wiki/Gettier_problem> [this].
+
+\title: Justified True Belief
+
+\sec: Justified True Belief
+
+A proposed definition of what it means to \i[know] something is to have a \i[justified true belief] of it.
+
+This turns out to have counterexamples, however! Here's one:
+
+My house uses a chore wheel. Tonight I am assigned the task of dishes. I thus have a justified belief that I will do dishes tonight. Futher, I hate doing dishes, and doing dishes always puts me in a bad mood. I thus have a justified belief that whoever does dishes tonight will be in a bad mood. Say tonight rolls around and my housemate volunteers to do the dishes; then, while doing the dishes, recieves bad news and is put in a bad mood. My justified belief (that whoever does dishes will be in a bad mood) turned out to be true. Thus, it was a justified true belief; however, it does not appear to have been knowledge. It was built off of false premises and only true "coincidentally".

@@ -1,0 +1,17 @@
+format=flossy-2
+
+\title: Multiplicative Order
+
+
+\sec: Definition
+
+Given $n \in \mathbb N$ and $a \in \mathbb N$ coprime with $n$, the \jarg <multiplicative order(| mod(|ulo))> [multiplicative order of $a$ modulo $n$] is, equivalently:
+
+- The order of $a$ in \ref multiplicative-groups-of-integers [the group] $((\mathbb Z / n)^\times, \cdot)$
+
+- The minimal $k \in \mathbb N$ such that $a^k \equiv 1\ (\text{mod } n)$
+
+
+\sec: Also see
+
+- \ref additive-order [additive order]

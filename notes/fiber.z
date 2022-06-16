@@ -1,0 +1,7 @@
+format=flossy-2
+
+\title: Fiber of a Function
+
+\sec: Definition
+
+For a function $f : A \to B$ and a $b \in B$, the preimage set $f^{-1}(\{b\})$ is called the \jarg <fiber(|s)> [fiber] of $f$ over $b$.

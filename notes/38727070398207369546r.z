@@ -1,0 +1,9 @@
+format=compat-1
+
+title: compactness, closedness, hausdorffness
+
+- [[T2 13.2]] §26.3
+    - Every [[compact]] [[subspace topology]] of a [[Hausdorff]] space is [[closed]]
+- 
+- [[T2 13.2]] §26.4
+    - If $$Y$$ is a [[compact]] [[subspace topology]] of [[Hausdorff]] $$X$$, and if $$x_0 \in X$$ but $$x_0 \notin Y$$, then exists disjoint $$U, V \subseteq X$$ s.t. $$x_0 \in U$$ and $$Y \subseteq V$$

@@ -1,0 +1,5 @@
+format=compat-1
+
+[:n-ary code:]
+
+- An __n-ary code__ is a [[code]] with alphabet $$\Sigma$$ of size $$n$$

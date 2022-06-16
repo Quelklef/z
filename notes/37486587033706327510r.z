@@ -1,0 +1,5 @@
+format=compat-1
+
+title: second-countability is preserved by subspaces
+
+- If $$X$$ is [[second-countable]] and $$Y \subseteq X$$ is a [[subspace topology]], then $$Y$$ is also second-countable

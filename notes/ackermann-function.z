@@ -1,0 +1,25 @@
+format=flossy-2
+
+TODO
+
+\sec: The Ackermann function
+
+The \jarg <Ackermann function> [Ackermann function] is a total function which is computable but not primitive recursive. A number of functions go by this name; a simple one is as follows:
+
+\katex:
+  A(m, n) = \begin{cases}
+    n + 1 & m = 0
+    \\ A(m-1, 1) & m > 0 \land n = 0
+    \\ A(m-1,A(m,n-1)) & m > 0 \land n > 0
+  \end{cases}
+
+- The rough outline for why $A$ is not primitive recursive is as follows:
+    - Note that $A(4, n) = 2^{2^{\cdots^2}} - 3$ with $n+2$ exponentiations
+    - To be primitive recursive, the function must be defined with a finite number of applications of primitive recursion
+    - However, roughly, each exponentiation requires an application of primitive recursion
+    - Thus, we cannot satisfy all $n$s
+- Skipping details, the reason that $A$ is not primitive recursive is that it can be shown to grow faster than any primitive recursive function
+- The Ackermann function is significant because:
+    - It shows that the set of [[primitive recursive]] functions is smaller than the set of [[computable]] functions; i.e., primitive recursion is weaker than computability
+    - Despite this, the Ackermann function is defined "simply" (i.e., using recursion)
+    - Though it is not primitive recursive, the Ackermann function is a [[partial recursive]] function

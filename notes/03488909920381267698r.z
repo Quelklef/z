@@ -1,0 +1,15 @@
+format=compat-1
+
+[:semi-Thue system:]
+
+- A [[production system]] where:
+    - All of the possibly-infinite productions are semi-Thue
+        - Meaning they are of the form $$AxB \to AyB$$. (Sometimes written simply as $$x \to y$$ when it's clear from context)
+        - The production set must still be computable. (And the alphabet finite)
+    - We have a particular nonempty word $$a$$ called the __axiom__
+        - If a word $$w$$ can be produced from $$a$$ by a finite number of rule applications, then we call $$w$$ a __theorem__
+- 
+- semi-Thue systems are powerful enough to emulate [[turing machine]]s
+    - More particularly, for any Turing machine we can create a semi-Thue system which has as theorems exactly those inputs for which the Turing machine halts
+    - Thus, the problem of telling if a word is a theorem of a semi-Thue system is in general not [[decidable]]
+        - Note that not every semi-Thue system is undecidable in this manner. For instance, if it has finite theorems, then it is trivially decidable.

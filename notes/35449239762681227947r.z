@@ -1,0 +1,6 @@
+format=compat-1
+
+[:separated by a continuous function:]
+
+- [[JRM:Top.2]] §33.2 ish
+    - For a space $$X$$ and $$A, B \subseteq X$$, we say that $$A$$ and $$B$$ can be separated by a continuous function if exists [[continuous]] $$f : X \to [0, 1]$$ with $$f(A) = \{0\}$$ and $$f(B) = \{1\}$$

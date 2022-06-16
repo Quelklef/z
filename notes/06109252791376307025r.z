@@ -1,0 +1,35 @@
+format=compat-1
+
+[:subspace x product topology:]
+
+- Given $$A$$ a [[subspace topology]] of $$X$$ and $$B$$ a [[subspace topology]] of $$Y$$, then the following are equivalent:
+    - The topology $$A \times B$$ as a [[product topology]] of $$A$$ and $$B$$
+    - The topology $$A \times B$$ as a subspace of $$X \times Y$$
+- 
+- Proof:
+    - $$(\Longrightarrow)$$
+        - Take $$\mathcal B_{A \times B}^\times$$ a basis for the product topology $$A \times B$$ where elements are of the form $$U \times V$$ for $$U$$, $$V$$ open in $$A$$, $$B$$
+        - Take $$\mathcal B_{X \times Y}$$ a basis for $$X \times Y$$ where elements are of the form $$U \times V$$ for $$U$$, $$V$$ open in $$X$$, $$Y$$
+        - Take $$\mathcal B_{A \times B}^\subseteq$$ a basis for the subspace topology $$A \times B$$ where elements are of the form $$U \cap (A \times B)$$ with $$U$$ a basis element of $$\mathcal B_{X \times Y}$$
+        - 
+        - Now take $$U \times V$$ a basis element of $$\mathcal B_{A \times B}^\times$$
+        - Since $$A$$ is a subspace of $$X$$ then $$U = W \cap A$$ for some $$W$$ open in $$X$$
+        - Since $$B$$ is a subspace of $$Y$$ then $$V = Z \cap B$$ for some $$Z$$ open in $$Y$$
+        - Thus $$U \times V = (W \cap A) \times (Z \cap B) = (W \times Z) \cap (A \times B)$$
+        - Note $$W \times Z$$ is a basis element for $$\mathcal B_{X \times Y}$$
+        - Thus $$(W \times Z) \cap (A \times B)$$ is a basis element of $$\mathcal B_{A \times B}^\subseteq$$
+        - 
+        - Thus basis elements of $$\mathcal B_{A \times B}^\times$$ are also basis elements of $$\mathcal B_{A \times B}^\subseteq$$
+    - $$(\Longleftarrow)$$ 
+        - Take the same 3 bases
+        - Take $$U \cap (A \times B)$$ a basis element of $$B_{A \times B}^\subseteq$$
+        - Then $$U$$ is a basis element of $$\mathcal B_{X \times Y}$$
+        - Thus it is of the form $$W \times Z$$ for some $$W$$, $$Z$$ open in $$X$$, $$Y$$
+        - So $$U \cap (A \times B) = (W \times Z) \cap (A \times B) = (W \cap A) \times (Z \cap B)$$
+        - Since $$W$$ is open in $$X$$ then $$W \cap A$$ is open in $$A$$
+        - Since $$Z$$ is open in $$Y$$ then $$Z \cap B$$ is open in $$B$$
+        - Thus $$(W \cap A) \times (Z \cap B)$$ is a basis element for $$\mathcal B^\times_{A \times B}$$
+        - 
+        - Thus basis elements of $$B^\subseteq_{A \times B}$$ are also basis elements of $$B_{A \times B}^\times$$
+    - Something something equal bases
+    - Therefore equal topologies

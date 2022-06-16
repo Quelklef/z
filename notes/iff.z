@@ -1,0 +1,11 @@
+format=flossy-2
+
+\title: If and Only If
+
+\sec: Definition
+
+The following are defined equivalent:
+  - $P$ \jarg <iff> [iff] $Q$
+  - $P$ \jarg <if and only if> [if and only if] $Q$
+  - $P$ \jarg <exactly when> [exactly when] $Q$
+  - $P \iff Q$

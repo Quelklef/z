@@ -1,0 +1,6 @@
+format=compat-1
+
+[:metrizable spaces are paracompact:]
+
+- [[JRM:Top.2]] 41.4
+- Every [[metrizable]] space is [[paracompact]]

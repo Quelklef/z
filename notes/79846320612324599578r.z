@@ -1,0 +1,6 @@
+format=compat-1
+
+[:bounded:]
+
+- Within some [[metric space]], a set $$A$$ is said to be __bounded__ if it the distance between its points is bounded, i.e., if there is some $$M$$ such that for each $$a_1, a_2 \in A$$ we have that $$d(a_1, a_2) \leq M$$
+- Conjectured equivalence: saying that $$A$$ exists within some [[epsilon ball]]. Proof sketch: $$(\Longrightarrow)$$ $$A$$ is contained in every epsilon ball of size $$M$$ centered around a point in $$a$$. $$(\Longleftarrow)$$ given that $$A$$ is contained in some epsilon ball of size $$M$$, then $$d$$ is bounded by $$M$$.

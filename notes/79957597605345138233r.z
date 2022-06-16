@@ -1,0 +1,5 @@
+format=compat-1
+
+[:closed map:]
+
+- Like [[open map]], but for closed sets

@@ -1,0 +1,26 @@
+format=compat-1
+
+[:primitive element:]
+
+- Given an $$\alpha$$ within some [[ring]], the __order__ of $$\alpha$$ is the minimum $$N$$ for which $$\alpha^N = 1$$
+    - [[generalized Euler's theorem]] guarantees that always $$N \leq \lvert R^\times \rvert$$
+    - If the order of $$\alpha$$ is this maximum $$\lvert R^\times \rvert$$, we call $$\alpha$$ a __primitive element__ (or __primitve root__ when we are working in a [[field]])
+    - Once you know one primitive element, there's an easy way to find the rest, but idk what that is. Check the book? Something to do with GCD or relative primality or something.
+- 
+- For $$p$$ prime, we know $$\alpha \in \mathbb Z/p$$ is a primitive element iff
+    - for each prime factor $$c$$ of $$p-1$$ we have that $$\alpha^{(p-1)/c} \not\equiv 1$$ mod $$p$$
+- For $$P$$ irreducible and of degree $$n$$, we know $$\alpha(x) \in \mathbb F_q[x]/P$$ is a primitive element iff
+    - $$\alpha(x)^{q^n-1} \equiv 1$$ mod $$P$$
+    - __but__ for each prime factor $$c$$ of $$q^n - 1$$ we have that $$\alpha(x)^{(q^n-1)/c} \not\equiv 1$$
+- 
+- Facts about order:
+    - If $$\alpha$$ has order $$d$$, then $$\alpha^N = 1 \iff d \mid N$$
+        - Corollary: every power $$\alpha^k$$ of $$\alpha$$ has an order dividing $$d$$
+    - If $$\alpha$$ has order $$d$$ and $$d=ef$$ then $$\alpha^e$$ has order $$f$$
+        - Partial proof: $$(\alpha^ e)^f = \alpha^d = 1$$, so the order of $$\alpha ^e$$ is at most $$f$$
+    - If $$\alpha_1, \alpha_2$$ have relatively prime respective orders $$d_1, d_2$$, then $$\alpha_1 \alpha_2$$ has order $$d_1 d_2$$
+- 
+- From these facts, we can conclude that every [[finite field]] $$\mathbb F_q$$ has a primitive root $$\alpha$$
+    - Proof is nonobvious
+    - Then $$\alpha$$ has order $$q - 1$$
+    - Also, there are exactly $$\varphi(q-1)$$ primitive roots (for $$\varphi$$ the [[Euler phi function]])

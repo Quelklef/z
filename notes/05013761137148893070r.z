@@ -1,0 +1,5 @@
+format=compat-1
+
+[:minimum distance:]
+
+- For a set of [[code words]] $$\mathcal C$$, call $$d(\mathcal C)$$ the minimum [[hamming distance]] between two words in $$\mathcal C$$, i.e., $$\min_{x, x' \in \mathcal C,\ x \neq x'} d(x, x')$$

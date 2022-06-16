@@ -1,0 +1,6 @@
+format=compat-1
+
+[:commutative ring:]
+
+- A __commutative ring__ is a 3-tuple $$(R, +, \times)$$ which forms a [[ring]] and where $$\times$$ is commutative as well.
+- Some authors always mean "commutative ring" when they say "ring"

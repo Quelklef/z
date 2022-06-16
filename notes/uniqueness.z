@@ -1,0 +1,26 @@
+format=flossy-2
+
+\title: Kinds of uniqueness
+
+\sec: Definitions
+
+Say we define a value $x$ by giving a condition $\phi$ that must hold on it. Then we say:
+
+- $x$ is \jarg <unique> [unique] if the condition $\phi$ determines at most one value.
+  Mathematically, we consider $x$ to be unique if for all $a, b$ satisfying $\phi$ we have that $a = b$
+
+- $x$ is \jarg <(unique |)up to isomorphism> [unique up to isomorphism] if all values satisfying $\phi$ are isomorphic to each other
+  Likewise, this is expressed as $\phi(a) \land \phi(b) \implies a \cong b$
+
+- Generally for any equivalence relation $\sim$ we say that $x$ is \jarg <unique up to> [unique up to] $\sim$ if all values satisfying $\phi$ are related by $\sim$
+  Expressed as $\phi(a) \land \phi(b) \implies a \sim b$
+
+\sec: Examples
+
+- Define $x$ to be the value $x \in \mathbb R$ such that $x^2 = 2$. Then $x$ is \i[not] unique, since both $\sqrt 2$ and $-\sqrt 2$ satisfy this condition.
+
+- Define $x$ to be the value $x \in \mathbb R$ such that $x > 0$ and $x^2 = 2$. Then $x$ \i[is] unique and is given by $x = \sqrt 2$
+
+- Define $x$ to be the 0-element set. Then $x$ is unique and is given by $x = \varnothing$.
+
+- Define $x$ to be the 1-element set. Then $x$ is \i[not] unique but is unique up to isomorphism, since all 1-element sets are isomorphic (wrt the category $\textbf{Set}$)

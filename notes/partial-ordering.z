@@ -1,0 +1,22 @@
+format=compat-1
+
+[:partial order:] [:partial orders:] [:partial ordering:] [:partial orderings:] [:poset:]
+
+A partial ordering is a natural generalization of the idea of linear orders wherein we drop the requirement to be total. That is, a partial order is a linear order except that there may be incomparable elements.
+
+Formally, a we define partial orders to be binary relations $$\leq$$ satisfying:
+  1. Reflexivity: always $$a \leq a$$
+  2. Transitivity: if $$a \leq b$$ and $$b \leq c$$ then $$a \leq c$$
+  3. Antisymmetry: if $$a \leq b$$ and $$b \leq a$$ then $$a = b$$
+
+Examples:
+  In life:
+  - Ordering objects by $$\subseteq$$ on color palette
+  In math:
+  - Sets under $$\subseteq$$
+  - Strings/words under "is a prefix of" or "is a suffix of"
+  - $$\mathbb C$$ orderd by distance from $$0$$
+
+Non-examples:
+  In math:
+  - The set $$\mathcal P(3)$$ of subsets of a 3-element set, ordered by cardinality. We have $$\{a, b\} \leq \{b, c\}$$ despite the two sets being inequal, which breaks antisymmetry. Due to this, least upper bounds are not unique: the LUB of $$\{a\}$$ and $$\{b\}$$ is equally $$\{a, b\}$$, $$\{b, c\}$$, and $$\{c, a\}$$.

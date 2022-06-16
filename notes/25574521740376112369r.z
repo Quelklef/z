@@ -1,0 +1,8 @@
+format=compat-1
+
+title: subbasis, basis, topology
+
+- Take a set $$X$$
+- Let $$\mathscr S$$ be a set of subsets of $$X$$ which [[cover]]s $$X$$. Then $$\mathscr S$$ is a [[topological subbasis]]
+- Let $$\mathscr B$$ be the set of finite unions of $$\mathscr S$$. Then $$\mathscr S$$ is a [[topological basis]] (see [[subbasis to basis]])
+- $$\mathscr S$$ and $$\mathscr B$$ generate the same topology

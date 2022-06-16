@@ -1,0 +1,18 @@
+format=flossy-2
+
+\title: Associativity
+
+\sec: Definition
+
+An operation $\times : X^2 \to X$ on a set $X$ is called \jarg <associativ(ity|e(| operation(|s)))>[associative] if
+
+\katex: a \times (b \times c) = (a \times b) \times c
+
+
+\sec: Generalized Associativity
+
+Associativity is equivalent to the possibly-more-illustrative property of \jarg <generalized associativity> [generalized associativity], which states that every parenthetization of the summation
+
+\katex: x_1 + x_2 + \cdots + x_n
+
+will produce the same result (for $n > 0$)

@@ -1,0 +1,15 @@
+format=compat-1
+
+[:self-information:]
+
+- On a [[sample space]] $$\langle \Omega, P \rangle$$, the __self-information__ of some event $$\omega \in \Omega$$ is a measure of how much "information" is gained when that event occurs. Alternatively, it's a measure of how "surprising" it is for the event to occur.
+- Intuition:
+    - If $$P(\omega) = 1$$, then we gain no information from that event occurring; we already knew what would happen. Alternatively, it's not surprising at all for the event to occur.
+    - As $$P(\omega)$$ decreases, it's more surprising for $$\omega$$ to occur, so we consider the event to contain more information
+    - Consider the case of an event with $$50\%$$ probability, such as a coin toss or an incoming random bit. This serves as a nice unit for entropy. Let's call it one bit of entropy. Then $$n$$ incoming independent random bits should have $$n$$ bits of entropy. Given that $$n$$ incoming independent random bits have a $$2^{-n}$$ probability for each outcome, this motivates defining self-information to be $$-\log_2{P(\omega)}$$
+- Thus, definition:
+    - The self-information of some $$\omega \in \Omega$$ is defined to be $$I(\omega) := -\log_2(P(\omega))$$
+    - Unit is bits
+- 
+- For two [[random variable]]s $$X, Y$$, we define
+    - $$I(X \mid Y) := H(X) - H(X \mid Y)$$

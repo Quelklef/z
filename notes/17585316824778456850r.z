@@ -1,0 +1,10 @@
+format=compat-1
+
+[:word encoding:] [:code words:]
+
+- A __word encoding__ is a function from a set of "words" to the strings generated on a finite alphabet
+    - The classic example is morse code, where the words are english letters and the alphabet is $$\{ \ \cdot\ , -, \ \ \}$$
+- Sometimes denoted $$f: W \to \Sigma^*$$ with $$W$$ our words and $$\Sigma$$ our alphabet
+- Sometimes denoted $$f : \Sigma_\text{in}^* \to \Sigma_\text{out}^*$$ with $$\Sigma_\text{in}^*$$ our words and $$\Sigma_\text{out}$$ our alphabet
+
+Elements of the image of $$f$$ are called \i[code words]

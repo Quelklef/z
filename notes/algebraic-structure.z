@@ -1,0 +1,23 @@
+format=flossy-2
+
+\title: Algebraic Structure
+
+\sec: Definition
+
+An \jarg <algebraic structure(|s)> [algebraic structure] is a set $X$ taken together with a collection $\{\times_i\}$ of operations over $X$ and a collection of axioms $\{\phi_i\}$ about $X$ and $\{\times_i\}$.
+
+
+\sec: Examples
+
+- The simplest algebraic structure is the \i[set], which has no operations and no axioms
+
+- A monoid $S = (S, \{ \times \}, \{ \text{assoc}, \text{id} \})$ is a set $S$ taken with an operation $\times$ and the axioms that $\times$ is associative and has an identity.
+
+- A group $G = (G, \{ \times \}, \{\text{assoc}, \text{inv}, \text{id}\})$ is a set $G$ taken with an operation $\times$ and the axioms that $\times$ is associative and has an identity, and the axiom that each $g \in G$ has an inverse wrt $\times$.
+
+
+\sec: Notation + Terminology
+
+- The \jarg <underlying set(|s)> [underlying set] of an algebraic structure $(X, \{\times_i\}, \{\phi_i\})$ is the set $X$
+
+- The \jarg <order> [order] of an algebraic structure $(X, \{\times_i\}, \{\phi_i\})$ is the cardinality $\lvert X \rvert$ of its underlying set

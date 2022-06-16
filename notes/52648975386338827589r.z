@@ -1,0 +1,6 @@
+format=compat-1
+
+title: open coverings in second-countable spaces
+
+- [[JRM:Top.2]] §30.3
+- if $$X$$ is [[second-countable]] then every [[open covering]] of $$X$$ has a countable subcovering

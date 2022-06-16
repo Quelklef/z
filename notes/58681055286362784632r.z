@@ -1,0 +1,21 @@
+format=compat-1
+
+[:T2 17.2:]
+
+- Theorem 17.2 from [[JRM:Top.2]]
+- Given $$Y$$ a [[subspace topology]] of $$X$$:
+    - $$C_Y$$ a [[closed set]] in $$Y$$ iff there is some $$C_X$$ closed in $$X$$ where $$C_Y = C_X \cap Y$$
+- Proof:
+    - $$(\Longrightarrow)$$
+        - Take $$C_Y$$ closed in $$Y$$
+        - Then $$Y - C_Y$$ is open in $$Y$$
+        - Then by the definition of subspace topology, we have that for some $$O_X$$ open in $$X$$, we have $$Y - C_Y = O_X \cap Y$$
+        - Taking the complement gives $$C_Y = Y - (O_X \cap Y) = Y - O_X = Y \cap (X - O_X)$$
+        - Note $$X - O_X$$ is closed in $$X$$; done
+    - $$(\Longleftarrow)$$
+        - Take $$C_Y = C_X \cap Y$$ a subset of $$Y$$ where $$C_X$$ is closed in $$X$$
+        - Then $$Y - C_Y = Y - (C_X \cap Y) = Y - C_X = Y \cap (X - C_X)$$
+        - Since $$C_X$$ is closed in $$X$$ then $$X - C_X$$ is open in $$X$$
+        - Thus $$Y \cap (X - C_X)$$ is open in $$Y$$
+        - Thus $$Y - C_Y$$ is open in $$Y$$ so $$C_Y$$ is closed
+- This is the dual to the definition of an open set in a [[subspace topology]]

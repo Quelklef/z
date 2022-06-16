@@ -1,0 +1,9 @@
+format=compat-1
+
+title: locally compact Hausdorff via compactification
+
+- [[JRM:Top.2]] §29.1:
+- A [[topological space]] $$X$$ is both [[locally compact]] and [[Hausdorff]] if and only if $$X$$ is a subspace $$X \subseteq Y$$ of some [[compact]] [[Hausdorff]] space $$Y$$ which has only 1 more point than $$X$$, i.e., where $$\lvert Y - X \rvert = 1$$
+- Furthermore, if there are two such spaces $$Y$$ and $$Y'$$ then consider map between them which is the identity map on $$X$$ and takes the extra point in $$Y$$ to the extra point in $$Y'$$; this map is a [[homeomorphism]]
+- 
+- If $$X$$ is not itself [[compact]], then we have that the extra point in $$Y$$ is a [[limit point]] of $$X$$, so that the [[closure]] $$\bar X$$ is equal to $$Y$$

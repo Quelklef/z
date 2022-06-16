@@ -1,0 +1,7 @@
+format=compat-1
+
+[:local compactness on Hausdorff spaces:]
+
+- If $$X$$ is a [[Hausdorff]] space, then the following is equivalent to being [[locally compact]]:
+    - For each $$x \in X$$ and [[neighborhood]] $$U \ni x$$, exists a neighborhood $$V \ni x$$ such that $$\bar V$$ is [[compact]] and $$V \subseteq U$$
+- Note: this property is more what we would expect for something called "local compactness"

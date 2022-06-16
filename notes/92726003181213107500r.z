@@ -1,0 +1,5 @@
+format=compat-1
+
+[:hamming weight:]
+
+- The Hamming weight of a vector $$\vec v$$ is denoted $$\text{wt}(\vec v)$$ and defined to be the [[hamming distance]] to $$\vec 0$$, i.e., $$d(\vec v, \vec 0)$$

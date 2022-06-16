@@ -1,0 +1,6 @@
+format=compat-1
+
+[:Int A ⊆ A ⊆ Cl A:]
+
+- For a set $$A$$, the [[interior]] of $$A$$ is a nonstrict subset of $$A$$ is a nonstrict subset of the [[closure]] of $$A$$
+- $$\text{Int }A \subseteq A \subseteq \bar A$$

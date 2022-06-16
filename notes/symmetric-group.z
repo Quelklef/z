@@ -1,0 +1,23 @@
+format=flossy-2
+
+\title: Symmetric group
+
+\sec: Definition
+
+Over a set $X$, the \jarg <symmetric group(|s)> <symmetr(y|ies)> [symmetric group] is the group consisting of all bijections $X \to X$ taken under function composition.
+
+In the case of finite $X$, this is the group of permutations over $X$.
+
+
+\sec: Notation
+
+- $\text{Sym}(X)$ denotes the symmetric group over $X$
+
+- $S_n$ denotes the symmetric group over $\{1, \dots, n\}$
+
+
+\sec: Properties
+
+- For $X$ finite, the order $\lvert \text{Sym}(X) \rvert$ is $\lvert X \rvert !$; the order $\lvert S_n \rvert$ is $n!$
+
+- Within $S_n$, exactly half of the elements have even parity, and half odd (see the \ref alternating-group [alternating group])

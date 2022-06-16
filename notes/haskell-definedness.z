@@ -1,0 +1,23 @@
+format=flossy-2
+
+Notes from \href <https://cdsmithus.medium.com/fixpoints-in-haskell-294096a9fc10> [here].
+
+\title: Definedness in Haskell
+
+\sec: Idea
+
+Each Haskell term has a certain degree of \jarg <defined(|ness)> [definedness]:
+  - \c(⊥ :: [Int]) is the least-defined, since it contains no information
+  - \c(⊥ : ⊥ :: [Int]) tells that the list is nonempty
+  - \c(3 : ⊥ :: [Int]) tells that the list starts with a three
+  - \c(⊥ : [] :: [Int]) tells that the list has one item
+  - \c(3 : [] :: [Int]) gives the entire list
+
+We formalize this as an order relation $\leq$:
+  - $\bot$ is the minimal value
+  - $\bot : \bot \leq 3 : \bot$
+  - $\bot : [] \leq 3 : []$
+
+\sec: Properties
+
+- For a fixed Haskell type, forms a complete semilattice (i.e., one with LUBs)

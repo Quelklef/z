@@ -1,0 +1,10 @@
+format=flossy-2
+
+\title: Sample Space
+
+\sec: Definition
+
+A \jarg <sample space(|s)> [sample space] $\Omega$ is a set $\{\omega_1, \dots, \omega_n\}$ of possible outcomes of some probabilistic action, called \jarg <(atomic |)event(|s)> [(atomic) events].
+
+A subset $E \subseteq \Omega$ represents the possibility of \i[any] $\omega \in E$ occuring. Such objects are called \jarg <(compound |)event(|s)> [(compound) events] \aref [rk].
+\adef: Yes, the word "event" can mean either kind.

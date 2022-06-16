@@ -1,0 +1,10 @@
+format=compat-1
+
+[:production system:]
+
+- A production system is essentially a bunch of production rules on a finite alphabet $$\Sigma$$
+- A production rule is something like:
+    - $$AxB \to AyB$$ -- if you see a word $$A$$ followed by the word $$x$$ followed by a word $$B$$, you may replace it with $$AyB$$
+    - $$aAb^2cBc \to c^3bABa$$
+    - etc
+- A __normal__ production is one of the form $$aP \to Pb$$

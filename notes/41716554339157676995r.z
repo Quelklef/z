@@ -1,0 +1,5 @@
+format=compat-1
+
+[:binary symmetric channel:]
+
+- The __binary symmetric channel__ (BSC) with corruption [[probability]] $$p$$ is a [[noisy channel]] of binary bits where each sent bit has a $$p$$ chance of being flipped and a $$1 - p$$ chance of being transmitted properly.

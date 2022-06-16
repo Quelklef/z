@@ -1,0 +1,7 @@
+format=compat-1
+
+title: closed subsets of complete metric spaces are complete
+
+- Take a [[complete metric space]] $$X$$ and a [[closed]] subset $$A \subseteq X$$
+- Then $$A$$ is also complete as a [[subspace topology]]
+- This is because: [[Cauchy sequence]]s in $$A$$ are also Cauchy in $$X$$, and thus converge in $$X$$; since $$A$$ is closed in $$X$$ then $$A$$ contains all these limit points

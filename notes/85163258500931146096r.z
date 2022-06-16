@@ -1,0 +1,7 @@
+format=compat-1
+
+[:saturated:]
+
+- A set $$C \subseteq X$$ is said to be __saturated__ wrt a map $$f : X \to Y$$ iff
+    - $$C = f^{-1}(f(C))$$
+    - Intuition: $$f$$ doesn't map any "extra" $$x \notin C$$ to $$f(x) \in f(C)$$

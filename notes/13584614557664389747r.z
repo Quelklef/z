@@ -1,0 +1,12 @@
+format=compat-1
+
+[:normal:]
+
+- a [[topological space]] $$X$$ is said to be __normal__ if it satisfies the [[T1 axiom]] and if for each $$A, B \subseteq X$$ with $$A, B$$ disjoint and both closed, there are disjoint open sets respectively containing $$A$$ and $$B$$
+- stronger than [[regular]]
+- subspaces of normal spaces aren't always themselves normal, but they often are
+- 
+- A handful of sufficient conditions for normality (all from [[JRM:Top.2]]):
+    - [[regular]] and [[second-countable]] (§32.1)
+    - [[metrizable]] (§32.2)
+    - a [[well-ordered]] set in the [[order topology]] (§32.4)

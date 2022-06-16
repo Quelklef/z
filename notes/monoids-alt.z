@@ -1,0 +1,143 @@
+format=flossy-2
+meta: { starred = True }
+
+\title: Alternative Monoid Axioms (\ref monoids-alt-old [again])
+
+\sec: Definition
+
+A monoid is a 2-tuple $(X, s)$ of a set $X$ and a function
+
+\katex: s : X^\star \to X
+
+from finite sequences $\mathbf x \in X^\star$ to elements $s(\mathbf x) \in X$ such that:
+
+- $s(\mathbf a \oplus \mathbf b) = s(s(\mathbf a), s(\mathbf b))$; and
+- $s(x) = x$
+
+The first condition can be read as requiring that $s$ only exhibits "local" behaviour; it doesn't, for instance, observe the length of its input $\mathbf x \in X^\star$; the second condition can be read as requiring that $s$ \i[only] combine elements rather than affecting elements "on their own".
+
+
+\sec: Example
+
+Consider the function $\min$ defined over the extended reals $\overline {\mathbb R} = \mathbb R \cup \{ \pm \infty \}$ by
+
+\katex:
+  \min(x_1, x_2, \dots, x_n) = \begin{cases}
+    \text{the minimum value from } \{ x_1, x_2, \dots, x_n \} & n \geq 1
+    \\ +\infty & n = 0
+  \end{cases}
+
+This function has the property that
+
+\katex:
+  \begin{align*}
+    & \min(x_1, x_2, \dots, x_n)
+    \\ &= \min( \min(x_1, x_2, \dots, x_k), \min(x_{k+1}, x_{k+2}, \dots, x_n) )
+  \end{align*}
+
+for any $1 \leq k \leq n$.
+
+Not coincidentally, the operator $\star$ defined by $a \star b = \min(a, b)$ forms a monoid over $\overline{\mathbb R}$.\aref;
+\adef:
+  If we wanted to work over just $\mathbb R$ instead of $\overline{\mathbb R}$, then we would need $\min$ to be a function accepting only \i[nonempty] sequences of reals, the property would hold only for $1 < k < n$, and $\star$ would form a semigroup.
+
+By the way, this is not just a contrived example; \href <https://stackoverflow.com/a/8848969/4608364> [it's real-world].
+
+
+\sec: Equivalence with conventional definition
+
+To establish equivalence, we present for every set $X$ a function $\phi_X$ taking us between conventional-style and new-style monoids. We show that each function $\phi_X$ is bijective and therefore represents an equivalence.
+
+The construction $\phi$ is defined as follows.
+
+\b[Conventional -> new.] Given a conventional monoid $(X, \times, e)$, define $s : X^\star \to X$ as
+
+\katex: s(x_1, \dots, x_n) = e \times x_1 \times \cdots \times x_n
+
+Note that $(X, s)$ obeys the new-style monoid axioms respectively because:
+
+\katex:
+  \begin{align*}
+    & s(\mathbf a \oplus \mathbf b)
+    \\ &= e \times (a_1 \times \cdots \times a_n \times b_1 \times \cdots \times b_m)
+    \\ &= e \times (e \times a_1 \times \cdots \times a_n) \times (e \times b_1 \times \cdots \times b_m)
+    \\ &= e \times s(\mathbf a) \times s(\mathbf b)
+    \\ &= s(s(\mathbf a), s(\mathbf b))
+  \end{align*}
+
+and because
+
+\katex: s(x) = e \times x = x
+
+Now let $\phi_X(X, \times, e) = (X, s)$.
+
+\b[New -> conventional.] Given a new-style monoid $(X, s)$, let
+
+\katex: a \times b = s(a, b)
+
+\katex: e = s(\varepsilon)
+
+Then $(X, \times, e)$ obeys the conventional monoid axioms because:
+
+\katex:
+  \begin{align*}
+    & a \times (b \times c)
+    \\ &= s(a, s(b, c))
+    \\ &= s(s(a), s(b, c))
+    \\ &= s(a, b, c)
+    \\ &= s(s(a, b), s(c))
+    \\ &= (a \times b) \times c
+  \end{align*}
+
+and because:
+
+\katex:
+  \begin{align*}
+       & e \times a = s(e, a) = s(s(\varepsilon), s(a)) = s(a) = a
+    \\ & a \times e = s(a, e) = s(s(a), s(\varepsilon)) = s(a) = a
+  \end{align*}
+
+Now let $\phi^{-1}_X(X, s) = (X, \times, e)$.
+
+\b[Bijectivity.] We will show that $\phi$ is its own two-sided inverse.
+
+First note that $\phi\ ;\, \phi^{-1}$ is identity. Starting with a conventional-style monoid $(X, \times, e)$, induce $(X, s) = \phi(X, \times, e)$ and then $(X, \times', e') = \phi^{-1}(X, s)$. Then we have
+
+\katex: a \times' b = s(a, b) = e \times a \times b = a \times b
+
+and
+
+\katex: e' = s(\varepsilon) = e
+
+Now note that $\phi^{-1}\ ;\, \phi$ is identity. Starting with a new-style monoid $(X, s)$, induce $(X, \times, e) = \phi^{-1}(X, s)$ and then $(X, s') = \phi(X, \times, e)$. Then we have
+
+\katex:
+  \begin{align*}
+    & s'(a_1, \dots, a_n)
+    \\ &= e \times a_1 \times \cdots \times a_n
+    \\ &= s(e, s(a_1, \cdots s(a_{n-1}, a_n), \cdots))
+    \\ &= s(e, a_1, \dots, a_n) &&\text{via induction on } s(a, s(b, c)) = s(a, b, c)
+    \\ &= s(s(\varepsilon), s(a_1, \dots, a_n))
+    \\ &= s(a_1, \dots, a_n)
+  \end{align*}
+
+Thus, all $\phi_X$ is bijective, so new-style and conventional-style monoids are equivalent via $\phi$.
+
+
+\sec: Generalization to other algebraic structures
+
+I think that this concept can be generalized to other algebraic structures:
+
+\table headers=h center=yes
+  | [Algebraic structure] [Associated structure] [Axioms]
+  | [Magma] [Binary Tree] [same as below]
+  | [Monoid] [List] [$s(a \text{ union } b) = s(s(a), s(b))$ and $s(x) = x$]
+  | [Semigroup] [Nonempty list] [same]
+  | [Commutative monoid] [Multiset] [same]
+  | [Commutative semigroup] [Nonempty multiset] [same]
+  | [Commutative idempotent monoid] [Set] [same]
+  | [Commutative idempotent semigroup] [Nonempty set] [same]
+
+I'm not exactly sure how to get the math right here, though.
+
+Note that the meaning of "union" depends on the structure. For $\text{List}$, union is append; for $\text{Set}$, it's, well, union.

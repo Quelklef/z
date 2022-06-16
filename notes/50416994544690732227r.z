@@ -1,0 +1,5 @@
+format=compat-1
+
+title: products of first-countable spaces are first-countable
+
+- given a finite or countable collection of [[first-countable]] spaces, their [[product topology]] is also first-countable

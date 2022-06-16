@@ -1,0 +1,10 @@
+format=compat-1
+
+[:subnet:]
+
+- Generalization of subsequences to [[net]]
+- Consider the [[directed set]] $$(K, \leq_K)$$ and $$g : (K, \leq_K) \to (J, \leq_J)$$ a function where
+    - (monotonic) $$i \leq_K j \implies g(i) \leq_J g(j)$$
+    - $$g(K)$$ is [[cofinal]] in $$J$$
+- Now take $$f : (K, \leq_K) \to X$$ a [[net]] in $$X$$
+- Then $$f \circ g : (K, \leq_K) \to X$$ is called a __subnet__ of $$f$$

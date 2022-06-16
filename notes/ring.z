@@ -1,0 +1,19 @@
+format=flossy-2
+
+\title: Rings and \jarg <ring theory> [Ring Theory]
+
+\sec: Definition
+
+A \jarg <ring(|s)> [ring] is an algebraic structure $R = (R, +, \times)$ where, equivalently:
+
+- $(R, +)$ forms a commutative group
+- $(R, \times)$ forms a monoid
+- $\times$ distributes over $+$
+
+Or, more explicitly:
+
+- $+$ is commutative and associative with identity and inverses
+- $\times$ is associatve with identity
+- $\times$ distributes over $+$, i.e., $a \times (b + c) = (a \times b) + (a \times c)$
+
+\i[Remark:] Some authors do not require identity on $\times$. To be explicit, prefer the terms "unital ring" and "non-unital ring"

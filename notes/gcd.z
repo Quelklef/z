@@ -1,0 +1,30 @@
+format=flossy-2
+
+\title: Greatest common divisor
+
+\sec: Definition
+
+The \jarg <gcd> <greatest common divisor> [greatest common divisor] of two integers $a, b$ is the largest $g \in \mathbb Z$ such that both $g \mid a$ and $g \mid b$.
+
+
+\sec: Properties
+
+- For $e \in \mathbb Z$ if $e \mid a$ and $e \mid b$ then $e \mid \text{gcd}(a, b)$
+
+- $\text{gcd}(ka, kb) = k\cdot \text{gcd}(a, b)$
+
+- $\text{gcd}(a, b) = \text{gcd}(b, \text{mod}(a, b))$ \aref[pf]; this relation gives rise to the Euclidean algorithm for finding the gcd
+\adef:
+  \i[Proof]. Recall that $\text{mod}(a, b)$ is the unique $0 \leq r < b$ such that $\exists q : a = qb + r$.
+
+  Then it is sufficient to show that if $a = qb+r$ then $\text{gcd}(a, b) = \text{gcd}(b, r)$.
+
+  To do this, fix $a, b, q, r$ and assume $a = qb+r$; let $d = \text{gcd}(a, b)$. Want to show that $d = \text{gcd}(b, r)$; we will do this by showing that (1) $d \mid b$; that (2) $d \mid r$; and that (3) given $e$ such that $e \mid b$ and $e \mid r$ we have $e \mid d$.
+
+  1. Since $d = \text{gcd}(a, b)$ then we already know $d \mid b$.
+  2. Since $d = \text{gcd}(a, b)$ then $d \mid a$ and $d \mid b$ so exists $k_a, k_b$ where $a = dk_a$ and $b = dk_b$. We know $a = qb+r$ so we have $r = a-qb = dk_a - qdk_b = d(k_a - qk_b)$ and thus $d \mid r$.
+  3. Assume existence of an $e$ such that $e \mid b$ and $e \mid r$. Then exists $k_b, k_r$ where $b = ek_b$ and $r = ek_r$. Then $a = qb+r = qek_b + ek_r = e(qk_b + k_r)$, so $e \mid a$. Since $e \mid a$ and $e \mid b$, then $e \mid d$ and so $e \leq d$.
+
+- $\text{gcd}(a, b)$ \ref bezouts-identity [can be expressed] as a linear combination $ax + by$ \aref[ex]. Further, it \ref gcd-smallest-linear-combination [is the smallest].
+\adef:
+  For instance, $\text{gcd}(20, 32) = 4 = 100 - 96 = 5\cdot 20 - 3\cdot 32$

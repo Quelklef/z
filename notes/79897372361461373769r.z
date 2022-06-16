@@ -1,0 +1,5 @@
+format=compat-1
+
+[:standard deviation:]
+
+- The __standard deviation__ $$\sigma(X)$$ of a [[random variable]] $$X$$ is the positive square root of its [[variance]]

@@ -1,0 +1,15 @@
+format=compat-1
+
+[:net:]
+
+- For some [[directed set]] $$(J, \leq)$$ and set $$X$$, a __net__ is a function $$f : J \to X$$
+    - For a net $$a$$, we may write $$a_n$$ instead of $$a(n)$$
+    - Intuition: sequences are $$\mathbb Z^+ \to X$$; this essentially generalizes sequences by allowing the index set ($$\mathbb Z^+$$ / $$J$$) to not be a [[total order]]
+- 
+- Within some [[topological space]] $$X$$ net $$(a_n)_{n \in J}$$ is said to __converge__ to some $$x_f$$ iff:
+    - for each neighborhood $$U \ni x_f$$ we have some $$N$$ such that for each $$n > N$$ we know $$a_n \in U$$
+- 
+- $$x \in \bar A \iff \exists \text{ a net } (a_n) \text{ with each } a_n \in A \text{ which converges to } x$$
+    - §29, under Nets, number 6
+- Take $$f : X \to Y$$. Then $$f$$ is [[continuous]] iff for each convergent net $$(a_n) \to x$$ in $$X$$, we have that the net $$(f(a_n))$$ converges to $$f(x)$$
+    - §29, under Nets, number 7

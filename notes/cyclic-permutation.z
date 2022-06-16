@@ -1,0 +1,125 @@
+format=flossy-2
+
+\title: Cyclic Permutations
+
+\sec: Definition
+
+We call a permutation $\sigma : X \to X$ \jarg <cycle(|s)> <cyclic(| permutation)> [cyclic] if we can write $X$ as a union of disjoint ordered sets $X = \{L_i\} + \{R_j\}$ such that the following holds, where $a \overset\sigma\longrightarrow b$ denotes that $\sigma(a) = b$:
+
+\tikz:
+  \begin{scope}[font=\large]
+
+  \node[] at (0   :2.6) (1) { $L_1$ };
+  \node[] at (-60 :2.6) (2) { $L_2$ };
+  \node[] at (-120:2.6) (3) { $L_3$ };
+  \node[] at (-180:2.6) (4) { $\phantom{\cdot\cdot}\vphantom{\int^0}\smash{\vdots}$ };
+  \node[] at ( 120:2.6) (5) { $L_{n-1}$ };
+  \node[] at (  60:2.6) (6) { $L_n$ };
+
+  \node at (5, 3) { \tiny $\cdot$ };  % hack to expand box upwards
+  \node[] at ( 30:2.8) { \small $\sigma$ };
+  \node[] at ( 90:2.8) { \small $\sigma$ };
+  \node[] at (150:2.8) { \small $\sigma$ };
+  \node[] at (210:2.8) { \small $\sigma$ };
+  \node[] at (270:2.8) { \small $\sigma$ };
+  \node[] at (330:2.8) { \small $\sigma$ };
+
+  \begin{scope}[shorten >=8pt, shorten <=8pt, >={latex}, bend left=15]
+    \draw[->] (1) to (2);
+    \draw[->] (2) to (3);
+    \draw[->] (3) to (4);
+    \draw[->] (4) to (5);
+    \draw[->] (5) to (6);
+    \draw[->] (6) to (1);
+  \end{scope}
+
+  \begin{scope}[shorten >=2pt, shorten <=2pt]
+    \node[] at (6, 0) (R1) { $R_1$ };
+    \draw[->] (R1) to[loop,out=120,in=60,looseness=6] (R1);
+    \node at (6, 1.1) { \small $\sigma$ };
+
+    \node[] at (7.5, 0) (R2) { $R_2$ };
+    \draw[->] (R2) to[loop,out=120,in=60,looseness=6] (R2);
+    \node at (7.5, 1.1) { \small $\sigma$ };
+
+    \node at (9, 0) { $\dots$ };
+
+    \node[] at (10.5, 0) (Rk) { $R_k$ };
+    \draw[->] (Rk) to[loop,out=120,in=60,looseness=6] (Rk);
+    \node at (10.5, 1.1) { \small $\sigma$ };
+  \end{scope}
+
+  \end{scope}
+
+That is, we call $\sigma$ cyclic if it forms a single "loop" out of some subset $L \subseteq X$ and fixes the remaining $R = X - L$.
+
+\i[Note:] $R$ may be empty. Some authors also allow $L$ to be empty, making $\text{id}_X$ a cycle.
+
+
+\sec: Notation + Terminology
+
+If $\sigma$ is a cycle with "loop" $L$, then:
+
+- We may write $\sigma$ with \jarg <cycle notation> [cycle notation] as:
+  \katex: \sigma = (L_1\ L_2\ \dots\ L_n)
+
+  This syntax is invariant under cyclic rotation; $(a\ b\ c)$ is the same cycle as $(b\ c\ a)$ and $(c\ a\ b)$.
+
+- We call $\sigma$ an \jarg <(2|)-cycle(|s)> [$\lvert L \rvert$-cycle]. For instance, $(ab)$ is a 2-cycle and $(qsr)$ is a 3-cycle.
+
+
+\sec: Examples
+
+The permutation
+\katex:
+  \sigma = \begin{pmatrix}
+        a & b & c & d & e & f
+    \\  d & b & f & c & e & a
+  \end{pmatrix}
+
+is a cycle because it is characterized by the single "loop" $a \to d \to c \to f \to a$ and fixes the remaining elements $b$ and $e$. As such, we may write $\sigma$ using cycle notation as $\sigma = (a\ d\ c\ f)$.
+
+On the other hand, the permutation
+\katex:
+  \sigma = \begin{pmatrix}
+        a & b & c & d & e
+    \\  c & d & a & b & e
+  \end{pmatrix}
+
+is \i[not] a cycle, because it contains \i[two] loops, $a \to c \to a$ and $b \to d \to b$.
+
+
+\sec: Disjointness
+
+Two cycles $\sigma, \sigma' : X \to X$ are called \jarg <disjoint(| cycle(s|))> [disjoint] if there is no $x_0 \in X$ for which both $\sigma(x_0) \neq x_0$ and $\sigma'(x_0) \neq x_0$
+
+
+\sec: Properties
+
+- Disjoint cycles commute \aref[pf]
+  \adef:
+    Take disjoint cycles $\alpha$, $\beta$. We want to show that $\alpha \beta = \beta \alpha$, and will do so by showing that always $(\alpha\beta)x=(\beta\alpha)x$.
+
+    First note that for given $x$, $x$ is fixed under $\beta$ iff $\alpha(x)$ is fixed under $\beta$. Likewise, $x$ is fixed under $\alpha$ iff $\beta(x)$ is fixed under $\alpha$.
+
+    Now take arbitrary $x$. Since $\alpha$ and $\beta$ are disjoint, then $x$ is fixed under at least one. This gives three cases:
+
+    1. $x$ is fixed under both $\alpha$ and $\beta$. Then also $\alpha(x)$ is fixed under $\beta$ and vice-versa. Thus,
+
+    \katex: (\alpha \beta) x = \alpha(\beta(x)) = x = \beta(\alpha(x)) = (\beta \alpha) x
+
+    2. $x$ is fixed under $\alpha$ but not $\beta$. Then also $\beta(x)$ is fixed under $\alpha$. Thus,
+
+    \katex: (\alpha \beta) x = \alpha(\beta(x)) = \beta(x) = \beta(\alpha(x)) = (\beta \alpha) x
+
+    3. $x$ is fixed under $\beta$ but not $\alpha$. Then for similar reasons,
+
+    \katex: (\alpha \beta)x = \alpha(\beta(x)) = \alpha(x) = \beta(\alpha(x)) = (\beta\alpha)x
+
+    In each case, $(\alpha\beta)x = (\beta\alpha)x$. Therefore, $\alpha\beta = \beta\alpha$.
+
+- Cycles are \i[not] closed under multiplication; for instance, $(a\ b\ c)(b\ c\ d\ e) = (a\ c)(b\ d\ e)$ is not cyclic.
+
+- The order of a cycle $\lvert (x_1\ x_2\ \dots\ x_n) \rvert$ is $n$
+
+- Cycles \ref cycle-decomposition [can be used] to decompose permutations

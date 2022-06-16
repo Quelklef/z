@@ -1,0 +1,9 @@
+format=compat-1
+
+[:prefix code:] [:prefix-free code:]
+
+- Take some [[word encoding]] $$f : W \to \Sigma^*$$
+- We call $$f$$ a __prefix code__ (or __prefix-free code__) if:
+    - If there are no $$a', b' \in \text{Im}(f)$$ s.t. $$a'$$ is a prefix of $$b'$$ or vice-versa
+- Every prefix code is [[uniquely decipherable]]
+- One can guarantee that you are a prefix code by making all your [[code words]] the same length

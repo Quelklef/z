@@ -1,0 +1,6 @@
+format=compat-1
+
+[:open cover:] [:open covers:] [:open covering:] [:open coverings:] [:closed cover:] [:closed covers:] [:closed covering:] [:closed coverings:]
+
+A covering $$\mathcal A$$ is called \i[open] if it consists only of open sets.
+Likewise, if it consists only of closed sets, it is called \i[closed].

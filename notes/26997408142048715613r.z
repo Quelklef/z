@@ -1,0 +1,6 @@
+format=compat-1
+
+[:local formulation of continuity:]
+
+- A function $$f : X \to Y$$ is [[continuous]] if we can write $$X$$ as $$X = \bigcup_i U_i$$ where all $$U_i$$ are open and all $$f \vert U_i$$ are continuous
+    - Here I use $$f\vert U_i$$ to mean $$f$$ with its domain restricted to $$U_i$$

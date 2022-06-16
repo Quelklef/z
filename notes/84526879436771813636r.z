@@ -1,0 +1,8 @@
+format=compat-1
+
+[:product of random variables:]
+
+- For two [[random variable]]s $$X$$ and $$Y$$, we define their product $$XY$$ as:
+    - $$(XY)(\omega) = X(\omega) \cdot Y(\omega)$$
+- If $$X$$ and $$Y$$ are [[independent random variables]], then their [[expected value]] is given by:
+    - $$\mathbb E (XY) = \mathbb E X \cdot \mathbb E Y$$

@@ -1,0 +1,12 @@
+format=compat-1
+
+[:path component:]
+
+- [[JRM:Top.2]] §25 after 1
+- For a [[topological space]] $$X$$, define $$x \sim y$$ iff there is a [[path]] from $$x$$ to $$y$$. Then $$\sim$$ forms an [[equivalence relation]]. The generated equivalence classes are called the __path components__ of $$X$$.
+- 
+- §25.2 gives:
+    - Path components are [[path connected]]
+    - Path components are disjoint
+    - Path components [[cover]] $$X$$
+    - Each nonempty path-connected [[subspace topology]] of $$X$$ intersects exactly 1 path component

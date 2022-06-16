@@ -1,0 +1,20 @@
+format=compat-1
+
+[:chicken sexing:]
+
+- Article: https://commoncog.com/blog/chicken-sexing-and-perceptual-learning-as-a-path-to-expertise/
+- Points:
+    - Chicken sexing is the act of telling whether a young chick is a male or female
+    - Difficult; "chickens don't have penises"
+    - Trained sexers "can sort a thousand birds an hour with over 98% accuracy"
+    - Trained sexers "can't explain how they know [the sex of a chick]. They just ... do."
+    - New sexers are trained purely via feedback: have them sex a chick, then say if they were right or wrong; rinse and repeat "over a period of a few years"
+    - Chick sexing is thus an example of [[tacit knowledge]]: the sexers are able to know the sex of a chick, but can't explain how they know
+    - Article defined tacit knowledge as "knowledge that can’t be explicitly communicated"
+- 
+- Article: https://www.researchgate.net/publication/275577549_Edge_extraction_algorithm_for_feather_sexing_poultry_chicks
+- Points:
+    - Machine vision algorithm developed to sex chicks
+    - "Accuracies ranged from 50% to 89%", strictly not worse than luck
+    - Proves that the tacit knowledge of chicken sexing __can__ be codified, if in the fuzzy language of machine vision
+    - Seems to suggest, counter to the previous article, that it's not that the knowledge __can't__ be communicated (a machine vision algorithm is a perfectly precise method of communication), but rather that it's not easy to do so in a human manner; perhaps this is innate to the problem (we will never be able to explain why we can sex a chick) or maybe it's just because we haven't yet made the requisite breakthroughs

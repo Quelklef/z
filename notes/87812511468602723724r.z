@@ -1,0 +1,8 @@
+format=compat-1
+
+[:linear continuum:]
+
+- A nonempty set $$L$$ with a [[total order]] is called a __linear continuum__ if the following hold:
+    - $$L$$ has the least upper bound property, i.e. every nonempty subset of $$L$$ with an upper bound has a least upper bound
+    - The order is a [[dense order]], i.e. for every $$a < c$$ exists a $$b$$ s.t. $$a < b < c$$
+- Intuition: linear continuums are "$$\mathbb R$$-like" without requiring properties of $$\mathbb R$$ besides order-related ones

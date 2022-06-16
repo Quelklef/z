@@ -1,0 +1,11 @@
+format=flossy-2
+
+\title: With Respect To
+
+The acronym \jarg <wrt> <with respect to> [wrt] stands for \i[with respect to].
+
+Saying that some thing $a$ is defined with respect to some other thing $b$ essentially means that $a$ is a function of $b$. Typically, we use "wrt" to draw attention to $b$ in cases where it would usually be inferred from context.
+
+For instance, we might say that the integers $2$ and $14$ are not equivalent with respect to typical integer comparison, but \i[are] equivalent with respect to the quotient set $\mathbb Z / 12$. This is because "equivalence" of two objects is given by some equivalence relation $\sim$, so the equivalence or non-equivalence of $2$ and $14$ is actually a function of an equivalence relation over the integers. Typically, the equivalence relation we have in mind is equality, but we may choose others, such as the relation induced by $\mathbb Z / 12$.
+
+As a side-note: we could read the phrase "with respect to" as literally meaning "giving respect to", which makes some sense. When we say "XYZ with respect to A", we are in some literal sense "giving respect to" A in our interpretation of XYZ.

@@ -1,0 +1,6 @@
+format=compat-1
+
+[:uniform limit theorem:]
+
+- Take a sequence of [[continuous]] functions $$f_n : X \to Y$$ with $$Y$$ a [[metric space]].
+- If $$f_n$$ [[converges uniformly]] to $$f$$, then $$f$$ is continuous

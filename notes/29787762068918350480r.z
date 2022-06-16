@@ -1,0 +1,6 @@
+format=compat-1
+
+[:dense order:]
+
+- An [[ordered set]] is said to be __dense__ iff for every $$a, c$$, if $$a < c$$, then there exists some $$b$$ such that $$a < b < c$$
+- For example, $$\mathbb Q$$ and $$\mathbb R$$ are both dense because we can let $$b = \frac{a+c}2$$. On the contrary, $$\mathbb N$$ is not dense, since there is no $$b$$ between $$a = 1$$ and $$b = 2$$

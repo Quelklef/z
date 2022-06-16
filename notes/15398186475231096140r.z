@@ -1,0 +1,6 @@
+format=compat-1
+
+[:characteristic function:]
+
+- For a set $$A$$, the characteristic function $$\chi_A$$ is:
+- $$\chi_A(x) = \begin{cases} 1 & x \in A \\ 0 & x \notin A \end{cases}$$

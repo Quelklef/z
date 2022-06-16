@@ -1,0 +1,7 @@
+format=flossy-2
+
+\title: Fixpoints in Haskell
+
+In Haskell, all functions implicitly include $\bot$ in their domain and codomain. If a function \c[f] is strict in its argument, that means that \c[f ⊥ = ⊥]; since \c[fix f] is the least-defined fixpoint of \c[f] and since \c[⊥] is the least-defined value, then strict functions have \c[fix f = ⊥].
+
+On the other hand the lazy function \c[f = const x] has \c[fix f = x].

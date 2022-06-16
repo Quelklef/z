@@ -1,0 +1,10 @@
+format=compat-1
+
+[:the pasting lemma:]
+
+- Take some [[topological space]] $$X$$ where $$X = A \cup B$$ for $$A, B$$ closed in $$X$$
+- Say we have two functions $$f : A \to Y$$ and $$g : B \to Y$$
+- Assume that $$f$$ and $$g$$ agree on their shared domain, i.e. $$\forall x \in A \cap B : f(x) = g(x)$$. This justifies the creation of a composite function $$g$$ given by $$h(x) = f(x) = g(x)$$ on $$A \cap B$$ and $$h(x) = f(x)$$ on $$A - B$$ and $$h(x) = g(x)$$ on $$B - A$$
+- Then if $$f$$ and $$g$$ are both [[continuous]], then $$h$$ is as well
+- 
+- Note that if we take $$A, B$$ to be open instead of closed, the lemma is still true as a special case of [[local formulation of continuity]]

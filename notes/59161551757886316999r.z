@@ -1,0 +1,6 @@
+format=compat-1
+
+[:totally bounded:]
+
+- A [[metric space]] $$(X, d)$$ is said to be __totally bounded__ if for each $$\varepsilon > 0$$ we can cover $$X$$ with a finite number of $$\varepsilon$$-balls
+- Strictly stronger than bounded: take $$\mathbb R$$ in the metric space on metric $$d(x, y) = \min(1, \lvert x - y \rvert)$$. This space is bounded (all points are at most $$1$$ apart) but not totally bounded (let $$\varepsilon < 1$$). ([src](https://math.stackexchange.com/a/722334/243259))

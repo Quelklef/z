@@ -1,0 +1,12 @@
+format=compat-1
+
+title: uniquely decipherable does not imply instantaneous
+
+- Note that [[uniquely decipherable]] codes are not generally instantaneous.
+- Counter-example:
+    - Let $$f$$ be the [[word encoding]] $$\{\text A, \text B, \text C\} \to \{0, 1\}^*$$ given by:
+        - $$f(\text A) = \text 0$$
+        - $$f(\text B) = \text{01}$$
+        - $$f(\text C) = \text{11}$$
+    - Then the [[message encoding]] is $$f^*$$ uniquely decipherable, but requires lookahead: an incoming $$0$$ could be either an $$\text A$$ or part of a $$\text B$$
+    - (Note that, for this $$f$$, we can decode instantaneously but working from the right, because despite not being a [[prefix-free code]], it is a suffix-free code)

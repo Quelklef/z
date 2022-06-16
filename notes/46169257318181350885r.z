@@ -1,0 +1,6 @@
+format=compat-1
+
+title: closed subspaces of paracompact spaces are paracompact
+
+- if $$Y$$ is a [[closed]] [[subspace topology]] of $$X$$ and $$X$$ is [[paracompact]], then $$Y$$ is also paracompact
+- [[JRM:Top.2]] §41.2

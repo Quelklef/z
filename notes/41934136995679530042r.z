@@ -1,0 +1,8 @@
+format=compat-1
+
+[:subspace and connectedness:]
+
+- [[JRM:Top.2]] 23.2
+- For some [[topological space]] $$X$$, if two sets $$C$$ and $$D$$ form a [[separation]], and if $$Y$$ is some [[connected]] [[subspace topology]] of $$X$$, then $$Y$$ must lie __entirely__ in $$C$$ or $$D$$; i.e., one of the following is true:
+    - $$Y \subseteq C$$ and $$Y \cap D = \varnothing$$; or
+    - $$Y \subseteq D$$ and $$Y \cap C = \varnothing$$

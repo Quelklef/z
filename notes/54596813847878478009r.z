@@ -1,0 +1,30 @@
+format=compat-1
+
+[:subbasis to basis:]
+
+- Given a [[topological subbasis]] $$\mathcal S$$, taking unions of subbasis elements gives rise to a [[topological basis]] which generates the same topology.
+- More formally, given a subbasis $$\mathcal S$$, define $$\mathcal B$$ to be the set of all finite intersections of elements of $$\mathcal S$$. Then $$\mathcal B$$ is a basis, and $$S$$ and $$\mathcal B$$ generate the same topology.
+- Note: I guess this is why it's called a subbasis?
+- Proof:
+    - Take subbasis $$\mathcal S$$ on $$X$$
+    - Let $$\mathcal B$$ be the set of all finite intersections of elements of $$\mathcal S$$
+    - First: is $$\mathcal B$$ a basis?
+        - Condition 1: $$\bigcup \mathcal B = X$$.
+            - Note that $$\mathcal S \subseteq \mathcal B$$, since a 1-element intersection is the identity.
+            - Since $$\mathcal S$$ is a subbasis, then $$\bigcup \mathcal S = X$$, so also $$\bigcup \mathcal B = X$$
+        - Condition 2: given $$B_1, B_2 \in \mathcal B$$ and $$x \in B_1 \cap B_2$$, there exists a $$B'$$ s.t. $$x \in B'$$ and $$B' \subseteq B_1 \cap B_2$$
+            - Yes; let $$B' = B_1 \cap B_2$$. Since $$\mathcal B$$ was created by freely taking intersections, then $$B'$$ will certainly exist
+            - Note: this means we fulfill $$B' \subseteq B_1 \cap B_2$$ always with $$B = B_1 \cap B_2$$, never $$B \subsetneq B_1 \cap B_2$$
+    - Second: do $$\mathcal S$$ and $$\mathcal B$$ generate the same topology?
+        - WTS that some set $$U \subseteq X$$ is open in $$\mathcal T_\mathcal S$$ iff it's open in $$\mathcal T_\mathcal B$$
+        - $$(\Longrightarrow)$$
+            - Take a set $$U$$ open in $$\mathcal T_\mathcal S$$
+            - Then $$U$$ is a union of finite intersections of elements of $$\mathcal S$$
+            - Since $$\mathcal B$$ is the set of all finite intersections of elements of $$\mathcal S$$, then $$U$$ is a union of elements of $$\mathcal B$$
+            - Thus $$U$$ is open in $$\mathcal T_\mathcal B$$
+        - $$(\Longleftarrow)$$
+            - Take a set $$U$$ open in $$\mathcal T_\mathcal B$$
+            - Then $$U$$ is a union of basis elements
+            - Each basis elment is a finite intersection of elements of $$\mathcal S$$
+            - Thus $$U$$ is a union of finite intersections of elements of $$\mathcal S$$
+            - Thus $$U$$ is open in $$\mathcal T_\mathcal S$$

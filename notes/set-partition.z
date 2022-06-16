@@ -1,0 +1,16 @@
+format=flossy-2
+
+\title: Partitions
+
+\sec: Definition
+
+A \jarg <(set |) partition(|s)> <partitioned> [partition] of a set $X$ is a collection $\mathcal P$ of subsets of $X$ such that:
+
+- $\mathcal P$ is a covering for $X$; i.e., $\bigcup_{P \in \mathcal P} = X$
+- Elements are pairwise-disjoint; for $P_1 \neq P_2 \in \mathcal P$ we have $P_1 \cap P_2 = \varnothing$
+- $\varnothing \notin \mathcal P$
+
+
+\sec: Examples
+
+- The collection $\mathcal P = \{ \{ n : n \in \mathbb N \text{ is even} \} , \{ k : k \in \mathbb N \text{ is odd} \}$ is a partition of $\mathbb N$ into its even and odd subsets

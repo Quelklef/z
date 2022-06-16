@@ -1,0 +1,13 @@
+format=compat-1
+
+[:probability measure:]
+
+- Given a [[sample space]] $$\Omega$$, a __probability measure__ on $$\Omega$$ is a function $$\mu$$ which assigns a probability to events happening
+- Formally, $$\mu$$ is a function $$\mathscr P(\Omega) \to [0, 1]$$, taking a __set__ of events and giving the probability that any occurs. We also require:
+    - $$\mu(\Omega) = 1$$
+        - Intuition: there is a 100% chance that some event occurs
+    - $$\mu$$ distributes over countable disjoint unions
+        - I.e. for disjoint countable $$E \subseteq \Omega$$, have $$\mu(\bigcup_i E_i) = \sum_i \mu(E_i)$$
+        - Intuition: for two disjoint events, the probability of either happening is the sum of either's probability of happening
+        - Note that this implies $$\mu(\varnothing) = 0$$ ("there is no chance of nothing happening")
+        - Note that this also implies the $$\mu$$ is defined on every singleton $$\{\omega\}$$. We sometimes write $$\mu(\omega)$$ to mean $$\mu(\{\omega\})$$

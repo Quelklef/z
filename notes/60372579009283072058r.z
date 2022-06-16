@@ -1,0 +1,17 @@
+format=compat-1
+
+[:entropy:]
+
+- Given a [[sample space]] $$\Omega$$ with [[probability measure]] $$P$$, the __entropy__ of $$\Omega$$ is a the [[expected value]] of the [[self-information]] of each event; i.e,
+    - $$H(\Omega) = H(P(\omega_1), \dots, P(\omega_n)) := \mathbb E_{\omega \in \Omega} I(\omega) = -\sum_{\omega \in \Omega} P(\omega) \log_2 P(\omega)$$
+    - Note: on the edge case that some $$P(\omega) = 0$$, we define $$P(\omega) \log_2 P(\omega) := 0$$. This has two justifications: (1) a 0-probability event is the same as not having the event in $$\Omega$$ at all, and this definition ensures that; (2) the right-side limit of $$x \log x$$ is $$0$$.
+    - Observation: $$H(\Omega) = I(\prod_\omega P(\omega)^{P(\omega)})$$
+        - Is there a good interpretation for this?
+- 
+- Given that the definition of entropy on sample spaces only ever uses the probabilities of the events, we can actually just define entropy directly on a multiset of probabilities:
+    - Given a sequence of probabilities $$p_1, \dots, p_n$$, define $$H(p_1, \dots, p_n) = -\sum_i p_i \log_2 p_i$$
+- 
+- We can also define the entropy of a [[random variable]], as follows:
+    - For some random variable $$X$$ with possible values $$\{ x \}$$, define:
+    - $$H(X) = \sum_x -P(X = x) \log_2 P(X = x)$$
+    - Basically, we're just finding the entropy of a sample space $$\Omega_X$$ constructed by taking each $$x$$ and creating a corresponding $$\omega_x \in \Omega_X$$ which is the event that $$X = x$$

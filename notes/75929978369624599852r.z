@@ -1,0 +1,13 @@
+format=compat-1
+
+[:Huffman coding:]
+
+- The Huffman coding gives a [[code]] with an average codeword length that is minimized, as in it's within the bound set by by [[shannon's noiseless coding theorem]]
+    - Also provides a [[prefix code]] (sick!)
+    - We don't necessarily __hit__ the bottom of that bound. But what helps with that is to build the $$\ell^\text{th}$$ extension of the code, which is basically the same thing but where you send $$\ell$$ words at a time. As $$\ell$$ increases, the average length improves. In fact, we asymptotically approach the lower bound. (note that the lower bound is a moving target, but $$H(W^{(\ell)}) = \ell H(W)$$ -- apply this to the theorem baby)
+- 
+- How does it work?
+    - Choose the two words with the lowest probability. Create the minimal binary tree containing these two words. Remove these two words from the set of words __and replace them__ with the created binary tree. Consider the probability of the tree to be the sum of the probabilities of the words. Repeat.
+    - This gives a binary tree where only leaf nodes have words. This gives a correspondence from leaf nodes to binary strings, and all the binary strings taken together are prefix-free. These strings are the codewords of the words. 
+    - Peep this animation: https://cmps-people.ok.ubc.ca/ylucet/DS/Huffman.html . Try the word, "bookkeeper"
+        - https://firebasestorage.googleapis.com/v0/b/firescript-577a2.appspot.com/o/imgs%2Fapp%2Fplace%2FGUjcWKsCxC.mp4?alt=media&token=bc8361cc-0710-4de5-bb38-f2f631289dc4

@@ -1,0 +1,7 @@
+format=compat-1
+
+[:locally compact:]
+
+- For a [[topological space]] $$X$$, we say that $$X$$ is __locally compact at__ a point $$x_0 \in X$$ if there is a compact subspace $$C \subseteq X$$ which contains a [[neighborhood]] of $$x_0$$
+- If $$X$$ is locally compact at all of its points, then we call it just __locally compact__
+- Trivially, every [[compact]] space is locally compact (let $$C = X$$)

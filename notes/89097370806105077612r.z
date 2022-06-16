@@ -1,0 +1,14 @@
+format=compat-1
+
+[:generalized Euler's theorem:]
+
+- For some [[ring]] $$R$$ with $$R^\times$$ the [units]([[units of a ring]]) of $$R$$ finite, let $$N = \lvert R^\times \rvert$$; then for any unit $$u \in R^\times$$ we have that $$u^N = 1$$
+- 
+- Proof (maybe? im fucked up rn)
+    - Take some $$u \in R^\times$$
+    - Want to show $$u^N = 1$$
+    - Consider the map $$v \mapsto u\cdot v : R^\times \to R$$
+    - This is a bijection into $$R^\times$$. Because our domain is $$R^\times$$, i.e., the elements with inverse, then this map has an inverse $$v \mapsto u^{-1} \cdot v^{-1}$$. This is a two-sided inverse, so the original map is bijective.
+    - Then $$\{ uv : v \in R^\times \} = R^\times$$
+    - Then $$\prod_{r \in R^\times} r = \prod_{r \in R^\times} ur = u^N \prod_{r \in R^\times} r$$
+    - Divide the leftmost and rightmost expressions by $$\prod_{r} r$$ to get that $$1 = u^N$$

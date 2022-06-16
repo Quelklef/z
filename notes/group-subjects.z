@@ -1,0 +1,46 @@
+format=flossy-2
+
+\b[Summary]: Symmetries are bijections $X \to X$, and group theory is the study of symmetries, but we "forget" the set $X$ on which we are acting. What's up with that?
+
+Definitions:
+
+  \i[Symmetry]: a bijection $s : X \to X$
+  \i[Concrete group]: a collection of symmetries on $X$ closed under composition and containing $\text{id}_X$
+  \i[Abstract group]: a group as per modern definitions
+
+Abstract groups can be seen as an abstraction over concrete groups: every concrete group is an abstract group, and Cayley's theorem tells us that every abstract group is isomorphic to a concrete group, as well.
+
+As such, we may be tempted to conclude that modern group theory is the study of symmetries. In fact, this is what I was told in my current abstract algeabra class.
+
+However, there's something that bothers me about that. Crucial to symmetries $s : X \to X$ is that they have a set to \i[act on], i.e., $X$. When we abstract concrete groups of symmetries to abstract groups, we lose the concept of the group \i[acting on] anything. A group $(G, \star)$ is simply a set and an operation; there is no concept of "applying" a $g \in G$.
+
+Cayley's theorem gives a partial answer to this: it provides an injection $G \hookrightarrow \text{Sym}(G)$. Thus it allows us to interpret a group $G$ as actions, but \i[only] as actions $G \to G$; i.e., a group acting on itself. Most of the time, this is not what we have in mind: $(\mathbb R, +)$ is the group of translations \i[acting on reals], not acting on other translations.
+  \b[Wait, I think I fucked up]: Cayley's theorem gives $(\mathbb R, +) \hookrightarrow \text{Sym}(\mathbb R) \supseteq \text{Tr}$, which is correct
+
+A question, then, arises: to what degree can we, given some group $(G, \star)$, try to \i[recover] the concrete group that it represents? Given any isomorphism of $(\mathbb R, +)$, can we recover $\mathbb R$?
+
+Precisely, given a group $(G, \star)$, what concrete groups $(S, \circ)$ can we construct which are isomorphic with $(G, \star)$? The more we can make, the less $(G, \star)$ "pins down" a concrete group.
+
+Observe the following constructions.
+
+- To start we have, of course, Cayley's isomorphism, which takes us from an abstract group $G$ to a concrete group acting on $G$, i.e., to an $C \subseteq \text{Sym}(G)$. Thus given a group $(G, \star)$ exists a concrete group $C \cong (G, \star)$.
+
+- Take a concrete group $C$ acting on $X$ and a set $Y$ with cardinality equal to $X$. Then we have a bijection $\beta : X \to Y$. Define a function $\rho : (X \to X) \to (Y \to Y)$ by $\rho(f) = \beta \circ f \circ \beta^{-1}$. Then $(\rho(C), \circ)$ is group-isomorphic to $(C, \circ)$. Thus given a concrete group $C$ acting on $X$ and a $Y \cong X$ exists a concrete group $D \cong C$ acting on $Y$
+
+- Take a concrete group $C$ acting on $X$ and a set $Y \supseteq X$. Then we can lift every $(f : X \to X) \in C$ to an $f' : Y \to Y$ by setting $f'$ equal to $f$ on $X$ and equal to $\text{id}_Y$ on $Y \setminus X$. Then the group $(\{f'\}, \circ)$ is isomorphic with $(C, \circ)$. Thus given a concrete group $C$ acting on $X$ and a $Y \supseteq X$ exists a concrete group $D \cong C$ acting on $Y$.
+
+These facts taken together, we can conclude that:
+
+  Given a group $(G, \star)$ and a set $X$ st $\lvert X \rvert \geq \lvert G \rvert$, exists a concrete group $C \cong (G, \star)$ acting on $X$
+
+In other words, knowing a group does not restrict the specific set underlying isomorphic concrete groups, nor does it restrict the set's cardinality above.
+
+But maybe it restricts it below?
+
+Perhaps, in special cases, but not in general. Specifically, note that for $G = S_n$ we can choose $\lvert X \rvert = n \lneq \lvert G \rvert$ and we get that that the concrete group $\text{Sym}(X)$ is isomorphic to $G$.
+
+Generally, though, we do have the following: if we want $G \cong S \subseteq \text{Sym}(X)$, then we need $\lvert G \rvert = \lvert S \rvert \leq \lvert X^X \rvert$ So given $G$ we cannot choose an $X$ such that $\lvert X^X \rvert < \lvert G \rvert$, as that would be too small. For example, if $G = S_6$, we can't have $\lvert X \rvert < 720 = 6!$.
+
+Combining these two facts along with constructions above we conclude that for the finite symmetric groups $S_n$ the corresponding concrete groups are \i[exactly] those which act on a set $X$ of cardinality $\lvert X \rvert \geq n$.
+
+\b[Still more work to do here!] #onwards

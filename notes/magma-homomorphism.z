@@ -1,0 +1,8 @@
+format=compat-1
+
+[:magma morphism:] [:magma morphisms:] [:magma homomorphism:] [:magma homomorphisms:]
+
+A \i[magma homomorphism] is a morphism in the category of magmas.
+
+Explicitly, it is a function $$f : X \to Y$$ between two magmas $$(X, +)$$ and $$(Y, \times)$$ such that
+$[ f(a + b) = f(a) \times f(b) ]$

@@ -1,0 +1,10 @@
+format=compat-1
+
+title: equivalent conditions of open coverings on regular spaces
+
+- [[JRM:Top.2]] 41.3
+- Take a [[regular]] space $$X$$. Then [[TFAE]]. Every [[open covering]] of $$X$$ has a refinement that is:
+    - A [[countably locally finite]] [[open covering]] of $$X$$
+    - A [[locally finite]] [[covering]] of $$X$$
+    - A [[locally finite]] [[closed covering]] of $$X$$
+    - A [[locally finite]] [[open covering]] of $$X$$

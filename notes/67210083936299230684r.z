@@ -1,0 +1,13 @@
+format=compat-1
+
+[:indefinite expressions:]
+
+- In a language, I call something an "indefinite expression" if it denotes multiple values and is grammatically allowed in place of a single-value-denoting expression, causing the semantics of some enclosing phrase to change
+- Examples:
+    - English: in, "I like everyone", "everyone" is an indefinite expression
+    - Bash: in `cat ./*`, `./*` is an indefinite expression
+    - Bash: in `cat ./{here,there}`, `{here,there}` is an indefinite expression
+    - Raku: `all(xs) lt y` does not check if `all(xs)` is less than `y`, it checks if each `x` in `xs` is less than `y`
+    - SQL: in `WHERE row.id = ANY(...)`, `ANY(...)` is an indef expr
+    - Programming: (delimited) continuations can kind of be seen as indefinite expressions
+- Originally from [this](https://twitter.com/Quelklef/status/1350559133406117890) Twitter thread

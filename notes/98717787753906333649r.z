@@ -1,0 +1,13 @@
+format=compat-1
+
+[:completely regular:]
+
+- [[JRM:Top.2]] §33.2 ish
+- We call a [[topological space]] __completely regular__ if it satisfies the [[T1 axiom]] and for each $$x \in X$$ and closed $$A \subseteq X$$ not containing $$x$$, exists a [[continuous]] $$f : X \to [0, 1]$$ with $$f(A) = \{0\}$$ and $$f(x) = 1$$
+- 
+- Properties:
+    - Stronger than being [[regular]]
+    - True of [[normal]] spaces by the [[Urysohn lemma]]
+    - Subspaces of completely regular spaces are completely regular
+    - Products of completely regular spaces are completely regular
+    - Regularity is equivalent to being [[homeomorphic]] with $$[0, 1]^J$$ for some $$J$$ ([[JRM:Top.2]] §34.3)

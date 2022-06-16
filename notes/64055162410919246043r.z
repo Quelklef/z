@@ -1,0 +1,5 @@
+format=compat-1
+
+[:linearly independent:]
+
+- Within some [[linear space]], a set of vectors $$V$$ are __linearly independent__ if the only linear combination producing $$\vec 0$$ is that with all coefficients zero

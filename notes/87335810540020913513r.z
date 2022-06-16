@@ -1,0 +1,7 @@
+format=compat-1
+
+[:standard bounded metric:]
+
+- Given a [[metric space]] with metric $$d : X^2 \to \mathbb R$$, define $$\bar d(x_1, x_2) = \min(d(x_1, x_2), 1)$$. Then $$\bar d$$ is known as the __standard bounded metric__ on $$d$$
+- $$\bar d$$ generates the same topology as $$d$$
+    - In short, this is because $$\bar d$$ and $$d$$ agree on [[epsilon ball]]s with radius less than $$1$$, and that is sufficient to generate the metric topology. More detail: invoke [[T2 13.2]]; for some set $$U$$ open as per $$d$$ and some $$x \in U$$ there is definitely (?) an epsilon ball $$B$$ of size $< 1$ where $$x \in B \subseteq U$$. Thus the set of all epsilon balls of size $< 1$ forms a basis for the same topology that $$d$$ generates.

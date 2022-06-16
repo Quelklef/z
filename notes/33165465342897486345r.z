@@ -1,0 +1,9 @@
+format=compat-1
+
+[:compactness of subspaces:]
+
+- [[JRM:Top.2]] §26.1
+- If $$Y$$ is a [[subspace topology]] of $$X$$, then [[TFAE]]:
+    - $$Y$$ is [[compact]]
+    - Every [[covering]] of $$Y$$ by sets [[open]] in $$X$$ contains a finite subcollection covering $$Y$$
+- Yes, this is pretty trivial

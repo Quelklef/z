@@ -1,0 +1,8 @@
+format=compat-1
+
+[:topological group:]
+
+- A __topological group__ $$G$$ is a [[group]] which is also a [[topological space]] and such that:
+    - $$G$$ satisfies the [[T1 axiom]]
+    - $$\times : G^2 \to G$$ is [[continuous]]
+    - $$\cdot^{-1}\ : G \to G$$ is [[continuous]]

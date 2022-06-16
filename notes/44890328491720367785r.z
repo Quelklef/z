@@ -1,0 +1,6 @@
+format=compat-1
+
+[:metric space:] [:metric spaces:]
+
+- Generally, a __metric space__ is a pair $$(X, d)$$ of a set and a [[metric]] on that set
+- In topology, we take $$X$$ to be a [[topological space]] which is [[metrizable]] and $$d$$ is the metric generating its topology

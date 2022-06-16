@@ -1,0 +1,10 @@
+format=compat-1
+
+[:turing machine:]
+
+- Formally, we define a turing machine to be a set of 4-tuples $$\langle a, b, c, d \rangle$$ where $$a, b$$ pairs give at most one 4-tuple, i.e., $$c$$ and $$d$$ are [[partial function]]s of $$(a, b)$$
+    - $$a$$ is the current TM state. A TM comes equipped with a finite number of states.
+    - $$b$$ is the symbol under the TM head. A TM's tape may have symbols from a finite alphabet on it.
+    - $$c$$ is a write or move instruction; $$c \in \text{move left}, \text{move right}, \text{write }*$$ for every symbol $$*$$
+    - $$d$$ is the target TM state
+- Thus the 4-tuple $$\langle q_0, 0, \text{move right}, q_1 \rangle$$ is to be interpreted as saying: if we are in state $$q_0$$ and reading a $$0$$, then move right and switch to state $$q_1$$

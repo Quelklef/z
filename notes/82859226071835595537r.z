@@ -1,0 +1,6 @@
+format=compat-1
+
+[:compactness of product topologies:]
+
+- A finite [[product topology]] of compact spaces is also compact ([[JRM:Top.2]] §26.7)
+- True of infinite products as well -- this is the Tychonoff theorem (§37.3)

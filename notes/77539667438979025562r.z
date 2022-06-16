@@ -1,0 +1,13 @@
+format=compat-1
+
+[:locally connected:] [:local connectedness:]
+
+A topological space $$X$$ is called locally connected at $$x$$ if for each open $$U \ni x$$ there exists a connected neighborhood $$V \ni x$$ with $$V \subseteq U$$.
+
+If $$X$$ is locally connected at every $$x \in X$$, we simply call it "locally connected".
+
+Ex: splitting $$\mathbb R$$ into two disjoint intervals forms a locally connected (but not connected) space
+
+Theorem (JRM:Top.2 §25.3). TFAE:
+  $$X$$ is locally connected
+  For each open $$U \subseteq X$$, every component of $$U$$ is open in $$X$$

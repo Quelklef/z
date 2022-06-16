@@ -1,0 +1,269 @@
+format=flossy-2
+meta: { starred = True }
+
+\rem:
+  !!!!!!!!!!!!!!!!!!!!!!! feedback from talking with sam
+  !!!!!!!!!!!!!!!!!!!!!!!
+  !!!!!!!!!!!!!!!!!!!!!!!
+
+  - clarify why a "symmetry" is a "bijection"
+  - clarify that the "points/elements" of the triangle group are points/vertices of the triangle, and the triangle itself is the "whole" group. (but really its the isometries on the triangle)
+  - maybe end the section on symmetries with different examples of symmetries before moving onto the next section
+  - clarify what exactly a "completed collection of symmetries" is and why it's relevant
+
+\scope { infer-references = False } ;;
+\title: What the hell is a \ref group [group]?
+
+\b[Abstract.] Group theory is often described as the "study of symmetry". But how does that relate to the \ref group [definition of groups]? A symmetry is essentially a bijection; through the lens of Cayley's theorem and generating sets, a group is a collection of symmetries (bijections) taken together with their compositions and inverses.
+
+
+\sec: Symmetries and Bijections
+
+Take a look at this triangle:
+
+\tikz pre: \newcommand\tri{ \begin{scope}[shift={(0,-1/6)}] \draw (-30:1) -- (90:1) -- (210:1) -- (-30:1); \end{scope} }
+\tikz: \tri{}
+
+To be clear, when I say "this triangle", I thinking of the triangle as a collection of points $\triangle \subseteq \mathbb R^2$. As such, we can transform it the same way we can transform anything in $\mathbb R^2$; namely, with functions $t : \mathbb R^2 \to \mathbb R^2$.
+
+We can, for instance,
+
+- Dilate the triangle about its center by a factor of $1/2$:
+
+\tikz pre:
+  \newcommand\transf[2]{
+    \tri{}
+
+    \begin{scope}[shift={(3,.25)}, scale=.3] #1 \end{scope}
+    \draw[->,>={latex}] (2, -.25) -- (4, -.25);
+
+    \begin{scope}[shift={(6,0)}] #2 \end{scope}
+  }
+\tikz: \transf {} {  \begin{scope}[shift={(0,-1/12)}] \draw (-30:.5) -- (90:.5) -- (210:.5) -- (-30:.5); \end{scope} }
+
+- Reflect the triangle vertically about its center ...
+
+\tikz:
+  \transf
+    { \tri{} \draw[dashed] (-1.5,0) -- (1.5,0); }
+    { \begin{scope}[shift={(0,1/6)}] \draw (30:1) -- (-90:1) -- (-210:1) -- (30:1); \end{scope} }
+
+- ... or along another line
+
+\tikz:
+  \transf
+    { \tri{} \draw[dashed] (-32:1.5) -- (155:1.5); }
+    { \tri{} }
+
+- Rotate by $15^\circ$ ...
+
+\tikz:
+  \transf
+    { \tri{} \draw[->] [shorten <=1pt,shorten >=5pt,bend right=20] (-30:1) to (90:1); }
+    { \begin{scope}[shift={(0,1/6)}] \draw (45:1) -- (-75:1) -- (-195:1) -- (45:1); \end{scope} }
+
+- ... or by $120^\circ$
+
+\tikz:
+  \transf
+    { \tri{} \draw[->] [shorten <=1pt,shorten >=5pt,bend right=20] (-30:1) to (90:1); }
+    { \tri{} }
+
+Notice that two of these transformations don't seem to "do anything". Namely, the second reflection and rotation leave $\triangle$ looking exactly the same as it started.
+
+These fixpoints are witnesses to the symmetries of regular triangles! The reason that the second reflection has no effect on $\triangle$ is because the reflection is about an axis of symmetry; likewise, the reason that a rotation by $120^\circ$ has no effect on $\triangle$ is because of the radial symmetry of regular triangles.
+
+\tikz:
+  \draw (0:1) -- (120:1) --(240:1) -- (360:1);
+  \draw [dotted] (0:1.5) -- (180:1.5);
+  \draw [dotted] (60:1.5) -- (240:1.5);
+  \draw [dotted] (120:1.5) -- (300:1.5);
+
+  \begin{scope}[shift={(6,0)}]
+    \draw (0:1) -- (120:1) --(240:1) -- (360:1);
+    \draw [->] [shorten <=5pt,shorten >=5pt,bend left] (0:1) to (240:1);
+    \draw [->] [shorten <=5pt,shorten >=5pt,bend right] (0:1) to (120:1);
+  \end{scope}
+
+  \node at (3, -1.75) {symmetries of the regular triangle};
+
+Generally, if we can find a transformation $t : \triangle \to \mathbb R^2$ such that $t(\triangle) = \triangle$, we figure that this is witness to some symmetry of our shape $\triangle$; as such, we call $t$ a \i[symmetry] \aref[rk]. Note that the condition $t(\triangle) = \triangle$ is exactly the condition that $t$ is a bijective function! In other words, symmetries are exactly bijections.
+\adef:
+  Since we are considering $\triangle$ to be a locus of points, this technically means that there are many symmetries on a triangle which "feel wrong". For instance, we could swap two points of the triangle--that's a symmetry!
+
+  What's going on here?
+
+  Symmetries care only about the set structure of what we are working with. The fact that the points in $\triangle$ form three lines is irrelevant to what is and isn't a symmetry; to be a symmetry one need only preserve the collection of points.
+
+  But when we think of triangles we don't want consider all this nonsense to be a symmetry.
+
+  We can solve this in one of two ways. The first is to restrict ourselves to talking about isometries (that is, distance-preserving symmetries). The second way is to \i[not] consider a triangle to be a locus of points, but to be defined only by its vertices, with "understood" edges between them.
+
+  \tikz:
+    \draw[dotted] (-30:1) -- (90:1) -- (210:1) -- (-30:1);
+    \begin{scope}[every node/.style={ inner sep=0pt,outer sep=0pt,minimum size=2pt,draw,circle,fill }]
+      \node at (90:1) {};
+      \node at (-30:1) {};
+      \node at (210:1) {};
+    \end{scope}
+
+  For the rest of this page, though, we'll just sweep this issue under the rug.
+
+We can think of group theory, loosely speaking, as the study of objects $G$ (for instance, $G = \triangle$) taken alongside a set of symmetries on those objects.
+
+
+\sec: Completion
+
+So group theory is about symmetries and by "symmetry" we mean "bijection". Ok, but what can we do with that? Say I hand you the object $G = \square$ alongside the following two symmetries over $G$:
+
+\tikz pre:
+
+  \newcommand{\sq}[5]{
+    \begin{scope}[shift={#1},scale=.75]
+      \draw (-1, 1) -- (1, 1) -- (1, -1) -- (-1, -1) -- (-1, 1);
+      \node at (-.65, .65) {#2};
+      \node at (.65, .65) {#3};
+      \node at (-.65, -.65) {#5};
+      \node at (.65, -.65) {#4};
+    \end{scope}
+  }
+  \newcommand{\A}{$\alpha$}
+  \newcommand{\B}{$\beta$}
+  \newcommand{\C}{$\gamma$}
+  \newcommand{\D}{$\delta$}
+
+  \newcommand{\transfSq}[9]{
+    \sq{(0,0)}{#2}{#3}{#4}{#5}
+    \draw[->,>={latex}] (1.25, -.35) to (4.75, -.35);
+    \begin{scope}[shift={(3,.25)},scale=.5] #1 \end{scope}
+    \sq{(6,0)}{#6}{#7}{#8}{#9}
+  }
+
+  \newcommand{\symS}{ \sq{(0,0)}{}{}{}{} \draw[dashed] (-.95, -.95) -- (.95, .95); }
+  \newcommand{\symR}{ \sq{(0,0)}{}{}{}{} \draw[->] [shorten <=1pt,shorten >=6pt,bend left] (-.75, .75) to (.75, .75); }
+\tikz:
+
+  \node at (0, 2) {S :};
+  \begin{scope}[shift={(2,2)}]
+    \transfSq
+      {\symS}
+      {\A}{\B}{\C}{\D}
+      {\C}{\B}{\A}{\D}
+  \end{scope}
+
+  \node at (0, -1) {R :};
+  \begin{scope}[shift={(2,-1)}]
+    \transfSq
+      {\symR}
+      {\A}{\B}{\C}{\D}
+      {\D}{\A}{\B}{\C}
+  \end{scope}
+
+What interesting things can you tell me about $G$ and $S$ and $R$?
+
+Well, here's something interesting. The vertical reflection:
+
+\tikz:
+
+  \begin{scope}[shift={(0,0)}]
+    \transfSq
+      { \sq{(0,0)}{}{}{}{} \draw[dashed] (-.95, 0) -- (.95, 0); }
+      {\A}{\B}{\C}{\D}
+      {\D}{\C}{\B}{\A}
+  \end{scope}
+
+Can be constructed by composing $S$ and $R$:
+
+\tikz:
+
+  \sq{(0,0)}{\A}{\B}{\C}{\D}
+  \sq{(4,0)}{\C}{\B}{\A}{\D}
+  \sq{(8,0)}{\D}{\C}{\B}{\A}
+
+  \begin{scope}[every arrow/.style={ >=latex }]
+    \draw[->] (1,-.25) to (3,-.25);
+    \draw[->] (5,-.25) to (7,-.25);
+    \node at (2, .25) {S};
+    \node at (6, .25) {R};
+  \end{scope}
+
+Likewise, we can construct:
+
+- The counter-clockwise rotation as $R \to R \to R$
+- The "do nothing" symmetry as $S \to S$
+- The reflection over the falling diagonal as $R \to S$
+
+As it turns out, \i[every] symmetry \aref[rk] of the square can be expressed as some combination of $S$ and $R$!
+\adef: By which I mean in particular isometries (length-preserving bijections)
+
+I give this example for a reason. We reached an interesting conclusion, and in order to do so, it was not enough to talk about $S$ and $R$ on their own. Instead, we worked with \i[compositions] of $S$ and $R$.
+
+Likewise, group theory is not interested in viewing symmetries in isolation. Rather, given a collection $\mathcal S = \{ S_i \}$ of symmetries over some set $G$, a group theorist will be interested not only in symmetries $S \in \mathcal S$ but also:
+
+- Compositions $S_1 \circ S_2$ of symmetries $S_1, S_2 \in \mathcal S$
+- The identity bijection \aref[rk]
+  \adef: Strictly speaking, this is redundant. If $\mathcal S$ is nonempty, then composing any $S \in \mathcal S$ with its inverse $S^{-1}$ produces the identity
+- Inverses $S^{-1}$ of symmetries $S \in \mathcal S$ (and compositions thereof)
+
+Altogether, let us denote such a "completed" set of symmetries \aref[rk] by $\bar{\mathcal S}$. Again, we are interested in $\bar{\mathcal S}$ rather than just $\mathcal S$ simply because we can do interesting things with it!
+\adef: What I'm giving here is essentially a contextualized presentation of the concept of group \i[generating sets]
+
+Actually, what a group \i[is] is a completed collection $\bar{\mathcal S}$ of symmetries over some object $G$. Kind of....
+
+
+\sec: Cayley's Theorem
+
+Thinking of groups as completed collections $\bar{\mathcal S}$ of symmetries is loosely reasonable, but pedantically wrong. Let's bridge that gap.
+
+Notice that when we performed the "completion" from $\mathcal S$ to $\bar{\mathcal S}$, we did so with respect to composition $\circ$. That is, we asked for:
+
+- Compositions of elements of $\mathcal S$; that is, applications of $\circ$
+- An identity element \i[with respect to] $\circ$; that is, the symmetry $e$ where for every $S \in \mathcal S$ we have $e \circ S = S \circ e = S$.
+- Inverses of elements in $\mathcal S$ \i[with respect to] $\circ$; that is, for each $S \in \mathcal S$ the value $S'$ exhibiting $S \circ S' = S' \circ S = e$
+
+As it turns out, these three conditions--now that we have relativized them with respect to the operator $\circ$--produce a set of axioms which essentially form their own characterization of a group! Precisely,
+
+Take a 2-tuple $(G, \star)$ consisting of a set $G$ and any binary operator $\star$ on $G$, and assume that:
+
+- $\star$ is associative
+- $G$ contains an identity; that is, $\exists e \in G\ \forall g \in G \mid e \star g = g \star e = g$
+- $G$ contains inverses wrt $\star$; that is, $\forall g \in G\ \exists g' \in G \mid g \star g' = g' \star g = e$
+
+Then there exists a completed collection of symmetries $\bar{\mathcal S}$ over $G$ such that $\star$ behaves on $G$ in the same way that $\circ$ behaves on $\bar{\mathcal S}$ \aref[rk]. This is known as \ref cayleys-theorem [Cayley's Theorem].
+\adef:
+  By "behaves in the same way" I mean in particular that there exists a bijection $\phi : G \to \bar{\mathcal S}$ such that:
+
+  - $\phi(e) = \text{id}$
+  - $\phi(a \star b) = \phi(a) \circ \phi(b)$
+
+  In other words, there is a way to go between $G$ and $\bar{\mathcal S}$ which "respects" the relevant structure. (If you're not familiar with category theory, and this doesn't make much sense, that's fine)
+
+Since each such 2-tuple $(G, \star)$ acts like a completed collection of symmetries, then the above three axioms act to give an abstract characterization of what a group is. In fact, these three axioms \i[are] \ref group [the modern definition] of "group"!
+
+
+\sec: Recap
+
+A "symmetry" on an object $G$ is just a bijection $G \to G$. Group theory is essentially the study of such symmetries. A single symmetry $S : G \to G$ is typically not interesting in isolation, so we study collections of symmetries taken together with their inverses and compositions thereof. Modern treatments of group theory do not speak about symmetries directly, but instead study groups via Cayley's theorem through a more abstract notion defined by the modern group axioms.
+
+
+\sec: Examples
+
+The only examples of groups I have given so far are the symmetries on the triangle $\triangle$ and the square $\square$ \aref[rk]. These are fine examples, but give a very narrow view of group theory. There are many groups not directly related to polygons!
+\adef: These are called \ref dihedral-group [dihedral groups], if you're curious!
+
+To rectify the situation, here are some examples of groups with different "feels" to them.
+
+- $(S(X), \circ)$. This is the group of all bijections on a set $X$. This should feel familiar!
+
+- $D_6 \cong S(\{1, 2, 3\})$. This is the group of all symmetries of a triangle. Why is it isomorphic with $S(\{1,2,3\})$? \aref[ans]
+  \adef: At the time of writing, this is discussed on the page for \ref grp [$\mathbf{Grp}$]
+
+- $(\mathbb R, +)$. This is the group of all translations on $\mathbb R$; that is, functions of the form $(x \mapsto x + \delta)$ for some $\delta \in \mathbb R$. We can consider a translation by $\delta$ to be a witness to the fact that sliding $\mathbb R$ by $\delta$ produces $\mathbb R$.
+
+- $(\mathbb R \setminus \{0\}, \times)$. This is the group of dilations on $\mathbb R$; that is, functions of the form $(x \mapsto \sigma x)$ for some $\sigma \in \mathbb R \setminus \{0\}$. We can consider a dilation by $\sigma$ to be a witness to the fact that dilating $\mathbb R$ by $\sigma$ produces $\mathbb R$.
+
+- $(\mathbb C \setminus \{0\}, \times)$. Likewise, this is the group of all nontrivial dilation-rotation compositions on $\mathbb C$
+
+- $(\mathbb Z / n, +)$. This is the group of translations on $\mathbb Z$, but where $\mathbb Z$ "wraps around" to zero at $n$; think of a clock
+
+- $(\mathscr M_n, \cdot)$. This is the group of invertible square matrices of size $n$.

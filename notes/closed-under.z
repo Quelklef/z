@@ -1,0 +1,7 @@
+format=flossy-2
+
+\title: Closure of an operation
+
+\sec: Definition
+
+Given $A \subseteq B$ and some operation $\star : A^2 \to B$, if always $x \star y \in A$ we say that $A$ is \jarg <clos(ed|ure) under> [closed under] $\star$. We may equivalently say that $\star$ is \jarg <(|is )closed> [closed] or has \jarg <(|has )closure> [closure].

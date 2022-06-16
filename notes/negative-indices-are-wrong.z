@@ -1,0 +1,36 @@
+format=flossy-2
+
+\title: Negative array indices are wrong
+
+\sec: Negative array indices are nice
+
+Some programming languages, like \href <https://stackoverflow.com/a/11367936/4608364> [Python], \href <https://stackoverflow.com/a/10569792/4608364> [Ruby], and Perl, support array indexing with negative values. Doing so will index "from the right", so for instance \c(array[-1]) will be the last element and \c(array[-2]) the second-to-last.
+
+We can succinctly summarize the behaviour with the following identity:
+
+\code py: array[-abs(n)] == array[len(array) - abs(n)]
+
+Convenient! Want the $n^\text{th}$ value of an array? Boom: \code(array[n]). Want the $n^\text{th}$-from-last? Bam: \code(array[-n-1]) \aref[rk].
+\adef: Often one can write \code(array[-n-1]) succinctly as \code(array[~n]), utilizing bitwise NOT and twos-complement integer representation!
+
+However, I claim that this is the \b[end] of the niceness of negative array indices.
+
+
+\sec: Negative array indices are not nice
+
+The issue is that negative array indices do more than just provide nice syntax. If, for instance, an index is derived from the user ...
+
+\code py:
+  n = input()
+  print(array[n])
+
+... We probably don't intend for an input value of \c(-1) to print out the last item of the array, and the user probably would by surprised by that behaviour as well.
+
+Actually, I would claim that the \i[vast] majority of code which makes use of negative array indices does so by negating an expected-nonnegative index, and almost never by passing around a possibly-negative index. In other words, my bet is that 99% of code looks either like \c(array[n]), with \c(n >= 0) expected, or \c(array[-n]) with \c(n >= 1) expected, and almost never like \c(array[n]) with the explicit consideration that \c(n) might be negative.
+
+This easy oversight can turn into subtle bugs. And for what? Pretty syntax.
+
+
+\sec: What to do instead?
+
+Super simple: provide different methods for indexing from the left and from the right. \c{array.from_right(n)} is not much more difficult to write than \c{array[-n]}--and certainly no less readable!

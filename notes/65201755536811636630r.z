@@ -1,0 +1,7 @@
+format=compat-1
+
+[:euclidean metric:]
+
+- The __euclidean metric__ given on $$\mathbb R^n$$ is a [[metric]] given by:
+    - $$d(x, y) := \lvert \lvert x - y \rvert \rvert$$
+- Where $$\lvert \lvert \cdot \rvert \rvert$$ denotes the [[norm]]

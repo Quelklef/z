@@ -1,0 +1,7 @@
+format=compat-1
+
+title: paracompact Hausdorff spaces are normal
+
+- [[paracompact]] [[Hausdorff]] spaces are [[normal]]
+- [[JRM:Top.2]] §41.1
+- Generalization of [[compact Hausdorff spaces are normal]]

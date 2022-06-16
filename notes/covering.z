@@ -1,0 +1,13 @@
+format=flossy-2
+
+\title: Covering
+
+\sec: Definition
+
+A collection $\mathcal A$ of sets is called a \jarg <cover(|s)> <covering(|s)> [covering] of $X$ when
+
+\katex: X = \bigcup_{A \in \mathcal A} A
+
+or, equivalently,
+
+\katex: \forall x \in X : \exists A \in \mathcal A : x \in A

@@ -1,0 +1,20 @@
+format=compat-1
+
+[:component:]
+
+- [[JRM:Top.2]] §25
+- For some [[topological space]] $$X$$, define $$x \sim y$$ iff there is a [[connected]] [[subspace topology]] of $$X$$ which contains both $$x$$ and $$y$$. Then $$\sim$$ forms an [[equivalence relation]] (see book). The generated equivalence classes are called the __components__ or __connected components__ of $$X$$.
+    - Intuition: I think what we get here is essentially that the classes are the "largest" connected subspaces we can make
+- 
+- Motivation: if a space is not [[connected]], but we still want to use the concepts regarding connectedness on the space, we can work with its components instead
+- 
+- §21.5 gives the following:
+    - Components are connected
+    - Components are disjoint
+    - Components [[cover]] $$X$$
+    - This isn't strong enough to characterize components, since we can split $$\mathbb R$$ into $$(-\infty, 0), \{0\}, (0, \infty)$$ which satisfies these statements but does not form components. So, we also have this:
+    - Each nonempty connected [[subspace topology]] of $$X$$ intersects exactly 1 component
+- 
+- Components are closed but not necessarily open. If there are only finitely many, then they are open too.
+    - Apparently this follows from §23.4, but I don't completely see it tbh.
+    - From a comment on [here](https://math.stackexchange.com/q/1052551/243259): "Each component is closed. Hence, the complement of each component is open. But each component is itself a finite intersection of complements of components, hence is also open."

@@ -1,0 +1,6 @@
+format=compat-1
+
+title: turing machines are effectively countable
+
+- The set of [[turing machine]]s are [[effectively countable]]
+- This is basically because they're highly finite

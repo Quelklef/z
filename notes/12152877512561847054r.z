@@ -1,0 +1,11 @@
+format=compat-1
+
+title: continuity of functions between metrizable topologies
+
+- [[JRM:Top.2]] thm 21.1
+- For some $$f : X \to Y$$ where $$X$$ and $$Y$$ are [[metrizable]] with respective metrics $$d_X$$ and $$d_Y$$, [[TFAE]]:
+    - $$f$$ is [[continuous]]
+    - For $$x \in X$$ and $$\varepsilon > 0$$, exists a $$\delta >0$$ such that $$d_X(x, y) < \delta \implies d_Y(f(x), f(y)) < \varepsilon$$
+        - This is very epsilon-delta-esque
+        - If we rewrite this in terms of epsilon-balls, it becomes even more epsilon-delta-esque:
+            - For every $$x \in X$$ and $$\varepsilon > 0$$, exists a $$\delta > 0$$ s.t. $$y \in B_X(x, \delta) \implies f(y) \in B_Y(f(x), \varepsilon)$$

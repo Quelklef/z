@@ -1,0 +1,13 @@
+format=compat-1
+
+[:binary relation:] [:trinary relation:] [:n-nary relation:]
+
+The concepts "is friends with", "is a parent of" and "shares a class with" are all real-world examples of \i[binary relations]. Such objects relate elements of a set.
+
+Mathematically, we reify the concept of a binary relation on a set $$X$$ as a collection $${\sim} \subseteq X^2$$ of pairs of elements of $$X$$. If $$(a, b) \in {\sim}$$, then we say that $$a$$ \i[relates to] $$b$$, and write $$a \sim b$$.
+
+For instance, we may relate two elements $$a, b \in \mathbb N$$ if $$2 \mid (a - b)$$. Then we would have $$0 \sim 2 \sim 4 \sim \cdots$$ and $$1 \sim 3 \sim 5 \sim \cdots$$.
+
+In this case, we have that $$n \sim n'$$ if and only if $$n' \sim n$$. Note that this is not in general the case. For instance, consider the relation on $$\mathbb N$$ defined by $$a \sim b$$ iff $$a \leq b$$. Then $$0 \sim 1$$ but $$1 \nsim 0$$.
+
+N-nary relations are a natural generalization of binary relations. An $$n$$-nary relation on $$X$$ is just a subset of $$X^n$$.

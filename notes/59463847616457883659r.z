@@ -1,0 +1,5 @@
+format=compat-1
+
+[:manifold:]
+
+- An $$m$$-manifold $$X$$ is a [[Hausdorff]] space where each $$x \in X$$ has some [[neighborhood]] which is [[homeomorphic]] with an open subset of $$\mathbb R^m$$

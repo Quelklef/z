@@ -1,0 +1,6 @@
+format=compat-1
+
+[:support:]
+
+- For some [[topological space]] $$X$$ and function $$f : X \to \mathbb R$$, the support of $$f$$, denoted $$\text{supp}(f)$$, is the [[closure]] of $$f^{-1}(\mathbb R \setminus \{0\})$$
+- The key note here is that if $$x \notin \text{supp}(f)$$ then there is a [[neighborhood]] $$U \ni x$$ where $$f(U) = \{0\}$$

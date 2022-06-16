@@ -1,0 +1,5 @@
+format=compat-1
+
+title: products of second-countable spaces are second-countable
+
+- given a finite or countable collection of [[second-countable]] spaces, their [[product topology]] is also second-countable

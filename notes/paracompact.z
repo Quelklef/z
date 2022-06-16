@@ -1,0 +1,12 @@
+format=flossy-2
+
+\sec: Paracompactness
+
+We call a topological space $X$ \jarg <paracompact(|ness)> [paracompact] if every open covering $\mathcal A$ of $X$ has a locally finite open refinement $\mathcal B$ which also covers $X$.
+
+
+Paracompactness is a generalization of compactness. This is not immediately obvious, but may be made more clear by giving the following characterization of comapctness:
+
+  A space is compact iff every open covering $\mathcal A$ has a \u[finite] open refinement $\mathcal B$ which also covers $X$
+
+Note that the difference between this definition of compactness and the definition of paracompactness is only finite vs locally finite.

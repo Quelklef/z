@@ -1,0 +1,5 @@
+format=compat-1
+
+[:span:]
+
+- A set of vectors $$\{v_i\}$$ is said to __span__ a [[linear space]] $$V$$ iff the set $$\{ c_1 v_1 + \dots + c_n v_n : c_i \in F \}$$ is all of $$V$$

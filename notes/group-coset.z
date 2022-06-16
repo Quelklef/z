@@ -1,0 +1,117 @@
+format=flossy-2
+
+\title: Group Cosets
+
+\sec: Definition
+
+For $H$ a subgroup of $G$, and given some $g \in G$, we define
+
+- $gH$ to denote $\{ gh : h \in H \}$
+- $Hg$ to denote $\{ hg : h \in H \}$
+
+the first term is called a \jarg <(left |)coset(|s)> [left coset] and the second a \jarg <(right |)coset(|s)> [right coset].
+
+
+\sec: Example
+
+Take the symmetric group $G = S_3$ and subgroup
+
+\katex:
+  H = \left\{
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 1 & 2 & 3
+    \end{pmatrix},
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 3 & 2 & 1
+    \end{pmatrix}
+  \right\}
+
+then the cosets of $H$ are:
+
+\katex:
+  \begin{pmatrix}
+       1 & 2 & 3
+    \\ 1 & 2 & 3
+  \end{pmatrix} H
+
+  = \begin{pmatrix}
+       1 & 2 & 3
+    \\ 3 & 2 & 1
+  \end{pmatrix} H
+
+  = H
+
+and
+
+\katex:
+  \begin{pmatrix}
+       1 & 2 & 3
+    \\ 2 & 1 & 3
+  \end{pmatrix} H
+
+  = \begin{pmatrix}
+       1 & 2 & 3
+    \\ 3 & 1 & 2
+  \end{pmatrix} H
+
+  = \left\{
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 2 & 1 & 3
+    \end{pmatrix},
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 3 & 1 & 2
+    \end{pmatrix}
+  \right\}
+
+and
+
+\katex:
+  \begin{pmatrix}
+       1 & 2 & 3
+    \\ 2 & 3 & 1
+  \end{pmatrix} H
+
+  = \begin{pmatrix}
+       1 & 2 & 3
+    \\ 1 & 3 & 2
+  \end{pmatrix} H
+
+  = \left\{
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 2 & 3 & 1
+    \end{pmatrix},
+    \begin{pmatrix}
+         1 & 2 & 3
+      \\ 1 & 3 & 2
+    \end{pmatrix}
+  \right\}
+
+
+\sec: Properties
+
+> Cosets form partition elements. That is, for $H \subseteq G$, the set of all left cosets $\{ gH : g \in G \}$ is a partition of $G$. Likewise for right-cosets.
+  To prove this, we will show that (1) the collection of left cosets covers $G$, and (2) left cosets are disjoint.
+
+  1. For each $g \in G$, we have that $g = g1_H \in gH$.
+
+  2. assume $g_1 \neq g_2$. Then for all $h \in H$ we have $g_1h \neq g_2h$, due to the presence of inverses. Further, $g_1H \neq g_2H$.
+
+- All left- and right- cosets of $H$ have the same cardinality as $H$. Since left- and right- cosets partition $G$, then there are $\lvert G \rvert / \lvert H \rvert$ left cosets of $H$ and the same number of right cosets.
+
+\fold:
+  Coset equality can be found with the following identities:
+  - $g_1H = g_2H$ if and only if $g_2^{-1}g_1 \in H$
+  - $Hg_1 = Hg_2$ if and only if $g_2g_1^{-1} \in H$
+:
+  I will prove the first identity; the second is proven similarly.
+
+  $(\Rightarrow)$ Assume that $g_1 H = g_2 H$. Then exists some $h_1, h_2$ where $g_1h_1 = g_2h_2$. Multiplication gives $g_2^{-1}g_1 = h_2h_1^{-1}$. Since $h_2h_1^{-1} \in H$, then also $g_2^{-1}g_1 \in H$.
+
+  $(\Leftarrow)$ First note that if $h \in H$ then $hH = H$. Now assume $g_2^{-1}g_1 \in H$. Then $g_2H = g_2((g_2^{-1}g_1)H) = \{ g_2(g_2^{-1}g_1h) : h \in H \} = \{ g_1h : h \in H \} = g_1H$
+
+  $(\Leftarrow)$, alternative proof. Assume $g_2^{-1}g_1 \in H$. Then $g_1 = g_2(\underbrace{g_2^{-1}g_1}_{\in H}) \in g_2H$. Since $g_1 \in g_2H$ and cosets are disjoint, then $g_1H = g_2H$.

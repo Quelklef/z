@@ -1,0 +1,6 @@
+format=compat-1
+
+[:index:]
+
+- for some [[coding function]] over [[turing machine]]s, for any turing machine its code is called its __index__
+- because Turing machines have such simple structure (hell, they are probably an ADT), most of the time computing a turing machine from its index is going to be [[primitive recursive]]

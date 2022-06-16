@@ -1,0 +1,6 @@
+format=compat-1
+
+[:field:]
+
+- A __field__ is a 3-tuple $$(R, +, \times)$$ which is a [[commutative ring]] where $$0 \neq 1$$ and where all elements have multiplicative inverses
+    - Note: I'm not positive about the motivation for $$0 \neq 1$$; it might be that otherwise we get a trivial structure.

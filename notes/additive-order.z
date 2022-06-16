@@ -1,0 +1,21 @@
+format=flossy-2
+
+\title: Additive Order
+
+
+\sec: Definition
+
+Given $a, n \in \mathbb N$, the \jarg <additive order(| mod(|ulo))> [additive order of $a$ modulo $n$] is, equivalently:
+
+- The order of $a$ in the group $(\mathbb Z / n, +)$
+
+- The value $\text{LCM}(a, n) / a$; that is, the least common multiple of $a$ and $n$ divided by $a$
+
+- The minimal $\ell \in \mathbb N$ such that $\underbrace{a + a + \cdots + a}_{\ell \text{ times}}$ is divisible by $n$
+
+- The minimal $\ell \in \mathbb N$ such that $\ell \cdot a \equiv 0\ (\text{mod } n)$
+
+
+\sec: Also see
+
+- \ref multiplicative-order [multiplicative order]

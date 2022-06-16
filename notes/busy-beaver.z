@@ -1,0 +1,90 @@
+format=flossy-2
+
+\title: Busy Beaver Machines
+
+
+\sec: Introduction
+
+Fixing an alphabet size and state count, there exist only a finite number of satsifactory turing machines; call the collection of these TM's $T$. We can execute all machines $t \in T$ on an empty tape; each $t$ will either (1) never halt; or (2) halt after a possibly large--but still finite--number of steps. Because $T$ itself is finite, some $t \in T$ will run for the longest time while still halting.
+
+That is, the following is well-defined:
+
+\katex: \max_{t \in T,\ t \text{ halts}} \left \{ \text{ steps taken by } t \text{ before halting } \right \}
+
+
+\sec: Definitions
+
+> (Remark on non-standard definitions)
+  I've seen the busy beaver game defined two different ways:
+
+  - Maximizing the number of steps taken before halting
+  - Maximizing the number of $1$s written onto the tape before halting
+
+  I use approach #1. The two are morally equivalent, but may differ in actual values.
+
+- The number of steps taken by some turing machine $t$ before halting is called its score. If $t$ does not halt, its score is said to be $\infty$.
+
+> The maximum score possible for $n$-state $m$-symbol halting TMs is denoted $\text{BB}(n, m)$ or $\Sigma(n, m)$.
+  - If $m$ is not specified, then $m = 2$
+  - At least, I \i[think] $\Sigma = \text{BB}$.
+
+- If a turing machine $t$ with $n$ states and $m$ symbols has score $BB(n, m)$, it is called a \jarg <busy beaver> [busy beaver].
+
+
+\sec: Consequences, Properties, etc
+
+> In principle, knowing certain values of $BB(n, m)$ would resolve particular conjectures
+  For instance, consider \aref [Goldbach's conjecture]. We can construct a turing machine $t$ which iterates over even numbers and tests whether this conjecture holds on each, and halting if a counter-example is found.
+  \adef: This proposes that even $k \geq 4$ can be written as the sum of two prime numbers
+
+  Let $n$ be the number of states in $t$, and $m$ then number of symbols. We can in principle use the calue of $BB(n, m)$ to resolve this conjecture as follows. Run $t$ for $BB(n, m)$ steps. If $t$ has halted, then it has found a counter-example to Goldbach's conjecture, and so Goldbach's is false. If $t$ has not halted, then it never will, and so Goldbach's is true.
+
+  In reality, values of $BB(n, m)$ are so large that even if we knew them, it would be infeasible to execute a TM for so many steps.
+
+> Undecidability of large values
+  \href <https://twitter.com/HigherGeometer/status/1257516510563561472> [Exists] a 748-state turing machine $t$ which iterates over consequences of ZFC, halting if a statement is found of the form $a \in a$. That is, $t$ halts iff ZFC is inconsistent. If ZFC were able to compute $BB(748)$, then we could run $t$ for that many steps and discover the consistency of ZFC, according to ZFC. Due to Godel's second competeness theorem, this is not possible, so $BB(748)$ must be undecidable in ZFC.
+
+  More generally speaking, for any sufficiently-powerful axiomatic system $S$, if we can construct a contradiction-generating TM $t$ with $n$ states and $m$ symbols; then $BB(n, m)$ must be undecidable in $S$.
+
+  Further, all $BB(n' \geq n, m' \geq m)$ are also undecidable for similar reasons: if we knew $BB(n', m')$, we could again run $t$ for that many steps; since $BB(n', m') \geq BB(n, m)$, doing so would still inform us of the (in)consistency of ZFC, according to ZFC.
+
+> The function $BB(-, m) : \mathbb N \to \mathbb N$ grows faster than any computable function, and is thus uncomputable
+  Fix $m$. Now suppose we had a computable function $f : \mathbb N \to \mathbb N$ which grew at least as fast as $BB(-, m)$; precisely,
+
+  \katex: \exists N \in \mathbb N : \forall n \geq N : f(n) \geq BB(n, m)
+
+  We could use $f$ to solve the halting problem, as follows.
+
+  Take a turing machine $t$ with $n$ states and $m$ symbols. WLOG, assume that $n \geq N$ (if this is not the case, one can add as many non-operative states as necessary to ensure $n \geq N$).
+
+  Compute $f(n)$, which is possible since we assumed that $f$ is computable. Execute $t$ for $f(n)$ steps, which is possible since $f(n) \in \mathbb N$. At this point, $t$ will have either halted or not. If $t$ did not halt, then since $n \geq N$ we have $f(n) \geq BB(n, m)$ which means by definition of $BB$ that $t$ will never halt.
+
+  Thus given any turing machine $t$ with $m$ states we can decide with a finite procedure whether or not $t$ will halt. This solves the halting problem \aref [rk], which is impossible, so by contradiction $f$ must be slower-growing than $BB(-, m)$.
+  \adef: Strictly speaking, we have only solved the halting problem on $m$-symbol turing machines; this is probably equivalent to the general-form halting problem.
+
+> Implicit upper bounds on counterexamples
+  Note: the following is synthesized from \href <https://chat.platonic.systems/platonic/pl/7qgxszfn4jn3je8oriciu354ya> [a conversation] between Tommy Bidne, Morgan Thomas, and I. #onwards
+
+  Say you have a conjecture that some predicate $P$ holds on every natural number. And say you have a turing machine $t_P$ which searches for counter-examples and halts when it finds one; that is, $t_P$ halts iff the conjecture $\forall n\ P(n)$ is false. Also say you have a function $S : \mathbb N \to \mathbb N$ such that
+
+  \katex:
+    t_P \text{ has not halted after } n \text{ steps } \iff \forall k < S(n) : P(k)
+
+  That is, $S$ tells us the "speed" of $t_P$; after running $t_P$ for $n$ steps we will have verified $P(n)$ for $0 \leq n < S(n)$.
+
+  Okay, that's the setup.
+
+  Now assume that a counter-example $c$ to $P$ exists. Then we know $t_P$ halts on some $n$. Further, it must halt after at most $BB(t_P)$ steps \aref[rk] (because otherwise it would run forever). In turn, the counterexample $c$ must be less than $S(BB(t_P))$.
+  \adef: where $BB(t)$ denotes $BB(n, m)$ where $n$ is the number of states in $t$ and $m$ the number of symbols
+
+  This means that the existence of the function $BB$ bounding runtime on halting machines $t_P$ indirectly establishes a bound on counter-examples to conjectures $P$.
+
+  So we have for a counter-example searching TM $(t_P, S)$ that any counterexamples must be less than $S(BB(t_P))$. If we are interested in finding whether or not the conjecture $P$ actually is true, we can do so by explicitely running $t_P$ on all numbers $0 \leq n < S(BB(t_P))$; as such, to make this search as fast as possible, it behooves us to try and minimize $S(BB(t_P))$.
+
+  Finding a counter-example searching TM $(t_P, S)$ with small $S(BB(t_P))$ can essentially be done in 3 ways:
+
+  - Try to minimize $n$--the number of states in $t_P$--which lowers $BB(t_P)$
+  - Try to minimize $m$--the number of symbols in $t_P$--which lowers $BB(t_P)$
+  - Try to make $S$ slow-growing; that is, try to make $t_P$ \i[slow-running].
+
+  In other words, if we want to do an exhaustive search with $t_P$, it is useful to construct $t_P$ to be the smallest TM which runs as \i[slowly] as possible. This results in a tighter bound on possible counter-examples to $P$; these potential counterexamples can then be tested with a fast-running turing machine.

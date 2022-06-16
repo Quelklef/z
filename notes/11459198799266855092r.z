@@ -1,0 +1,5 @@
+format=compat-1
+
+[:linear subspace:]
+
+- A subspace of a [[linear space]] $$V$$ is a subspace of $$V$$ which is also itself a vector space

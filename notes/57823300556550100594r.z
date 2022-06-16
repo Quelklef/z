@@ -1,0 +1,7 @@
+format=compat-1
+
+[:Chebysheff's inequality:]
+
+- For a [[random variable]] $$X$$ and fixed $$\varepsilon > 0$$,
+    - $$P(\lvert X - \mathbb E X \rvert \geq \varepsilon) \leq \sigma^2(X)\varepsilon^{-2}$$
+    - Immediate consequence of [[Markov's inequality]]

@@ -1,0 +1,6 @@
+format=compat-1
+
+[:connected sandwich:]
+
+- If $$A$$ is a [[connected]] [[subspace topology]] of $$X$$ and if $$A \subseteq B \subseteq \bar A$$, then $$B$$ is connected
+    - [[JRM:Top.2]] 23.4

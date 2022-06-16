@@ -1,0 +1,7 @@
+format=compat-1
+
+[:neighborhood:] [:neighborhoods:] [:neighborhood of:] [:neighborhoods of:]
+
+Within a topological space $$X$$, we say that a set $$U \subseteq X$$ is a \i[neighborhood of] $$x_0 \in X$$ iff $$U$$ is open and $$x_0 \in U$$.
+
+Note that use of the term "neighborhood" can differ by author!

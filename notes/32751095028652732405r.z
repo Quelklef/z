@@ -1,0 +1,6 @@
+format=compat-1
+
+title: local compactness of subspaces of locally compact hausdorff spaces
+
+- [[JRM:Top.2]] §293.
+- Take $$X$$ [[locally compact]] and [[Hausdorff]] and $$A \subseteq X$$ a [[subspace topology]]. If $$A$$ is open or closed, then $$A$$ is [[locally compact]]

@@ -1,0 +1,13 @@
+format=flossy-2
+
+\title: Subgroups
+
+\sec: Definition
+
+If all of the following are true:
+
+- $(H, \cdot_H)$ and $(G, \cdot_G)$ are both groups
+- $H \subseteq G$
+- $h_1 \cdot_H h_2 = h_1 \cdot_G h_2$ for every $h_1, h_2 \in H$
+
+then we say that $H$ is a \jarg <subgroup> [subgroup] of $G$.

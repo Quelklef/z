@@ -1,0 +1,8 @@
+format=compat-1
+
+[:connectedness of linear continuums:]
+
+- [[JRM:Top.2]] §24.1
+- If $$L$$ is a [[linear continuum]] in the [[order topology]], then:
+    - $$L$$ is [[connected]]
+    - Intervals and rays in $$L$$ are connected

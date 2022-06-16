@@ -1,0 +1,5 @@
+format=compat-1
+
+[:locally metrizable:]
+
+- We call a space $$X$$ __locally metrizable__ iff every $$x \in X$$ has some [[neighborhood]] $$U \ni x$$ which is [[metrizable]] in the [[subspace topology]]

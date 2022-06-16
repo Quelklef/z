@@ -1,0 +1,12 @@
+format=compat-1
+
+[:properties of product topologies:]
+
+- The following hold for both the [[infinite product topology]] and the [[box topology]]:
+- 
+- If every $$A_\alpha$$ is a [[subspace topology]] of $$X_\alpha$$ then $$\prod_\alpha A_\alpha$$ is a subspace of $$\prod_\alpha X_\alpha$$
+    - This is [[JRM:Top.2]] 19.3
+- If every $$A_\alpha$$ is [[Hausdorff]], then $$\prod_\alpha A_\alpha$$ is as well
+    - This is [[JRM:Top.2]] 19.4
+- Take some family of spaces $$X_\alpha$$ and sets $$A_\alpha \subseteq X_\alpha$$. Then $$\prod_\alpha \bar A_\alpha = \overline{\prod_\alpha A_\alpha}$$
+    - This is [[JRM:Top.2]] 19.5

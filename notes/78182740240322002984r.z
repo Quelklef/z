@@ -1,0 +1,6 @@
+format=compat-1
+
+[:topological embedding:]
+
+- Given an injective [[continuous]] function $$f : X \to Y$$ between two [[topological space]]s, we call $$f$$ an __embedding__ of $$X$$ in $$Y$$ if when we restrict the codomain of $$f$$ to its image (as a [[subspace topology]]) to produce a bijection, we get a [[homeomorphism]]
+- 

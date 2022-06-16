@@ -1,0 +1,14 @@
+format=compat-1
+
+[:completeness of function spaces:]
+
+- Take $$(Y, d)$$ a [[complete metric space]] and $$J$$ a set
+    - When $$J$$ is uncountable, then $$Y^J$$ is not metrizable. However...
+    - Let $$\bar \rho(\mathbf x, \mathbf y) = \sup_{a \in J}\{ \min(d(x_\alpha, y_\alpha), 1) \}$$
+        - Interpretation: $$\bar \rho$$ gives a measure of "how locally similar" the two functions $$\mathbf x, \mathbf y : J \to Y$$ are. If $$\bar \rho(\mathbf x, \mathbf y)$$ is small, that means that every respective output from these functions differs by at most a small amount
+    - This is the [[uniform metric]] generating the [[uniform topology]]
+    - Relative to $$\bar \rho$$, $$Y^J$$ is a [[complete metric space]]!
+- 
+- Take $$Y$$ a [[metric space]] and $$X$$ a [[topological space]]
+    - Then $$\mathscr C(X, Y)$$, the set of continuous functions $$X \to Y$$, is closed in $$Y^X$$ under the uniform metric. Thus if $$Y$$ complete in the uniform metric then $$\mathscr C(X, Y)$$ [is too]([[closed subsets of complete metric spaces are complete]])
+    - Likewise for $$\mathscr B(X, Y)$$, the set of bounded functions $$X \to Y$$

@@ -1,0 +1,17 @@
+format=flossy-2
+
+\title: Topology
+
+\sec: Definition
+
+On a set $X$, a \jarg <topolog(y|ies|ical)> [topology] is a collection $\tau$ of subsets of $X$ where:
+  1. $\varnothing$ and $X$ are in $\tau$
+  2. $\tau$ is closed under union
+  3. $\tau$ is closed under finite intersection
+
+
+\sec: Terminology
+
+- Sets $U \subseteq X$ is in $\tau$ are called \jarg <open set(|s)> [open sets]
+
+- A pair $(X, \tau)$ of a set and its topology is called a \jarg <(topological |)space(|s)> [topological space]. Often just written as $X$ when the topology is clear from context.

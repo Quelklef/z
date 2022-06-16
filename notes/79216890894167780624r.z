@@ -1,0 +1,6 @@
+format=compat-1
+
+title: locally compact hausdorff via homeomorphisms with subspaces
+
+- [[JRM:Top.2]] §29.4
+- A space $$X$$ is [[locally compact]] [[Hausdorff]] iff it is [[homeomorphic]] to an open [[subspace topology]] of a [[compact]] [[Hausdorff]] space

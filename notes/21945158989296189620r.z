@@ -1,0 +1,7 @@
+format=compat-1
+
+[:Euler's theorem:]
+
+- In $$\mathbb Z / m$$, if $$a$$ is a [unit]([[units of a ring]]), then $$a^{\varphi(m)} = 1$$
+    - Where $$\varphi$$ is the [[Euler phi function]]
+- This comes immedately from [[generalized Euler's theorem]], letting $$R = \mathbb Z / m$$

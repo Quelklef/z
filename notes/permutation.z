@@ -1,0 +1,47 @@
+format=flossy-2
+
+\title: Permutations
+
+\sec: Definition
+
+A \jarg <permutation(|s)> [permutation] $\sigma$ on a set $X$ is, to give three different phrasings,
+
+  - a finite symmetry over $X$
+  - a bijection over $X$ with finite support
+  - a bijection over $X$ which is equivalent to the identity function on all but a finite number of elements
+
+Permutations are typically considered as elements of symmetric groups
+
+
+\sec: Notation + Terminology
+
+- Two-line notation: we can write a permutation $\sigma$ over a set $X$ by juxtaposing the elements $x_1, \dots, x_n$ of $X$ with their respective images $\sigma(x_1), \dots, \sigma(x_n)$. For instance, we might write a bijection over $\{1, \dots, 7\}$ as:
+
+\katex:
+  \sigma = \begin{pmatrix}
+       1 & 2 & 3 & 4 & 5 & 6 & 7
+    \\ 4 & 5 & 3 & 1 & 7 & 6 & 2
+  \end{pmatrix}
+
+- One-line notation \aref[more]
+\adef:
+  In the case where $X$ has an understood ordering, we may omit the first line from two-line notation to produce:
+
+  \katex:
+    \sigma = \begin{pmatrix}
+      4 & 5 & 3 & 1 & 7 & 6 & 2
+    \end{pmatrix}
+
+  In order to distinguish this from cycle notation, one-line notation is often written without parentheses:
+
+  \katex:
+    \sigma = \begin{matrix}
+      4 & 5 & 3 & 1 & 7 & 6 & 2
+    \end{matrix}
+
+  I generally try to prefer two-line notation over one-line
+
+
+\sec: Properties
+
+- All permutations \ref cycle-decomposition [can be decomposed] into a product of disjoint cycles

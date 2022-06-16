@@ -1,0 +1,77 @@
+format=flossy-2
+
+\title: Equivalence Relations & Classes, Setoids
+
+\b[Warning:] this note is a mess!
+
+Eq classes are equivalently for:
+- Redefining identity (ex. set size -> study of cardinality; fixed difference -> modular arithmetic)
+  - Can be done with setoids / eq rels
+  - Can be done with class representatives
+- Forming partitions
+
+
+\sec: Intro
+
+In mathematics there is a common pattern of wanting to take some set and decompose it into disjoint subsets (ie, forming a partition). For instance
+
+- We can split $\mathbb N$ into even and odds, writing it as $\mathbb N = \{ n \in \mathbb N : n\text{ even} \} + \{ n \in \mathbb N : n\text{ odd}\}$.
+- Given a graph $G$, we could express it as the union of its components $G = C_1 \cup C_2 \cup \cdots$
+- If you like, you could construct $\mathbb N$ by starting with the integers $\mathbb Z$ and "forgetting" signs. That is, express $\mathbb Z$ as the sum $\mathbb Z = \{0\} + \{1, -1\} + \{2, -2\} + \cdots$; this is in some sense "approximately the same" as $\mathbb N$.
+
+Equivalence relations give the formal tools for doing such contructions.
+
+
+\sec: Definition
+
+An \jarg <equivalence relation> <eq rel> [equivalence relation] over a set $X$ is a binary relation $\sim$ on $X$ which is:
+
+- Reflexive; $a \sim a$
+- Symmatric; if $a \sim b$ then $b \sim a$
+- Transitive; if $a \sim b$ and $b \sim c$ then $a \sim c$
+
+Given an equivalence relation $\sim$, its \jarg <(equivalence |)class(|es)> [equivalence classes] are all sets of the form $\{ y : y \sim x \}$ for some $x \in X$.
+
+The equivalence relation axioms guarantee that the collection of such classes form a partition of $X$.
+
+The set of equivalence classes over $X$ of $\sim$ is denoted $X/\sim$ and called a \jarg <quotient set(|s)> [quotient set].
+
+
+\sec: Notation + Terminology
+
+- Given $x \in X$, the expression $[x]_\sim$ denotes the equivalence class of $x$, namely $\{ y : y \sim x \}$.
+
+- For some class $C$, a member $c \in C$ is called a \jarg <(class |)representative(|s)> [representative] of $C$.
+
+
+\sec: Examples
+
+- Take a collection of people and define $p_1 \sim p_2$ iff $p_1$ and $p_2$ have the same hair color. Then the equivalence classes group the people by hair color.
+
+- On $\mathbb C$, define $a \sim b$ iff $\lvert a \rvert = \lvert b \rvert$. Then the classes are concentric circles around $0$.
+
+
+\sec: Equivalence to normalization functions
+
+Let $E \subseteq N$ and $O \subseteq N$ repsectively be the set of even and odd integers. We may build the partition $\mathbb N = E + O$ By defining $n_1 \sim n_2 \iff 2 \mid (n_2 - n_1)$; the resultant classes are exactly $\{E, O\}$.
+
+But it may feel instead more intuitive to do it as follows. Let $r : \mathbb N \to \{0, 1\}$ be defined as $r(n) = \text{mod}(n, 2)$. Then $E$ is the subset of $\mathbb N$ where $r(n \in E) = 0$, and $O$ is the subset of $\mathbb N$ where $r(n \in O) = 1$.
+
+We can do this with the language of equivalence relations by defining $a \sim b \iff r(a) = r(b)$. Then the classes formed by $\sim$ are exactly $\{E, O\}$.
+
+This pattern always works. Generally, we can go back-and-forth between equivalence relations $\sim$ and "reduction" functions $r$:
+
+- Given some function $r : X \to R$, let $a \sim b \iff r(a) = r(b)$. This is an equivalence relation.
+- Given some equivalence relation $\sim$ on $X$, define $r : X \to \mathcal P(X)$ as $r(x) = [x]_\sim$.
+
+In both cases we have that the two constructions are equivalent in the following senses:
+
+- $a \sim b$ if and only if $r(a) = r(b)$
+- The equivalence classes formed by $\sim$ are exactly the sets of the form $\{ x \in X : r(x) = r_0 \}$ for some $r_0$.
+
+
+\sec: Setoids
+
+A \jarg <setoid(|s)> [setoid] $X$ is a pair $X = (X, \sim)$ of an underlying set $X$ and an equivalence relation $\sim$. Forming quotient sets can be seen as folding a setoid into a set; that is, we have
+
+\katex: a \sim b \text{ in } (X, \sim) \iff a = b \text{ in } X / \sim

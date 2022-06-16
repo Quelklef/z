@@ -1,0 +1,101 @@
+format=flossy-2
+
+\title: \b[Grp], the category of Groups
+
+\sec: Definition
+
+\jarg <grp> <category of groups> <group (iso|homo|)morphism(s|)> [\b[Grp]] is the category wherein objects are groups and morphisms are group homomorphisms.
+
+Given groups $(G, \star)$ and $(H, *)$, a function $\phi : G \to H$ is considered a homomorphism iff $\phi(a \star b) = \phi(a) * \phi(b)$.
+
+
+\sec: Properties
+
+- Bijective homomorphisms are isomorphisms
+
+> Morphisms preserve identities
+  Assume $\phi : G \to H$ is a group morphism. Let $e$ and $\bar e$ respectively denote identities of $G$ and $H$. Then,
+
+  \katex:
+    \begin{align*}
+         &  \phi(e)
+      \\ &= \phi(e)\cdot \bar e
+      \\ &= \phi(e)\cdot \phi(e)\cdot \phi(e)^{-1}
+      \\ &= \phi(e \cdot e)\cdot \phi(e)^{-1}
+      \\ &= \phi(e)\cdot \phi(e)^{-1}
+      \\ &= \bar e
+    \end{align*}
+
+> Morphisms respect powers; for a morphism $\phi$ we have $\phi(a^{\pm n}) = [\phi(a)]^{\pm n}$
+  For $n = 0$, observe that $\phi(a^0) = \phi(e) = e = \phi(a)^0$.
+
+  For positive $n$, apply induction to the fact that $\phi(a^n) = \phi(a)\phi(a^{n-1})$
+
+  For negative $n$, note that $e = \phi(e) = \phi(a^na^{-n}) = \phi(a^n)\phi(a^{-n}) = \phi(a^n)\phi(a)^{-n}$ and thus $\phi(a^n) = [\phi(a)^{-n}]^{-1} = \phi(a)^n$.
+
+> Isomorphism preserve element order
+  Proof left to the reader :O
+
+
+\sec: Examples of group homomorphisms
+
+- The function $\phi : (\mathbb Z, +) \to (\mathbb Z / n, +)$ given by $\phi(x) = \bar x$ is a homomorphism since $\overline{a + b} = \bar a + \bar b$
+
+- Note that $e^{i\theta}e^{i\rho} = e^{i(\theta + \rho)}$. Thus letting $\text{rot}(\theta) = e^{i\theta}$ we get that $\text{rot}$ is a morphism from $(\mathbb R, +)$ into $(\mathbb C, \cdot)$. This lends itself to the nice interpretation that $\text{rot}$ takes us from translations to rotations, "wrapping" the number line around the unit circle in the complex plane; translations along $\mathbb R$ become translations around the unit circle.
+
+- For any group $(G, \star)$ we have a homomorphism into the trivial group $(\{*\}, \cdot)$
+
+- If $G$ is a subgroup of $H$, the inclusion function $\iota : G \to H$ is a homomorphism
+
+
+\sec: Examples of group (non-)isomorphism
+
+- $\exp : (\mathbb R, +) \to (\mathbb R^{>0}, \cdot)$ is a homomorphism since $e^{a+b} = e^ae^b$. In fact, it's an isomorphism.
+
+- Note that $\begin{pmatrix} 1 & a \\ 0 & 1 \end{pmatrix} \begin{pmatrix} 1 & b \\ 0 & 1 \end{pmatrix} = \begin{pmatrix} 1 & {a+b} \\ 0 & 1 \end{pmatrix}$. Then if we let $M(s) = \begin{pmatrix} 1 & s \\ 0 & 1 \end{pmatrix}$, we get that $M$ is an isomorphism between $(\mathbb R, +)$ and $(M(\mathbb R), \times)$ \aref [rk]
+\adef: Also see "homogeneous coordinate systems" as used in computer graphics
+
+> $\mathbb Z / 4 \ncong (\mathbb Z / 2)^2$
+  Intuition. thinking of these groups as linear spaces, $\mathbb Z / 4$ has only one basis element $\bar 1$ whereas $(\mathbb Z / 2)^2$ has both $(\bar 0, \bar 1)$ and $(\bar 1, \bar 0)$ as bases
+
+  Proof. (Note that this proof is not directly related to the intuition above.) Note that in $(\mathbb Z/2)^2$, the identity has order $0$ and every other element has order $1$. On the contrary, in $\mathbb Z/4$, the element $\bar 2$ has order $2$. Since group isomorphisms preserve order, this means that the two groups cannot be isomorphic.
+
+> $(\mathbb Z / 8)^\times \cong (\mathbb Z / 12)^\times$
+  I'm sorry to say I don't have a better proof for this than, "write out the multiplication tables"
+
+> $D_6 \cong S_3$; the dihedral group $D_6$ is isomorphic with the symmetric group $S_3$
+  The group $D_6 = D_{2 \times 3}$ consists of symmetries of an equilateral triangle. By labelling the vertices of said triangle, we can associate symmetries in $D_6$ with permutations over $\{1, 2, 3\}$. For example, we can visualize reflection over the $y$-axis as
+
+  \tikz:
+    \begin{scope}[shift={(-1,0)}]
+      \draw (-30:1) -- (90:1) --(210:1) -- (-30:1);
+      \node at (90:1.5) {1};
+      \node at (210:1.5) {2};
+      \node at (-30:1.5) {3};
+    \end{scope}
+
+    \begin{scope}[shift={(7,0)}]
+      \draw (-30:1) -- (90:1) --(210:1) -- (-30:1);
+      \node at (90:1.5) {1};
+      \node at (210:1.5) {3};
+      \node at (-30:1.5) {2};
+    \end{scope}
+
+    \draw[->] (1, .2) -- (5, .2);
+
+    \begin{scope}[shift={(3, 1)}, scale=.5]
+      \draw (-30:1) -- (90:1) --(210:1) -- (-30:1);
+      \draw [dashed] (-90:1) -- (90:1.5);
+    \end{scope}
+
+  and thus associate it with the permutation
+
+  \katex:
+    \begin{pmatrix}
+      1 & 2 & 3 \\
+      1 & 3 & 2
+    \end{pmatrix}
+
+  Note that this mapping $D_6 \to S(3)$ is an injective homomorphism.
+
+  Further, since it's injective, and since $\lvert D_6 \rvert = 6 = \lvert S_3 \rvert$, then this mapping is in fact also surjective and is therefore an isomorphism.

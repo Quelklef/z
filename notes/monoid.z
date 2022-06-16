@@ -1,0 +1,9 @@
+format=flossy-2
+
+\title: Monoids
+
+\sec: Definition
+
+A \jarg <monoid(|s)> <monoidal> [monoid] is an algebraic structure $X = (X, \times, e)$ consisting of a set $X$, binary operation $\times$, and element $e \in X$ such that:
+  1. $\times$ is associative; $(a \times b) \times c = a \times (b \times c)$
+  2. $e$ is a two-sided identity for $\times$; $a \times e = e \times a = a$

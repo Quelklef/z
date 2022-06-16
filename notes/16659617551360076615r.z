@@ -1,0 +1,7 @@
+format=compat-1
+
+[:Markov's inequality:]
+
+- For a real-valued [[random variable]] $$X$$ and non-negative valued function $$f$$ on $$\mathbb R$$ and $$a > 0$$, 
+    - $$P(f(X) \geq a) \leq \mathbb E f(X) a^{-1}$$
+    - Wack

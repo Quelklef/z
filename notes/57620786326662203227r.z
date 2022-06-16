@@ -1,0 +1,9 @@
+format=compat-1
+
+[:semantic-dependent parsing:]
+
+- a tweet from me:
+    - We like to talk about the 'syntax and semantics' of a (natural) language as if they're independent, but aren't they very much not independent?
+
+As in, there are sentences we would be unable to parse without knowing the meanings of the words, right?
+- 

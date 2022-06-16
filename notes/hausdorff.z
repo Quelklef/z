@@ -1,0 +1,20 @@
+format=flossy-2
+
+\title: Hausdorff Topologies
+
+\sec: Definition
+
+A topological space is said to be \jarg <Hausdorff(|ness)> [Hausdorff] or to satisfy the \jarg <T2(| (axiom|condition))> [T2 condition] if every distinct pair of points can be surrounded by disjoint neighborhoods; that is,
+
+\katex: \forall a, b \in X : a \neq b \implies \exists \text{ open } U, V \subseteq X : a \in U \text{ and } b \in V \text{ and } U \cap V = \varnothing
+
+
+\sec: Properties
+
+- Stronger than (i.e., implies) the T1 condition.
+
+- Equivalent condition: the diagonal $\{ (x, x) : x \in X \}$ is closed in the product topology $X \times X$.
+
+- Sequences have unique limits
+
+- Nets also have unique limits

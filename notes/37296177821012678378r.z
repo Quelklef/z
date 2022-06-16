@@ -1,0 +1,8 @@
+format=compat-1
+
+title: sum of random variables
+
+- For two [[random variable]]s $$X$$ and $$Y$$, we define their sum $$X + Y$$ as:
+    - $$(X + Y)(\omega) = X(\omega) + Y(\omega)$$
+- Then the [[expected value]] of $$X + Y$$ is:
+    - $$\mathbb E(X + Y) = \mathbb E X + \mathbb E Y$$

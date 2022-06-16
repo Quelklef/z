@@ -1,0 +1,12 @@
+format=compat-1
+
+[:shannon's noiseless coding theorem:]
+
+- For some [[code]] $$f : W \to \Sigma^*$$,
+    - Let $$\text{avglength}(f)$$ be the average length of a code word coming out of $$f$$, i.e. $$\sum_{w \in W}P(w)\text{len}(f(w))$$. (We are modelling $$f$$ as choosing words $$w \in W$$ at random)
+    - Then if $$\text{avglength}(f)$$ is minimal, then:
+        - $$H(W)/\log_2(n) \leq \text{avglength}(f) < 1 + H(W)/\log_2(n)$$
+        - Where $$H$$ gives the [[entropy]] of a word set
+        - Where $$n$$ is the number of characters in the output alphabet
+    - Note that by log rules, $$H(W)/\log_2(n)$$ is basically the base-$$n$$ entropy of $$W$$
+    - This is proven using [[Kraft-McMillan]]

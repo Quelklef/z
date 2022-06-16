@@ -1,0 +1,7 @@
+format=compat-1
+
+[:proof as decomposition:]
+
+- Stop thinking of a lemma/proof/proposition as a rationale for the __certain truth__ of something
+- Instead, think of a proof as a deconstruction of a large claim ($$P \Rightarrow Q$$) into a series of smaller claims (the lemmas)
+- This idea comes from Proofs and Refutations by Imre Lakatos, but I have not found exactly where

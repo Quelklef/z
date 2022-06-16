@@ -1,0 +1,7 @@
+format=compat-1
+
+[:morse code:]
+
+- Morse code is a [[message encoding]]
+- Morse code is [[uniquely decipherable]] only if we delimit words by spaces
+    - Otherwise, $$f^*(\text{TOMTOM}) = f^*(\text{MMMMMM}) = f^*(\text{TOTOTO})$$

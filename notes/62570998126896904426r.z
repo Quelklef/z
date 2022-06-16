@@ -1,0 +1,8 @@
+format=compat-1
+
+[:refinement:] [:open refinement:] [:closed refinement:]
+
+- Take $$\mathcal A$$ a collection of sets, and $$\mathcal B$$ the same. We say that $$\mathcal B$$ is a __refinement__ of $$\mathcal A$$ if for each $$B \in \mathcal B$$ we have some $$A \in \mathcal A$$ with $$B \subseteq A$$.
+- If we are working in some [[topological space]], and every $$B \in \mathcal B$$ is open, we call it an __open refinement__; if they are all closed, then it's a __closed refinement__.
+- 
+- Refinements are generalizations of subcollections, as every subcollection is a refinement

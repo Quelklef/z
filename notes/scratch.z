@@ -1,0 +1,31 @@
+format=flossy-2
+
+\tikz:
+  \begin{scope}[font=\large]
+
+  \node[] at (0   :2.6) (1) { $0$ };
+  \node[] at (-45 :2.6) (2) { $1$ };
+  \node[] at (-90 :2.6) (3) { $0$ };
+  \node[] at (-135:2.6) (4) { $1$ };
+  \node[] at (-180:2.6) (5) { $0$ };
+  \node[] at (-225:2.6) (5) { $0$ };
+  \node[] at (-270:2.6) (5) { $1$ };
+  \node[] at (-315:2.6) (5) { $1$ };
+
+  \begin{scope}[shorten >=2pt, shorten <=2pt]
+    \node[] at (6, 0) (R1) { $R_1$ };
+    \draw[->] (R1) to[loop,out=120,in=60,looseness=6] (R1);
+    \node at (6, 1.1) { \small $\sigma$ };
+
+    \node[] at (7.5, 0) (R2) { $R_2$ };
+    \draw[->] (R2) to[loop,out=120,in=60,looseness=6] (R2);
+    \node at (7.5, 1.1) { \small $\sigma$ };
+
+    \node at (9, 0) { $\dots$ };
+
+    \node[] at (10.5, 0) (Rk) { $R_k$ };
+    \draw[->] (Rk) to[loop,out=120,in=60,looseness=6] (Rk);
+    \node at (10.5, 1.1) { \small $\sigma$ };
+  \end{scope}
+
+  \end{scope}

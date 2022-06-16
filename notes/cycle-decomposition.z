@@ -1,0 +1,142 @@
+format=flossy-2
+
+\title: Cycle Decomposition of Permutations
+
+\sec: Statement
+
+Given a permutation $\sigma$, we can write $\sigma$ as a product of pairwise-disjoint cycles
+
+\katex: \sigma = \beta_1 \cdots \beta_n
+
+Such a product is called a \jarg <(cycle|cyclic) decomposition> [cycle decomposition] of $\sigma$.
+
+Cycle decompositions are unique, but only up to ordering, since disjoint cycles permute.
+
+
+\sec: Example
+
+Consider the permutation
+
+\katex:
+  \sigma = \begin{pmatrix}
+       1 & 2 & 3 & 4 & 5 & 6 & 7
+    \\ 4 & 5 & 3 & 1 & 7 & 6 & 2
+  \end{pmatrix}
+
+We can visualize this permutation as so:
+
+\tikz:
+  \node[draw,circle] at (0    :2) (1) {1};
+  \node[draw,circle] at (51.4 :2) (2) {2};
+  \node[draw,circle] at (102.8:2) (3) {3};
+  \node[draw,circle] at (154.2:2) (4) {4};
+  \node[draw,circle] at (205.7:2) (5) {5};
+  \node[draw,circle] at (257.1:2) (6) {6};
+  \node[draw,circle] at (308.5:2) (7) {7};
+
+  \begin{scope}[shorten >=5pt, shorten <=5pt, >={latex}]
+    \draw[->] (1) to[bend left] (4);
+    \draw[->] (4) to[bend left] (1);
+
+    \draw[->] (3) to[loop,out=120,in=60,looseness=6] (3);
+    \draw[->] (6) to[loop,out=-120,in=-60,looseness=6] (6);
+
+    \draw[->] (2) to (5);
+    \draw[->] (5) to (7);
+    \draw[->] (7) to (2);
+  \end{scope}
+
+One may notice that this permutation is comprised of a number of cycles. Indeed, we can write it as the product
+
+\katex:
+  \begin{align*}
+    \sigma &= (4\ 1)(2\ 5\ 7)(3)(6) \\
+           &= (4\ 1)(2\ 5\ 7)
+  \end{align*}
+
+
+\sec: Proof
+
+Got none at the moment
+
+
+\sec: Properties
+
+- Given a cycle decomposition $\sigma = \beta_1 \cdots \beta_n$, the order $\lvert \sigma \rvert$ is equal to the least common multiple $\text{LCM}(\lvert \beta_1 \rvert, \dots, \lvert \beta_n \rvert)$ \aref[rk].
+\adef:
+  I will not give a proof of this. However, the intuition is that since each product term $\beta_i$ is disjoint with all others, they "act independently" and so the identity will be reached on common multiples.
+
+- If $\sigma$ is a $n$-cycle, then the cycle decomposition of $\sigma^k$ consists of $\ell$-cycles (probably), where $\ell$ is the additive order of $k$ modulo $n$ \aref[more].
+\adef:
+  Things I don't have:
+  - A proof for this
+  - A good explanation for this
+  - Complete confidence that this is correct
+
+  Things I do have:
+  - Pretty pictures for this
+  - Relative confidence that this is correcy
+
+  Let us fix $\sigma$ to be the identity 12-cycle. So $n=12$ and $\sigma$ looks like:
+
+  \tikz:
+    \foreach \i
+      [evaluate=\i as \deg using {int(-30 * \i)}]
+      [evaluate=\i as \n using {int(\i + 1)}]
+      in {0, ..., 11}
+    { \node (\i) at (\deg:2) {\n}; }
+
+    \foreach \i [evaluate=\i as \j using {int(mod(\i + 1, 12))}] in {0, ..., 11}
+    { \draw[->] (\i) to (\j); }
+
+  Now consider $\sigma^3$. We can characterize $\sigma$ as taking $x$ to $x + 1$ (bar cyclic behaviour). As such, $\sigma^3$ will take $x$ to $x + 3$ (bar cyclic behaviour). This looks like:
+
+  \tikz:
+    \foreach \i
+      [evaluate=\i as \deg using {int(-30 * \i)}]
+      [evaluate=\i as \n using {int(\i + 1)}]
+      in {0, ..., 11}
+    { \node (\i) at (\deg:2) {\n}; }
+
+    \foreach \i
+      [evaluate=\i as \a using {int(mod(\i + 0, 12))}]
+      [evaluate=\i as \b using {int(mod(\i + 3, 12))}]
+      [evaluate=\i as \c using {int(mod(\i + 6, 12))}]
+      [evaluate=\i as \d using {int(mod(\i + 9, 12))}]
+      in {0, ..., 2}
+    {
+      \draw[->] (\a) to (\b);
+      \draw[->] (\b) to (\c);
+      \draw[->] (\c) to (\d);
+      \draw[->] (\d) to (\a);
+    }
+
+  Note that $\sigma$ is composed of 3 distinct 4-cycles. Convince yourself this makes sense, and naturally gives rise to the conjecture that if $k \mid 12$ then $\sigma^{12}$ will be comprised of $(12/k)$-cycles.
+
+  Now consider $\sigma^8$:
+
+  \tikz:
+    \foreach \i
+      [evaluate=\i as \deg using {int(-30 * \i)}]
+      [evaluate=\i as \n using {int(\i + 1)}]
+      in {0, ..., 11}
+    { \node (\i) at (\deg:2) {\n}; }
+
+    \foreach \i
+      [evaluate=\i as \a using {int(mod(\i + 0, 12))}]
+      [evaluate=\i as \b using {int(mod(\i + 8, 12))}]
+      [evaluate=\i as \c using {int(mod(\i + 16, 12))}]
+      [evaluate=\i as \d using {int(mod(\i + 24, 12))}]
+      [evaluate=\i as \e using {int(mod(\i + 32, 12))}]
+      in {0, ..., 3}
+    {
+      \draw[->] (\a) to (\b);
+      \draw[->] (\b) to (\c);
+      \draw[->] (\c) to (\d);
+      \draw[->] (\d) to (\e);
+      \draw[->] (\e) to (\a);
+    }
+
+  Note that $\sigma^8$ is comprised of 4 distinct 3-cycles. Convince yourself this makes sense, and naturally gives rise to the conjecture that the cycle decomposition of $\sigma^k$ consists of cycles of length equal to the additive order of $k$ modulo $12$.
+
+  Generalizing, we have that if $\sigma$ is an $n$-cycle, then $\sigma^k$ comprises $\ell$-cycles, where $\ell = \text{LCM}(n, k)/k$ is the additive order of $k$ modulo $n$.

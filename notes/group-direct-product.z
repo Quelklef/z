@@ -1,0 +1,10 @@
+format=flossy-2
+
+\sec: Direct product of groups
+
+Given two groups $(A, \times_G)$ and $(B, \times_B)$, let us define a third structure $(X, \times_X)$ as
+
+  $X := A \times B$ (cartesian product)
+  $(a_1, b_1) \times_X (a_2, b_2) := (a_1 \times_A a_2, b_1 \times_B b_2)$
+
+this structure $X$ is called the \jarg <(|group )direct product> <direct product o(n|f) groups> [direct product] of $A$ and $B$ and is denoted $A \otimes B$. The resulting structure $X$ is a group with identity $e_X = (e_A, e_B)$.

@@ -1,0 +1,5 @@
+format=compat-1
+
+[:sequentially compact:]
+
+- A [[topological space]] $$X$$ is said to be __sequentially compact__ if every sequence of points $$(x_n)_{n\in \mathbb N}$$ with $$x_n \in X$$ has a convergent subsequence

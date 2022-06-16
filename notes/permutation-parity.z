@@ -1,0 +1,115 @@
+format=flossy-2
+
+\title: Permutation 2-cycle decomposition, Permutation parity
+
+\sec: Summary
+
+\i[Prop.] Every possible \jarg <2-cycle decomposition> [decomposition of a permutation $\sigma$ into a product of 2-cycles]
+
+\katex: \sigma = \alpha_1 \alpha_2 \cdots \alpha_n
+
+has the same number of terms modulo 2; that is, $n$ is either always even or odd \aref main-claim-proof [pf].
+
+\i[Defn.] If $n$ is always even, then $\sigma$ is said to be \jarg <(even|odd)(| permutation(|s))> [even]; likewise for oddity.
+
+\adef main-claim-proof:
+  Fix a permutation $\sigma$, and take two 2-cycle decompositions
+
+  \katex:
+    \begin{align*}
+      \sigma &= \alpha_1 \cdots \alpha_n
+      \\     &= \beta_1 \cdots \beta_k
+    \end{align*}
+
+  We will show that $2 \mid n$ iff $2 \mid k$ and so conclude that $n \equiv k\ (\text{mod } 2)$
+
+  To do this, assume for contradiction that $2 \mid n$ but $2 \nmid k$. Now note that:
+
+  \katex:
+    \begin{align*}
+      & e
+      \\ &= \sigma \sigma^{-1}
+      \\ &= (\alpha_1 \cdots \alpha_n)(\beta_1 \cdots \beta_k)^{-1}
+      \\ &= (\alpha_1 \cdots \alpha_n)(\beta_k^{-1} \cdots \beta_1^{-1})
+      \\ &= (\alpha_1 \cdots \alpha_n)(\beta_k \cdots \beta_1) & \text{since 2-cycles are their own inverse}
+      \\ &= \alpha_1 \cdots \alpha_n \cdot \beta_k \cdots \beta_1
+    \end{align*}
+
+  Thus we have written $e$ as a product of $n + k$ 2-cycles. Since by assumption $n$ and $k$ have different parities, then $n + k$ is odd, so we have written $e$ as a product of an odd number of 2-cycles. This contradicts that every 2-cycle decomposition of $e$ has an even number of terms, proven below.
+
+
+  \i[Lemma.] Every 2-cycle decomposition of the identity permutation $e$ has an even number of terms.
+
+  Assume that $e$ is decomposed into 2-cycles as follows:
+
+  \katex: e = \beta_1 \cdots \beta_r
+
+  and let $(a\ b) = \beta_r$. Then the product $\beta_{r-1}\beta_r$ is in one of the following forms:
+
+  \katex:
+    \begin{gather*}
+      (a\ b)(a\ b)
+      \\ (a\ c)(a\ b)
+      \\ (b\ c)(a\ b)
+      \\ (c\ d)(a\ b)
+    \end{gather*}
+
+  These products are respectively equal to the following:
+
+  \katex:
+    \begin{gather}
+      e
+      \\ (a\ b)(b\ c)
+      \\ (a\ c)(c\ b)
+      \\ (a\ b)(c\ d)
+    \end{gather}
+
+  In the case $(1)$, we are able to remove the final two terms off ther product, thus expressing $e$ as a product of $r-2$ 2-cycles.
+
+  In the cases $(2)-(4)$, note that the second term in the product does not contain an $a$. As such, cases $(2)-(4)$ allow us to express $e$ in a form with the rightmost $a$ moved to the left.
+
+  We repeat this movement until case $(1)$ is reached. This \i[must] happen because, if it does not, then $a$ will be in the leftmost term of the product, meaning that $e$ does not fix $a$, which is a contradiction.
+
+  As such, eventually case $(1)$ will be reached, allowing us to re-express $e$ as a product of $r-2$ 2-cycles. Repeating this process, we will terminate either with an empty product or a product of a single 2-cycle. The latter is impossible, because it would not be equal to $e$. Thus, we will terminate on the empty product, meaning that $r$ was originally even.
+
+This is called a permutation's \jarg <parit(y|ies)> [parity].
+
+
+\sec: Example
+
+Consider the cycle
+
+\katex: \sigma = (1\ 5\ 4\ 2\ 3)
+
+We can write this cycle as a product of 2-cycles as follows:
+
+\katex: \sigma = (1\ 3)(1\ 4)(1\ 2)(1\ 5)
+
+Since this product has 5 terms, then $\sigma$ is odd.
+
+There are other ways to write $\sigma$ as a product of 2-cycles; for instance, we could multiply the current expression by $(1\ 3)(1\ 3) = e$ to obtain:
+
+\katex: \sigma = (1\ 3)(1\ 4)(1\ 2)(1\ 5)(1\ 3)(1\ 3)
+
+Note that doing so does not change the number of terms (modulo 2); the claim is that this will always be the case.
+
+
+\sec: Properties
+
+> A cycle is even iff its length is odd
+  I assert without proof that if $\sigma = (x_1\ x_2\ \cdots x_n)$ is a cycle, then $\sigma = (x_1\ x_n)(x_1\ x_{n-1})\cdots(x_1\ x_2)$
+
+  Since this 2-cycle decomposition has $n - 1$ elements, then $\sigma$ is even iff $n$ is odd.
+
+> A product of permutations $\pi = \sigma \cdot \tau$ is even iff $\sigma$ and $\tau$ are of the same parity
+  That is, permutation parity has the following pattern:
+
+  \katex:
+    \begin{align*}
+      \text{even} \cdot \text{even} &\text{ is even}
+      \\ \text{even} \cdot \text{odd} &\text{ is odd}
+      \\ \text{odd} \cdot \text{even} &\text{ is odd}
+      \\ \text{odd} \cdot \text{odd} &\text{ is even}
+    \end{align*}
+
+- Thus, a permutation $\sigma$ is even iff its cycle decomposition $\sigma = \alpha_1 \cdots \alpha_n$ has an even number of even-length cycles

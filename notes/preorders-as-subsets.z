@@ -1,0 +1,9 @@
+format=compat-1
+
+Proposition. For every set $$X$$ and preorder $$\to$$ on $$X$$, exists a set $$S$$ and function $$s : X \to 2^S$$ such that $$x \to y$$ iff $$s(x) \subseteq s(y)$$
+
+Proof. Take $$(X, \to)$$. For $$x \in X$$, let $$s(x)$$ denote the set of values $$y \in X$$ with $$y \to x$$. Note that $$s$$ is of type $$s : X \to \mathcal P(X) = 2^X$$, as promised. I claim that $$x \to y \iff s(x) \subseteq s(y)$$:
+$$(\Rightarrow)$$ Take $$x \to y$$ and $$z \in s(x)$$. Then $$z \to x$$ so by transitivity $$z \to y$$ so $$z \in s(y)$$. Thus $$s(x) \subseteq s(y)$$.
+$$(\Leftarrow)$$ Take $$s(x) \subseteq s(y)$$. Note $$x \to x$$ so $$x \in s(x)$$ so $$x \in s(y)$$ so $$x \to y$$.
+
+#onwards

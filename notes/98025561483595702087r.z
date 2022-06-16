@@ -1,0 +1,5 @@
+format=compat-1
+
+[:hamming distance:]
+
+- The __hamming distance__ between two strings of equal length is the number of positions where they have different characters

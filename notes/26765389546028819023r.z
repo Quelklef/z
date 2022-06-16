@@ -1,0 +1,5 @@
+format=compat-1
+
+[:effectively countable:]
+
+- A set $$S$$ is called __effectively countable__ iff it has a [[coding function]]

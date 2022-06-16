@@ -1,0 +1,40 @@
+format=flossy-2
+
+\title: Group Homomorphism Kernel
+
+
+\sec: Definition
+
+For a group morphism $\phi : G \to H$, the \jarg <kernel> [kernel] of $\phi$ is the fiber over the identity $e \in H$; that is,
+
+\katex: \text{ker}(\phi) = \{ g \in G : \phi(g) = e_H \}
+
+
+\sec: Properties
+
+> The kernel of $\phi : G \to H$ is a subgroup of $G$
+  Let $K$ be the kernel of $\phi$. Have that $K \subseteq G$, so have to show that $K$ forms a group.
+  Now:
+  - $K$ has identity. Since $\phi$ is a group morphism, $\phi(e_G) = e_H$
+  - $K$ is closed under multiplication. Take $a, b \in K$. Then $\phi(ab) = \phi(a)\phi(b) = e_H e_H = e_H$, so $ab \in K$.
+  - Multiplication is associative over $K$, since it is over $G$
+  - $K$ has inverses: Take $a \in K$. Know that exists an inverse $a^{-1} \in G$. And have that $e_H = \phi(e_G) = \phi(aa^{-1}) = \phi(a)\phi(a^{-1}) = e_H\phi(a^{-1}) = \phi(a^{-1})$. Thus $a^{-1} \in K$.
+
+> $\phi : G \to H$ is injective iff $\text{ker}(\phi)$ is the trivial subgroup of $G$
+  $(\Rightarrow)$ Assume $\phi$ is injective. Take $a, b \in \text{ker}(\phi)$. Know $\phi(a) = e_H = \phi(b)$. Since $\phi$ is injective, then $a = b$. Thus all elements of $\text{ker}(\phi)$ are the same, and thus are all $e_G$.
+  $(\Leftarrow)$ Proof by contrapositive. Assume $\phi$ is not injective. Then exists some $a \neq b \in G$ such that $\phi(a) = \phi(b)$. Then,
+
+  \katex:
+    \begin{align*}
+         &  e_H
+      \\ &= \phi(e_G)
+      \\ &= \phi(aa^{-1})
+      \\ &= \phi(a)\phi(a^{-1})
+      \\ &= \phi(b)\phi(a^{-1})
+      \\ &= \phi(ba^{-1})
+    \end{align*}
+
+  Thus $ba^{-1} \in \text{ker}(\phi)$. Also, since $b \neq a$, then $ba^{-1} \neq e_G$ \aref[pf]. Thus $\text{ker}(\phi) \neq \{ e_G \}$.
+  \adef:
+    Lemma. If $b \neq a$ then $ba^{-1} \neq e$.
+    Proof. By contrapositive. If $ba^{-1} = e$ then multiplying both sides by $a$ gives $b = a$.

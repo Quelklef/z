@@ -1,0 +1,9 @@
+format=compat-1
+
+[:linear space:] [:linear spaces:]
+
+- A __linear space__ (or vector space) $$V$$ over a [[field]] $$F$$ is a 2-tuple $$(V, +)$$ where:
+    - $$+ : V^2 \to V$$ is commutative and associative, has an identity (named $$\vec 0$$), and has inverses (i.e. minus)
+    - we can scale vectors, i.e., for $$\vec v \in V,\ a \in F$$ we have that $$a\vec v \in V$$
+    - $$+$$ and $$\cdot$$ distribute both ways; $$a(\vec v + \vec w) = a\vec v + a\vec w$$ and $$\vec v(a + b) = a\vec v + b\vec v$$
+    - for $$1 \in F$$, have that $$1\vec w = \vec w$$

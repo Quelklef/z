@@ -1,0 +1,5 @@
+format=compat-1
+
+[:probability space:]
+
+- A __probability space__ is a 2-tuple $$\langle \Omega, P \rangle$$ where $$\Omega$$ is a [[sample space]] and $$P$$ is a [[probability measure]]

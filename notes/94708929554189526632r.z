@@ -1,0 +1,6 @@
+format=compat-1
+
+title: locally-connected spaces have equal components and path components
+
+- [[JRM:Top.2]] §25.5
+- If a [[topological space]] $$X$$ is [[locally path connected]], then its [[component]]s and its [[path component]]s are the same.

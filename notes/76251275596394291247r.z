@@ -1,0 +1,11 @@
+format=compat-1
+
+[:Fermat's little theorem:]
+
+- Consider $$\mathbb F_p$$ the [[finite field]] with prime cardinality. Every $$\alpha \in \mathbb F_p$$ is a root of $$x^p - x$$
+- Proof:
+    - Because $$p$$ is prime, then the [units]([[units of a ring]]) $$\mathbb F_p^\times$$ is just $$\mathbb F_p - \{0\}$$
+    - By [[Euler's theorem]], we have then that for each nonzero $$\alpha \in \mathbb F_p$$ that $$\alpha^{p-1} = 1$$
+        - $$\varphi(p) = p - 1$$
+    - in other words $$\alpha^p = \alpha$$ in other words $$\alpha^p - \alpha = 0$$ in other words $$\alpha$$ is a root of $$x^p - x$$
+- As a corollary, and because factorization [is unique]([[uniqueness of factorization]]) in $$\mathbb F_p$$, we have that $$x^p - x = (x-0)(x-1)\cdots (x-(p-1))$$

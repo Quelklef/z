@@ -1,0 +1,11 @@
+format=compat-1
+
+[:conditional entropy:]
+
+- In a [[probability space]] $$\Omega$$ and for some event $$\omega \subseteq \Omega$$, we define the conditional entropy
+    - $$H(X \mid \omega) := -\sum_x P(X=x \mid \omega) \log_2 P(X=x \mid \omega)$$
+    - Read: "information gained from learning $$X$$ when we know $$\omega$$ occured"
+- And for two [[random variable]]s $$X$$ and $$Y$$,
+    - $$H(X \mid Y) := \sum_y P(Y=y) H(X \mid Y=y)$$
+    - Read: "information gained from learning $$X$$ when $$Y$$ is already known"
+- Compare these definitions to that of [[entropy]]

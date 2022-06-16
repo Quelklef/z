@@ -1,0 +1,5 @@
+format=compat-1
+
+title: continuous functions preserve connectedness
+
+- If we have [[continuous]] $$f : X \to Y$$ and $$X$$ is [[connected]], then $$\text{Im}(f) = f(X)$$ is connected as a [[subspace topology]] of $$Y$$

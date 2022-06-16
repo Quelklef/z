@@ -1,0 +1,18 @@
+format=compat-1
+
+[:topological basis:] [:basis:] [:generated topology:]
+
+Since topologies are closed under union, it is in some sense redundant to construct a topology by specifying \i[all] the open sets. What if we could just give some "minimal" set of open sets, which by freely applying unions would provide the rest? (It's like providing just $$0$$ and $$x \mapsto x + 1$$ instead of all of $$\mathbb N$$.) This "minimal" set is called a \i[basis], and we use it to generate topologies. Note that the basis is subject to some laws in order to ensure that freely applying unions actually \i[does] generate a topology.
+
+Definition: on a set $$X$$, a \i[topological basis] $$\mathcal B$$ is a collection of sets $$B \subseteq X$$ such that:
+
+  1. $$\mathcal B$$ covers $$X$$
+     - Ensures that $$X$$ will be open in the generated topology
+
+  2. If $$B_1, B_2 \in \mathcal B$$ are basis elements and $$x \in B_1 \cap B_2$$ then exists $$B' \in \mathcal B$$ with $$x \in B' \subseteq B_1 \cap B_2$$
+     - Weakened form of closure under intersection.
+     - Ensures that the generated topology will be closed under intersection.
+
+Given a basis $$\mathcal B$$, its \i[generated topology] is the collection of unions of basis elements. That is, a set $$U$$ is open in the generated topology if and only if it satisfies the following equivalent conditions:
+  1. $$U = \bigcup_{B \in \mathbf B} B$$ for some $$\mathbf B \subseteq \mathcal B$$
+  2. For each $$x \in U$$ exists a $$B \in \mathcal B$$ such that $$x \in B \subseteq U$$

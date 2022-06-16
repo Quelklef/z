@@ -1,0 +1,71 @@
+format=flossy-2
+
+\title: Groups and group theory
+
+\sec: Intro
+
+See \ref intro-to-groups [intro to groups] first!
+
+
+\sec: Definition
+
+A \jarg <group(|s)> <group theory> [group] is an algebraic structure $G = (G, \star)$ consisting of a set $G$ and a binary operation $\star$ satisfying:
+
+  1. (composition) $\star$ is associative
+  2. (identity) exists an $e \in G$ such that for any $f \in G$ we have $e\star f = f\star e = f$
+  3. (inverses) for any $f \in G$ exists a $g \in G$ such that $f\star g = g\star f = e$
+
+
+\sec: Notation + termiology
+
+>  There are two common notation systems in use, \i[multiplicative] and \i[additive]
+  Multiplicative notation (the usual):
+  - $a \star b$ is $ab$
+  - $e$ is $1$
+  - Inverse of $a$ is $a^{-1}$
+  - $\underbrace{a \star a \star \cdots \star a}_{n\text{ times}}$ is $a^n$
+
+  Additive notation:
+  - $a \star b$ is $a + b$
+  - $e$ is $0$
+  - Inverse of $a$ is $-a$
+  - $\underbrace{a \star a \star \cdots \star a}_{n\text{ times}}$ is $na$
+
+\sec: Properties
+
+> The identity element is unique. Thus, we may (and do) say "the" identity.
+  Proof. Assume two identities $e, e'$. Then $e = ee' = e'$
+
+> Inverses are unique. Thus, we may (and do) say "the" inverse of $f$. The inverse of $f$ is often written $f^{-1}$.
+  Proof. Fix $f$, and assume two inverses $g, g'$. Then $g = g(fg') = (gf)g' = g'$.
+
+> If $a, b$ commute then $(ab)^n = a^nb^n$
+
+  \katex:
+    (ab)^n
+    = \underbrace {ab \cdot ab \cdots ab}_{n \text{ times}}
+    = (\underbrace {a \cdot a \cdots a}_{n \text{ times}}) \cdot (\underbrace {b \cdot b \cdots b}_{n \text{ times}})
+    = a^n b^n
+
+> $(a^{-1})^{-1} = a$
+  Follows from axiom (3). Let $f=a$, then exists $a^{-1}$ such that $aa^{-1} = 1$. Since inverses are two-sided this implies both that $a^{-1}$ is an inverse of $a$ \i[and] that $a$ is an inverse of $a^{-1}$.
+
+> $(ab)^{-1} = b^{-1}a^{-1}$
+  This can be shown directly; for fun, though, we will prove it using Cayley's isomorphism $\phi$.
+
+  First note that for $f, g$ bijective, we have
+
+  \katex: (f \circ g)^{-1} = g^{-1} \circ f^{-1}
+
+  So given $a,b \in G$ this gives
+
+  \katex:
+    \begin{align}
+      (\phi(a) \circ \phi(b))^{-1} &= \phi(a)^{-1} \circ \phi(b)^{-1}
+      \\ \phi(ab)^{-1} &= \phi(a)^{-1} \circ \phi(b)^{-1}
+      \\ \phi((ab)^{-1}) &= \phi(a^{-1}) \circ \phi(b^{-1})
+      \\ \phi((ab)^{-1}) &= \phi(a^{-1}b^{-1})
+      \\ (ab)^{-1} &= a^{-1}b^{-1}
+    \end{align}
+
+  Note that step $(2 \to 3)$ follows from the property of group isomorphisms that $\phi(a)^{-1} = \phi(a^{-1})$.

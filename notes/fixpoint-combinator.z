@@ -1,0 +1,5 @@
+format=flossy-2
+
+In Haskell, the \jarg <fix(|point(| combinator))> [\c[fix]] function takes some \c[f :: a -> a] and returns the \ref haskell-definedness [least defined] \c[x] such that \c[f x = x] \aref[ex].
+\adef:
+  \i[Example]. \c[fix (3 :)] gives an infinite list of \c[3]s. The result isn't \c[⊥] because \c[f ⊥ = 3:⊥ ≠ ⊥].

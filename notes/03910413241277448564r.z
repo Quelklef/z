@@ -1,0 +1,6 @@
+format=compat-1
+
+[:message encoding:]
+
+- We lift a [[word encoding]] $$f : W \to \Sigma^*$$ into a message encoding $$f^* : W^* \to \Sigma^*$$ by defining $$f^*(w_1, w_2, \cdots) = f(w_1) f(w_2) \cdots$$, where juxtaposition denotes concatenation
+    - i.e. `f* = foldMap f`

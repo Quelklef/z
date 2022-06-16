@@ -1,0 +1,5 @@
+format=compat-1
+
+[:well-ordered:]
+
+- A set $$A$$ is __well-ordered__ if it has a [[total order]] $$\leq$$ such that every nonempty subset of $$A$$ has a least element

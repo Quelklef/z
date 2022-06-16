@@ -1,0 +1,10 @@
+format=compat-1
+
+[:ideal observer rule:]
+
+- If we do know the probabilities of stuff coming through a [[binary symmetric channel]], we can use the following decoding strategy:
+    - Let $$y$$ be what was received. Decide that what was probably sent was the $$x$$ that maximizes $$P(x \text{ sent} \mid y \text{ received})$$.
+        - We are able to do this calculation since we know the probabilities of each $$x_i$$
+        - Given that we know that $$y$$ was received, this is reasonable
+        - See [[maximum likelihood choice]] for the other way 'round
+        - This is called the __ideal observer rule__

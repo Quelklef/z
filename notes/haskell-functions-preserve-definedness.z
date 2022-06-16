@@ -1,0 +1,5 @@
+format=flossy-2
+
+\title: Haskell functions preserve definedness
+
+For any \c[f], \c[x], \c[y], \c[x ≤ y] implies \c[f(x) ≤ f(y)], where \c[≤] denotes the \ref haskell-definedness [definedness relation].

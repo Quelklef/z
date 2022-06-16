@@ -1,0 +1,6 @@
+format=flossy-2
+
+Theorem: take an ordered set $X$ in the order topology and a convex subset $Y \subseteq X$.
+Then the order topology on $Y$ is the same as the subspace topology on $Y$ under $X$.
+
+Example of why this is not true when $Y$ is not convex: consider $X = \mathbb R$ and $Y = [0, 2] \cup \{ 4 \}$. Then considering $Y$ as a subspace topology of $X$, $\{4\}$ is open because it is $Y \cap (3, 5)$ and $(3, 5)$ is open in $X$. However, considering $Y$ as an order topology, $\{ 4 \}$ is not open: this is because $4 = \max Y$, so any basis element containing $4$ is of the form $(a, 4]$ and thus also contains some other number $a < 4$.

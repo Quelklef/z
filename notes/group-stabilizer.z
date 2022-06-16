@@ -1,0 +1,21 @@
+format=flossy-2
+
+\title: Group Stabilizers
+
+\sec: Definition
+
+Take a group $G$ acting on set $A$. Then for each $a \in A$, its \jarg <stabilizer(|s)> [stabilizer] is the set of all elements $g \in G$ which fix $a$; ie,
+
+\katex: \text{stab}_G(a) = \{ g \in G \mid g \bull a = a \}
+
+
+\sec: Properties
+
+> For $G$ acting on $A$, each stabilizer $\text{stab}(a)$ is a subgroup of $G$
+  Proof that $\text{stab}(a)$ satisfies the group axioms:
+
+  - Since $1 \bull a = a$, then $1 \in \text{stab}(a)$
+
+  - Take $g_1, g_2 \in \text{stab}(a)$. Then $(g_1g_2) \bull a = g_1 \bull (g_2 \bull a) = a$, so $g_1g_2 \in \text{stab}(a)$.
+
+  - Take $g \in \text{stab}(a)$. Then $g^{-1} \bull a = g^{-1} \bull (g \bull a) = (g^{-1} g) \bull a = a$, so $g^{-1} \in \text{stab}(a)$.

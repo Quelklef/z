@@ -1,0 +1,87 @@
+format=flossy-2
+meta: { starred = True }
+
+\title: \jarg <Cayley's (theorem|isomorphism)> [Cayley's Theorem]
+
+\sec: Statement
+
+Given a group $G$, the mapping
+
+\katex:
+  \begin{align*}
+    & \phi : G \to S(G)
+    \\ &\phi(g) = (x \mapsto gx)
+  \end{align*}
+
+going from $G$ to the symmetric group over $G$ is an injective group homomorphism; equivalently, $G \cong \phi(G)$.
+
+
+\sec: Background + significance
+
+One may notice that many canonical examples of groups correspond to some group of functions.
+
+For instance, the group $(\mathbb R, +)$ is isomorphic to the group of translations on $\mathbb R$. Precisely, let $\text{Tr}$ be the set of translations on $\mathbb R$; that is, $\text{Tr} = \{ (x \mapsto x + \delta) : \delta \in \mathbb R \}$. Then $(\text{Tr}, \circ)$ is a group under function composition $\circ$; further, $(\mathbb R, +) \cong (\text{Tr}, \circ)$.
+
+This is not an isolated example. Here are some more \aref[rk]:
+\adef:
+  \i[Remark]: I haven't formally verified any of these examples, so it's possible that some are subtly incorrect!
+
+- $(\mathbb R, \times) \cong$ dilations on $\mathbb R$ under composition
+- $(\mathbb C, +) \cong$ two-dimensional translations on $\mathbb C$ under composition
+- $(\mathbb C \setminus \{0\}, \times) \cong$ composed dilations and rotations on $\mathbb C$ under composition
+- $(\text{Mat}_{n \times n}, \times) \cong$ linear transformations on $\mathbb R^n$ under composition
+- $(\mathbb Z / n, +) \cong$ cyclic translations on the sequence $\{ 1 \dots n \}$ under composition
+
+In each case, we have a set of "objects" ($\mathbb R$, $\mathbb C$, $\mathbb Z/n$) which, under a given isomorphism, turn out to actually represent \i[actions] on the underlying set, and the group operation represents composition.
+
+Cayley's theorem basically tells us that this is the case for every group. Given any group $(G, \star)$, exists some $S \subseteq G \to G$ such that $(G, \star) \cong (S, \circ)$. That is, a group $G$ of "elements" is some sense "secretly" about operations $G \to G$.
+
+Historically, the subgroups $(S, \circ)$ of symmetric groups were the main focus of group theory. When the modern definition of a group was introduced, it wasn't obvious (and still isn't!) what the actual \i[meaning] is. Cayley's theorem tells us that the modern study of groups is the same as the study of these subgroups $(S, \circ)$. Read more \href <https://math.stackexchange.com/questions/10029/importance-of-cayleys-theorem/10034#10034> [on math.SE].
+
+
+\sec: Proof
+
+Take a group $(G, \cdot)$. Let $\phi : G \to (G \to G)$ be defined by $\phi(x) = (y \mapsto xy)$.
+
+I claim that $(G, \cdot) \cong (\phi(G), \circ)$.
+
+First I must justify that $(\phi(G), \circ)$ is even a group.
+
+  1. $\circ$ is a binary operation on $\phi(G)$. This is obvious except for closure, which is shown:
+
+    \katex:
+      \begin{align*}
+           &  \phi(a) \circ \phi(b)
+        \\ &= (x \mapsto ax) \circ (x \mapsto bx)
+        \\ &= (x \mapsto a(bx))
+        \\ &= (x \mapsto (ab)x)
+        \\ &= \phi(ab)
+        \\ &\in \phi(G)
+      \end{align*}
+
+  2. Associativity of $\circ$: Yes, since it's function composition.
+
+  3. Identity: Yes; it is given by $\phi(e) = (x \mapsto ex) = (x \mapsto x) = \text{id}_G$
+
+  4. Inverses: Yes; $[\phi(a)]^{-1} = [x \mapsto ax]^{-1} = [y \mapsto a^{-1}y]$
+
+Thus $(\phi(G), \circ)$ is a group.
+
+Now we must show that $(G, \cdot) \cong (\phi(G), \circ)$.
+
+  1. $\phi$ is injective. Take $a \neq b$, then we have $\phi(a) = (x \mapsto ax)$ and $\phi(b) = (x \mapsto bx)$; these can be shown distinct by applying each to $x = e$ to produce respectively $a$ and $b$.
+
+  2. $\phi$ is a group homomorphism:
+
+      \katex:
+        \begin{align*}
+             &  \phi(ab)
+          \\ &= (x \mapsto (ab)x)
+          \\ &= (x \mapsto a(bx))
+          \\ &= (x \mapsto ax) \circ (x \mapsto bx)
+          \\ &= \phi(a) \circ \phi(b)
+        \end{align*}
+
+Since $\phi$ is injective, then it is a bijection when restricted to its image $\phi(G)$.
+
+Thus $(G, \cdot) \cong (\phi(G), \circ)$.

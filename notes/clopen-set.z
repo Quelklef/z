@@ -1,0 +1,5 @@
+format=compat-1
+
+[:clopen:] [:clopen set:] [:clopen sets:]
+
+We call a set \i[clopen] if it is both a closed set and an open set.

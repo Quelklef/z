@@ -1,0 +1,7 @@
+format=compat-1
+
+[:converges uniformly:]
+
+- Take a sequence of functions $$f_n : X \to Y$$ from some [[topological space]] $$X$$ to a [[metric space]] $$Y$$ with metric $$d$$
+- Say there exists an $$f : X \to Y$$ such that for every $$\varepsilon > 0$$ we have some integer $$N$$ such that for each $$n > N$$ and $$x \in X$$ we have $$d(f_n(x), f(x)) < \varepsilon$$
+- Then we say that $$f_n$$ converges uniformly to $$f$$

@@ -1,0 +1,16 @@
+format=compat-1
+
+[:partial function:] [:total function:]
+
+- A partial function generalizes the idea of a function, by allowing the function to remain undefined on some inputs.
+- For instance,
+    - We can view $$x \mapsto 1 / x$$ as a total function $$\mathbb R \setminus \{0\} \to \mathbb R $$, or as a partial function $$\mathbb R \to \mathbb R$$ which is undefined on $$x = 0$$
+    - Given an algorithm which accepts an integer and halts if it is even or loops forever if it is odd, we could view this algorithm as a total function $$\mathbb Z \to \mathbb Z \cup \{ \bot \}$$ or as a partial function $$\mathbb Z \to \mathbb Z$$
+    - Generally speaking, we can view a partial function as a partial function, as a total function on the defined part of the domain, or a total function where the codomain is adjoined with some divergent element $$\bot$$
+- Terms and notation:
+    - If a function is not partial, it is called __total__
+    - If a function is undefined for some $$x$$, we may say that it __diverges__ on the input and write $$f(x)\uparrow$$.
+    - If a function is defined for some $$x$$, we may say that it __converges__ in the input and write $$f(x)\downarrow$$, as well as using $$f(x)\downarrow$$ to refer to the value $$f(x)$$ while simultaneously asserting that it exists as a convergent result.
+- Equality of partial functions is similar to equality of total functions, but we require the functions to converge and diverge on the same inputs
+
+A function that is not partial is called \i[total]

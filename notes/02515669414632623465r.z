@@ -1,0 +1,9 @@
+format=compat-1
+
+[:maximum likelihood choice:]
+
+- When we don't know probabilities of stuff coming through a [[binary symmetric channel]], or when they all have the same probability, a reasonable decoding strategy is to take the codeword with the minimal [[hamming distance]] from what we received
+    - This is called the __maximum likelihood choice__
+    - Let $$y$$ be the message received, and $$x$$ be the message that we believe was sent, as per our decoding. Then this strategy maximizes $$P(y \text{ received} \mid x \text{ sent})$$
+        - This is kinda the opposite of the want, since what we __know__ $$y$$ was received
+        - See [[ideal observer rule]] for the other way 'round 

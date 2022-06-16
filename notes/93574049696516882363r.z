@@ -1,0 +1,6 @@
+format=compat-1
+
+[:dense:]
+
+- For a [[topological space]] $$X$$ and subset $$A \subseteq X$$, if the closure $$\bar A$$ is equal to $$X$$, then we say that $$A$$ is __dense__ in $$X$$
+    - Ex: $$\mathbb Q$$ is dense in $$\mathbb R$$

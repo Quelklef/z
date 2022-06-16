@@ -1,0 +1,14 @@
+format=compat-1
+
+[:shannon's noisy coding theorem:]
+
+- Transmitting through some channel with:
+    - input words $$x_1 \dots x_n$$
+    - each with probability $$p_1 \dots p_n$$ of being picked
+    - and output words $$y_1 \dots y_n$$
+    - and probabilities $$p_{i,j}$$ giving the probability that $$y_j$$ is received if $$x_i$$ was sent
+- Take $$0 < R < \text{capacity}(\mathcal C)$$
+- Then there exists a sequence codes $$\{ \mathcal C_n \}$$ with each $$\mathcal C_n \in \{0,1\}^*$$ s.t.:
+    - Each $$\mathcal C_n$$ has length $$n$$
+    - $$\text{rate}(\mathcal C_n) \to R$$ as $$n \to \infty$$
+    - Using [[maximum likelihood choice]] decoding, the max probability of a word being decoded wrong approaches zero as $$n \to \infty$$

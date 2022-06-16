@@ -1,0 +1,6 @@
+format=compat-1
+
+title: second-countable spaces have a dense countable subset
+
+- [[JRM:Top.2]] §30.3
+- if $$X$$ is a [[second-countable]] space, then there is some countable $$A \subseteq X$$ that is [[dense]] in $$X$$

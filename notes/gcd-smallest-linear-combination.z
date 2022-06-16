@@ -1,0 +1,24 @@
+format=flossy-2
+
+\title: $\text{gcd}(a, b)$ is the smallest positive linear combination of $a$ and $b$
+
+\sec: Statement
+
+The greatest common divisor of $a$ and $b$ is the smallest positive linear combination of $a$ and $b$ with integer coefficients.
+
+Fix $a, b \in \mathbb N_{\geq 2}$. Let $\mathcal L$ be the set $\{ ax + by : x,y \in \mathbb Z,\ ax+by > 0 \}$ of positive linear combinations of $a$ and $b$. Then $\min \mathcal L = \text{gcd}(a, b)$.
+
+
+\sec: Proof
+
+First note that since $a, b \ne 0$ then $\mathcal L$ is nonempty, which by the well-ordering principle implies that $\min \mathcal L$ exists.
+
+Let $d$ denote $\min \mathcal L$. Since $d \in \mathcal L$ we know $\exists x_0, y_0 : ax_0 + by_0 = d$.
+
+We want to show that $d = \text{gcd}(a, b)$. We will do this by showing that (1) $d \mid a$; that (2) $d \mid b$; and that (3) any $e$ dividing both $a$ and $b$ also divides $d$.
+
+1. Assume for contradiction that $d \nmid a$. Then we can write $a = dq+r$ for some $q$ and some $0 < r < d$. Thus $r = a-dq = a-q(ax_0 + by_0) = a(1 - qx_0) + b(-qy_0) \in \mathcal L$. Since $r < d$ and $r \in \mathcal L$, then $d \neq \min \mathcal L$, which is a contradiction. Conclude that $d \mid a$.
+
+2. $d \mid b$ by analogous reasoning
+
+3. Take $e$ such that $e \mid a$ and $e \mid b$. Since $e \mid a$ then exists $k$ where $e = ka$. Thus $e = a\cdot k + b\cdot 0$, and so $e \in \mathcal L$. Since $d = \min \mathcal L$, then $e \leq d$.

@@ -1,0 +1,21 @@
+format=flossy-2
+
+\title: Euclidean Algorithm
+
+The \jarg <Euclidean algorithm> [Euclidean algorithm] gives an algorithm for finding the greatest common divisor of two integers.
+
+It essentially relies on the following two facts about the GCD:
+  1. if $a \mid b$, then $\text{gcd}(a, b) = a$
+  2. $\text{gcd}(a, b) = \text{gcd}(b, \text{mod}(a, b))$
+
+The algorithm uses identity (2) to repeatedly reduce the input pair $(a, b)$ until the base case (1) is reached \aref[rk].
+\adef: \i[Remark]. Strictly speaking, we should justify that such a process eventually terminates. The justification boils down to noting that $\text{mod}(a, b) < b$, so our inputs shrink; in the worst case we reduce to $a=1$ or $b=1$ and terminate.
+
+
+For example,
+\katex:
+  \begin{align*}
+       &  \text{gcd}(210, 45)
+    \\ &= \text{gcd}(45, 30)
+    \\ &= \text{gcd}(30, 15) = 15
+  \end{align*}

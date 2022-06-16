@@ -1,0 +1,9 @@
+format=compat-1
+
+[:closure:]
+
+Within a topological space $$X$$, a set $$A \subseteq X$$ has a \i[closure], denoted $$\text{Cl}(A)$$ or $$\bar A$$, and defined equivalently as:
+  1. The intersection of all closed sets containing $$A$$
+  2. The set of $$x \in X$$ where every open $$U \ni x$$ intersects $$A$$
+  3. Given a topological basis $$\mathcal B$$ for $$X$$: all those $$x \in X$$ where every $$B \in \mathcal B$$ containing $$x$$ intersects $$A$$
+  4. The union of $$A$$ with its set of limit points $$A'$$

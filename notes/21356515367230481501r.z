@@ -1,0 +1,6 @@
+format=compat-1
+
+[:uniform continuity theorem:]
+
+- Take $$f : X \to Y$$ [[continuous]] with $$X$$ and $$Y$$ both [[metric space]]s with respective metrics $$d_X$$ and $$d_Y$$. If $$X$$ is [[compact]], then $$f$$ is [[uniformly continuous]]
+- This follows from the [[Lebesgue number lemma]]

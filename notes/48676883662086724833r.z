@@ -1,0 +1,12 @@
+format=compat-1
+
+[:universalty of shannon's entropy:]
+
+- For any function $$h : [0, 1]^* \to \mathbb R$$ satisfying a few properties is a scalar multiple of [Shannon's entropy function]([[entropy]]) $$H$$. These properties are:
+    - $$h$$ continuous on each input
+        - Intuition: a slight variation in the sample space should produce a slight variation in the entropy
+    - Take $$\Omega_1$$ a uniform dist'n of $$n$$ events and $$\Omega_2$$ a uni. dist. of $$n + 1$$ events. Then $$h(\Omega_1) < h(\Omega_2)$$
+        - Intuition: rolling a d20 gives more information than rolling a d4
+    - For $$p_i, q_i \in [0, 1]$$ and $$p = \sum p_i$$ and $$q = \sum q_i$$, this: $$h(p_1, \dots, p_r, q_1, \dots, q_s) = h(p, q) + ph(p_1p^{-1}, \dots, p_rp^{-1}) + qh(q_1q^{-1}, \dots, q_sq^{-1})$$
+        - Intuition: the uncertainty in some set of events $$\{p_i \} \cup \{q_i\}$$ is the same as if we group the events into $$p_i$$ and $$q_i$$ and find the uncertainty of which group we fall into $$h(p, q)$$ plus the weighted uncertainty contained in each group
+    - These properties guarantee $$h = cH$$ for some $$c > 0$$

@@ -1,0 +1,5 @@
+format=compat-1
+
+[:metrizable:]
+
+- A [[topological space]] $$\langle X, \mathcal T_X \rangle$$ is called __metrizable__ if there exists some [[metric]] that generates $$\mathcal T_X$$

@@ -1,0 +1,19 @@
+format=flossy-2
+
+\title: Tags
+
+\sec: List
+\x:
+  global._mkTag = function(tag, desc) {
+    const mark = new Cats();
+    mark.add(`- \\jarg <#${tag}> [#${tag}]: `, desc, '\n');
+
+    const refs = s.graph.notes.filter(n => n.source?.includes('#' + tag));
+    for (const ref of refs)
+      mark.add(`  - \\ref ${ref.id} [${ref.id}]`, '\n');
+
+    return parse(mark.toString());
+  }
+
+\x[_mkTag('onwards', 'tag for ongoing/incomplete thought processes or projects')]
+\x[_mkTag('notes', 'for notes taken on external materials (e.g. books, articles, papers)')]

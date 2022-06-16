@@ -1,0 +1,23 @@
+format=flossy-2
+
+#notes
+
+\title: \jarg <Proofs and Refutations> [Proofs and Refutations] (Imre Lakatos)
+
+A short novel exploring \i[what mathematics is] and \i[how mathematics happens] through a historical lens. Presented as a fictional conversation between teachers and students.
+
+Found it to be generally gripping, even though I think most of it went over my head.
+
+Things that stuck:
+
+- Mathematics is a human endeavor
+
+- Rigor is never achieved, only pursued.
+
+  For instance, let us start with the \i[assertion] of Euler's formula that $V - E + F = 2$. Since this is unproven, it is a boundary of rigor.
+
+  We can give a proof of this assertion. This pushes our boundary of rigor out further. However, our proof will assume certain things about what a polyhedron is. Digging into those assumptions will reveal issues with the proof. These assumptions represent a new boudnary of rigor.
+
+  The book explains this better than me...
+
+Would like to read again, so: #onwards

@@ -1,0 +1,14 @@
+format=compat-1
+
+[:connected:] [:separation:]
+
+A \i[separation] of a topological space is a partition of the space into two nonempty disjoint sets.
+
+If a space has no separation, it is said to be \i[connected].
+Equivalently, a space is connected iff the only clopen sets are $$\varnothing$$ and $$X$$.
+
+
+JRM:Top.2 §23.1: If $$Y$$ is a subspace of $$X$$ and $$A$$ and $$B$$ form a separation for $$Y$$, then neither $$A$$ nor $$B$$ contiain a limit point for the other
+  (Possibly slightly misphrased)
+
+JRM:Top.2 §23.3: If you have a collection $$\{ A_\alpha \}$$ of connected subspaces of $$X$$ where $$\bigcap_\alpha A_\alpha$$ is nonempty, then $$\bigcup_\alpha A_\alpha$$ is connected

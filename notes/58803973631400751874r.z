@@ -1,0 +1,5 @@
+format=compat-1
+
+[:trivial topology:]
+
+- For a set $$X$$, the [[topology]] $$T = \{\varnothing, X\}$$ is called the __trivial__ or __indiscrete__ topology

@@ -1,0 +1,7 @@
+format=compat-1
+
+title: booleans as eq classes of computable propositions
+
+- [original tweet](https://twitter.com/Quelklef/status/1329538983391531011)
+- A boolean value is essentially a first-class representation of a computable proposition (i.e., the proposition, __computed__), except we __forget__ what the proposition actually __was__
+- this is why "bool is bad" -- we are losing information, namely, the information of __what__ is true/false. we're carrying around this standalone truth value without any context for what makes it meaningful.

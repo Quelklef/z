@@ -1,0 +1,7 @@
+format=compat-1
+
+[:conditional probability:]
+
+- For a [[probability measure]] $$P$$, the __conditional probability__ $$P(B \text{ given } A)$$ or $$P(B \mid A)$$ is $$\frac {P(A \cap B)} {P(A)}$$
+- This is a definition
+- There's intuition here, but I don't know how to explain it well. Like, $$P(A \cap B)$$ "zooms into" the space where $$B$$ happens within the universe of $$A$$, then the $$P(A)^{-1}$$ renormalizes.

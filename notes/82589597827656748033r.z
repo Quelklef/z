@@ -1,0 +1,10 @@
+format=compat-1
+
+[:complete metric space:]
+
+- A [[metric space]] is __complete__ if every [[Cauchy sequence]] converges
+    - Ex: $$\mathbb Q$$ not complete, but $$\mathbb R$$ complete; in fact, one can define $$\mathbb R$$ as a quotient set of the set of Cauchy sequences in $$\mathbb Q$$
+    - Ex: generally, $$\mathbb R^n$$ complete
+    - Ex: $$\mathbb R^\omega$$ is complete in a particular metric (see [[JRM:Top.2]] §43.4)
+- 
+- A metric space with metric $$d$$ is complete iff it is complete with the bounded metric $$\bar d(x, y) = \min(d(x, y), 1)$$

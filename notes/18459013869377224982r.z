@@ -1,0 +1,6 @@
+format=compat-1
+
+[:open map:]
+
+- A function $$f : X \to Y$$ between two [[topological space]]s is called an __open map__ exactly when:
+    - $$\forall U \in \mathcal T_X : f(X) \in \mathcal T_Y$$

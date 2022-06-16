@@ -1,0 +1,59 @@
+format=flossy-2
+
+\title: \jarg <Orbit(-| )Stabilizer (theorem|thm)> [Orbit-Stabilizer Theorem]
+
+\sec: Statement
+
+Given a finite group $G$ acting on a finite set $A$, we have for any $a \in A$ that the following are equivalent:
+
+- $\lvert \text{orbit}(a) \rvert$, the number of elements in the orbit of $a$
+
+- The number of left cosets of the stabilizer $\text{stab}(a)$ of $a$, which is $\lvert G \rvert \cdot \lvert \text{stab}(a) \rvert ^{-1}$
+
+
+\sec: Proof
+
+The proof will proceed by establishing a bijection between elements of the orbit of $a$ and left cosets of the stabilizer of $a$. Once a bijection is shown to exist, that means the two sets in question are of equal cardinality.
+
+Define this bijection $f : \{ g\ \text{stab}(a) : g \in G \} \to \text{orbit}(a)$ as
+
+\katex: f(g\ \text{stab}(a)) = g \bull a
+
+Note that multiple values of $g$ may give rise to the same value for $g\ \text{stab}(a)$, meaning we need to show this mapping is well-defined. Then we need to show that it's bijective, which we will do by showing both injectivity and surjectivity.
+
+\b[Well-definedness.] We can show $f$ is well-defined by proving that if $g_1\ \text{stab}(a) = g_2\ \text{stab}(a)$ for given $g_1, g_2 \in G$, then $f(g_1\ \text{stab}(a)) = f(g_2\ \text{stab}(a))$
+
+\katex:
+  \begin{align*}
+    g_1\ \text{stab}(a) &= g_2\ \text{stab}(a)
+    \\ g_1^{-1}g_2 &\in \text{stab}(a)  && \text{propery of cosets}
+    \\ (g_1^{-1}g_2) \bull a &= a && \text{definition of stabilizer}
+    \\ g_2 \bull a &= g_1 \bull a && \text{apply $(x \mapsto g_1 \bull x)$ to both sides}
+  \end{align*}
+
+Thus $f$ is well-defined.
+
+\b[Injectivity.] We show that $f(x) = f(y)$ implies $x = y$
+
+\katex:
+  \begin{align*}
+    g_1 \bull a &= g_2 \bull a
+    \\ a &= g_1^{-1}g_2 \bull a  && \text{apply $(x \mapsto g_1^{-1} \bull x)$ to both sides}
+    \\ g_1^{-1}g_2 &\in \text{stab}(a)  && \text{definition of stabilizer}
+    \\ g_1\ \text{stab}(a) &= g_2\ \text{stab}(a) && \text{property of cosets}
+  \end{align*}
+
+\b[Surjectivity.] Take some $o \in \text{orbit}(a)$. Then by the definition of orbits there exists a $g_0 \in G$ where $g_0 \bull a = o$. Then $f(g_0\ \text{stab}(a)) = g_0 \bull a = o$. Thus every $o$ has a preimage, so $f$ is surjective.
+
+
+\sec: Examples
+
+Take the group $G = \mathbb Z / 4$--the integers modulo 4--acting on the set $\mathbf 2^4$ of length-4 bitstrings by rotation (so e.g. $1 \bull 1000 = 0100$). Now consider the specific element $a = 1010 \in A$. Then we have:
+
+\katex: \text{stab}(a) = \{ 0, 2 \} \hspace{40pt} \text{orbit}(a) = \{ 1010, 0101 \}
+
+Meaning
+
+\katex: \lvert \text{orbit}(a) \rvert = 2 = 4 \cdot \frac 12 = \lvert G \rvert \cdot \lvert \text{stab}(a) \rvert^{-1}
+
+Which matches the theorem statement

@@ -1,0 +1,7 @@
+format=compat-1
+
+[:Cauchy sequence:]
+
+- A sequence of numbers $$(x_n)$$ is said to be __Cauchy__ if its tail gets arbitrarily tight; that is, if for every $$\varepsilon > 0$$ exists some $$N$$ for which $$d(x_n, x_m) < \varepsilon$$ whenever $$n, m \geq N$$
+- Note that this is generic over the metric $$d$$
+- Convergent sequences are all Cauchy

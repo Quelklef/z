@@ -1,0 +1,13 @@
+format=flossy-2
+
+\title: Linear Transformation
+
+A \jarg <linear(| (operator|operation|map|transformation|function))> <linearity> [linear operation] \aref [rk] is a function
+\adef: Not to be confused with "\ref linear-function [linear \i[function]]"
+
+\katex: f : V \to W
+
+between two linear spaces $V$ and $W$ which respects addition and scalar multiplication; that is, where:
+
+  1. $f(\vec v +_V \vec w) = f(\vec v) +_W f(\vec w)$
+  2. $f(c \cdot_V \vec v) = c \cdot_W f(\vec v)$

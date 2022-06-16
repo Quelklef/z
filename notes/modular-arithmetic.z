@@ -1,0 +1,59 @@
+format=flossy-2
+
+Terms: \jarg <modul(o|us|ar(| (arithmetic|addition|multiplication)))> (TODO!)
+
+\title: Modular arithmetic
+
+\sec: Basic idea
+
+We can visualize the integers $\mathbb Z$ as a two-sided infinite sequence of numbers:
+
+\katex: \cdots \to -3 \to -2 \to -1 \to 0 \to 1 \to 2 \to 3 \to \cdots
+
+The basic idea of modular arithmetic is to take this sequence and turn it into a cycle:
+
+\tikz:
+  \foreach \i [evaluate=\i as \deg using {int(-30 * (\i - 3))}] in {0, ..., 11}
+  { \node (\i) at (\deg:2) {\i}; }
+
+  \foreach \i [evaluate=\i as \j using {int(mod(\i + 1, 12))}] in {0, ..., 11}
+  { \draw[->] (\i) to (\j); }
+
+  \node at (0, -2.5) {the integers modulo 12};
+
+The above figure represents one of the most common examples of modular arithmetic: arithmetic on a clock. 5 hours after 11 o'clock is not 16 o'clock but rather 4 o'clock. As such, starting at $11$ in the figure and following the arrows 5 times lands us on $4$ instead of $16$.
+
+The only difference is that we have chosen to use $0$ to represent 12 o'clock rather than $12$.
+
+
+\sec: Definition
+
+Warning: this section is relatively dense and arcane!
+
+Fix $n \geq 2$, the size of our cycle. Let $M$ be a set of size $n$ of elements $\{ \bar 0, \bar 1, \dots, \overline{n - 1} \}$. These elements represent the numbers on our cycle.
+
+This gives rise to a natural operation $\bar \cdot : \{0, \dots, n-1\} \to M$ which takes $0$ to $\bar 0$ and $1$ to $\bar 1$, etc. We extend this operation onto $\mathbb Z \setminus \{0, \dots, n-1\}$ as $\bar x := \overline{ \text{mod}(x, n) }$. For instance, if we fix $n=3$, we have:
+
+\katex:
+  \begin{align*}
+    \overline{-2} &= \bar 1
+    \\ \overline{-1} &= \bar 2
+    \\ \bar 0 &= \bar 0
+    \\ \bar 1 &= \bar 1
+    \\ \bar 2 &= \bar 2
+    \\ \bar 3 &= \bar 0
+    \\ \bar 4 &= \bar 1
+    \\ \bar 5 &= \bar 2
+  \end{align*}
+
+Define addition as $\bar a + \bar b := \overline{a + b}$. This gives, for instance, for $n=7$ that $\bar 4 + \bar 6 = \overline{4 + 6} = \overline{ 10 } = \overline{ \text{mod}(10, 7) } = \bar 3$.
+
+Define multiplication similarly.
+
+For given $n$, the set $M$ is usually denoted $\mathbb Z / n$ or $\mathbb Z / n \mathbb Z$.
+
+\sec: Properties
+
+- $(\mathbb Z / n, +)$ is a group
+
+- $(\mathbb Z / n, \cdot)$ is not a group (since $\bar 0$ has no inverse), but \ref multiplicative-groups-of-integers [can be modified to form one].

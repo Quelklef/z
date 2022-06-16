@@ -1,0 +1,7 @@
+format=compat-1
+
+[:uniformly continuous:]
+
+- For some $$f : X \to Y$$ between two [[metric space]]s $$(X, d_X)$$ and $$(Y, d_Y)$$, we say that $$f$$ is uniformly continuous if
+    - For each $$\varepsilon > 0$$ we have some $$\delta > 0$$ such that for all $$x_0, x_1 \in X$$ we have that $$d_X(x_0, x_1) < \delta \implies d_Y(f(x_0), f(x_1)) < \varepsilon$$
+    - This differs from the typical definition of [continuity]([[continuous]]) in that the quantification over $$x_0, x_1$$ is innermost; one is not "uniformly continuous" at a single point
