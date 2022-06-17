@@ -6,7 +6,7 @@ const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 const fss = squire('../../fss.js');
 
 const Rep = squire('./rep.js');
-const { Trie, indexOf, impossible } = require('./util.js');
+const { Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
 const { p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
 
 exports.default =
@@ -135,7 +135,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
     // annotation-related state
     annotNameQueue: [],
-    annotNameStack: ['*', '†', '‡', '♥', '♦', '♣'],
+    annotNameStack: (function * () { for (let i = 1;; i++) yield ('' + i); })(),
 
     // tex-related state
     katexPrefix: new Cats(),
@@ -145,7 +145,7 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
       const c = { ...this };
       c.indents = [...c.indents];
       c.annotNameQueue = [...c.annotNameQueue];
-      c.annotNameStack = [...c.annotNameStack];
+      c.annotNameStack = cloneIterator(c.annotNameStack);
       c.katexPrefix = c.katexPrefix.clone();
       c.texPrefix = c.texPrefix.clone();
       return c;
@@ -674,22 +674,22 @@ commands.aref = function(s) {
   p_spaces(s);
 
   let body;
-  let bracketed;
+  let isSuper;
   if (s.text[s.i] === ';') {
-    if (s.annotNameStack.length === 0)
+    const { value, done } = s.annotNameStack.next();
+    if (done)
       throw mkError(s.text, [s.i, s.i + 1], 'Out of footnote symbols!');
     s.i++;
-    body = s.annotNameStack[0];
-    bracketed = false;
-    s.annotNameStack = s.annotNameStack.slice(1);
+    body = value;
+    isSuper = true;
   } else {
     body = p_inline(s, p_toplevel_markup)
-    bracketed = true;
+    isSuper = false;
   }
 
-  const brackClass = bracketed ? 'bracketed' : '';
+  const isSuperClass = isSuper ? 'super' : '';
   return new Rep.Seq(
-    `<span class="annotation-reference ${brackClass}" id="${s.gensym('annot-id')}" data-refers-to="${name}">`,
+    `<span class="annotation-reference ${isSuperClass}" id="${s.gensym('annot-id')}" data-refers-to="${name}">`,
     body,
     '</span>'
   );
@@ -1417,8 +1417,28 @@ const annotationsImplementation = String.raw`
 
 * { box-sizing: border-box; }
 
-.annotation-reference.bracketed:before { content: '['; }
-.annotation-reference.bracketed:after { content: ']'; }
+.annotation-reference.super
+{
+  vertical-align: super;
+  font-size: .9em;
+  position: relative;
+  padding: 0 1px;
+}
+
+/* Increase effective clickable area */
+.annotation-reference.super:before {
+  content: '';
+  position: absolute;
+  width: 25px;
+  height: 25px;
+  border-radius: 100%;
+  left: calc(50% - 25px / 2);
+  top: calc(50% - 25px / 2);
+  /* background-color: rgba(var(--color-dynamic-rgb), .1); */
+}
+
+.annotation-reference:not(.super):before { content: '['; }
+.annotation-reference:not(.super):after { content: ']'; }
 
 .annotation-reference:before,
 .annotation-reference:after,
