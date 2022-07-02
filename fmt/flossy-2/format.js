@@ -1322,7 +1322,7 @@ table.headers-vert th:first-child
 }
 
 blockquote {
-  margin-left: 0;
+  margin: 0;
   padding-left: 1em;
   border-left: 4px solid rgba(0, 0, 0, 0.1);
   position: relative;
