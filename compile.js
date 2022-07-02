@@ -24,7 +24,8 @@ function main(args) {
   });
 
   const formats = {};
-  for (const dname of fss.list('./fmt', { type: 'd' })) {
+  const formatsHome = plib.resolve(__dirname, 'fmt');
+  for (const dname of fss.list(formatsHome, { type: 'd' })) {
     const floc = plib.resolve(env.root, 'fmt', dname, 'format.js');
 
     const format = squire(floc).default;

@@ -1,0 +1,43 @@
+{
+  "nodes": {
+    "npmlock2nix": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1654775747,
+        "narHash": "sha256-9pXHDpIjmsK5390wmpGHu9aA4QOPpegPBvThHeBlef4=",
+        "owner": "tweag",
+        "repo": "npmlock2nix",
+        "rev": "5c4f247688fc91d665df65f71c81e0726621aaa8",
+        "type": "github"
+      },
+      "original": {
+        "owner": "tweag",
+        "repo": "npmlock2nix",
+        "type": "github"
+      }
+    },
+    "pkgs": {
+      "locked": {
+        "lastModified": 1656781747,
+        "narHash": "sha256-Gey7LZwFbg1TRKV6ePH0FG8q0M8k8MQ8qOHm+LBPnpU=",
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "rev": "eced91d2f85cdea93c4fc4cde6ea1dc8deee59f6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "nixos",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "npmlock2nix": "npmlock2nix",
+        "pkgs": "pkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}

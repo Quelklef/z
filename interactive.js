@@ -32,7 +32,11 @@ function main({ serverPort, websocketPort }) {
 
   const watcher = chokidar
     .watch(
-      ['./notes', './*.js', './fmt/**/*.*'],
+      [
+        plib.resolve(process.env.PWD, 'notes'),
+        plib.resolve(__dirname, '*.js'),
+        plib.resolve(__dirname, 'fmt/**/*.*'),
+      ],
       { cwd: '.' },
     )
     .on('ready', () => {
