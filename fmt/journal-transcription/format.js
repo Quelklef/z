@@ -127,8 +127,8 @@ function iso(num, f) {
   return ('' + fn).padStart(len, '0');
 }
 
-function isThisFormat(note) {
-  return t in note;
+function isSameJournal(there, here) {
+  return t in there && there.journalInfo.number === here.journalInfo.number;
 }
 
 function mkHtml(page, graph, env) {
@@ -139,8 +139,8 @@ function mkHtml(page, graph, env) {
 
   let prevNext = '';
   {
-    const prevPage = graph.notes.find(n => isThisFormat(n) && iso(n.range[1], x => x + 1) === page.range[0]);
-    const nextPage = graph.notes.find(n => isThisFormat(n) && n.range[0] === iso(page.range[1], x => x + 1));
+    const prevPage = graph.notes.find(n => isSameJournal(n, page) && iso(n.range[1], x => x + 1) === page.range[0]);
+    const nextPage = graph.notes.find(n => isSameJournal(n, page) && n.range[0] === iso(page.range[1], x => x + 1));
     // ^ TODO: O(n) but ought to be O(1)
     prevNext = mk(prevPage, '&larr; prev') + ' &bull; ' + mk(nextPage, 'next &rarr;');
 

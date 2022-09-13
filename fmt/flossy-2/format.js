@@ -373,6 +373,9 @@ function p_toplevel_impl(s, { done, verbatim }) {
   parsing:
   while (true) {
 
+    // Check indentation
+    // If indented block has ended, stop parsing
+    // Else, skip indentation whitespace
     const [blockOver, advanceBy] = checkIndent(s);
     if (blockOver) break parsing;
     else s.i += advanceBy;
@@ -429,8 +432,9 @@ function getNextNonemptyLine(text, i0 = 0) {
   for (let sol = i0; sol < text.length; sol = indexOf(text, '\n', sol) + 1) {
     const eol = indexOf(text, '\n', sol);
     const line = text.slice(sol, eol);
-    if (line.trim() !== '')
+    if (line.trim() !== '') {
       return line;
+    }
   }
   return null;
 }
@@ -930,7 +934,8 @@ commands.table = function(s) {
     while (true) {
       const cell = p_backtracking(s, s => {
         p_whitespace(s);
-        return p_inline(s, p_toplevel_markup);
+        const [body, kind] = p_enclosed(s, p_toplevel_markup);
+        return body;
       });
       if (cell === null) break;
       row.push(cell);
@@ -1270,10 +1275,11 @@ code {
   border: 1px solid rgba(var(--color-static-rgb), .25);
   background-color: rgb(245, 245, 245);
   border-radius: 3px;
+  white-space: pre-wrap;
 }
 code.inline {
   display: inline;
-  padding: 0px 2px;
+  padding: 0px 3px;
 }
 code.block {
   display: block;
