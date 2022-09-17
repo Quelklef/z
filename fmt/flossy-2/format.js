@@ -804,6 +804,28 @@ commands.katex = function(s) {
   });
 }
 
+commands['katex-prelude'] = function(s) {
+  p_spaces(s);
+  p_take(s, ';\n');
+  s.katexPrefix.add(String.raw`
+    \newcommand{\cl}[1]{ \mathcal{#1} }
+    \newcommand{\sc}[1]{ \mathcal{#1} }
+    \newcommand{\bb}[1]{ \mathbb{#1} }
+    \newcommand{\mag}[1]{ { \lvert {#1} \rvert } }
+    \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
+    \newcommand{\ol}[1]{ \overline{#1} }
+    \newcommand{\t}[1]{ \text{#1} }
+
+    % represents an anonymous parameter
+    % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
+    \newcommand{\apar}{ {-} }
+
+    % tuples
+    \newcommand{\tup}[1]{ \langle {#1} \rangle }
+  `);
+  return new Rep.Seq('');
+}
+
 // TeX, TikZ
 commands.tikz = function(s) {
   p_spaces(s);
