@@ -6,8 +6,6 @@ const { lazyAss, Cats, iife } = squire('./util.js');
 const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
-const t = Symbol('compile.t');
-
 const main =
 exports.main =
 function main(args) {
@@ -22,6 +20,9 @@ function main(args) {
     root: process.env.PWD,
     cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
   });
+
+  // Holds transient (ie, not cached) information
+  const trans = new WeakMap();
 
   const formats = {};
   const formatsHome = plib.resolve(__dirname, 'fmt');
@@ -71,10 +72,11 @@ function main(args) {
       const cached = env.cache.getOr('notes', [note.hash], null);
       if (cached) note = cached;
 
-      // Initialize transient (non-cached) data
-      Object.defineProperty(note, t, { enumerable: false, value: {} });
-      note[t].isFromCache = !!cached;
-      note[t].format = format;
+      // initialize transient data
+      trans.set(note, {
+        isFromCache: !!cached,
+        format: format,
+      });
 
       graph.notes.push(note);
     }
@@ -88,7 +90,7 @@ function main(args) {
   {
     const counts = {};
     for (const note of graph.notes)
-      counts[note[t].format.name] = (counts[note[t].format.name] || 0) + 1;
+      counts[trans.get(note).format.name] = (counts[trans.get(note).format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
     env.log.info(
       `Found ${Object.keys(formats).length} formats: `
@@ -189,7 +191,7 @@ function main(args) {
 
   env.log.info(`Caching...`);
   for (const note of graph.notes) {
-    if (note[t].isFromCache) continue;
+    if (trans.get(note).isFromcache) continue;
     env.cache.put('notes', [note.hash], note);
   }
 
