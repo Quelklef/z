@@ -10,21 +10,17 @@ const fss = squire('./fss.js');
 exports.mkEnv =
 function mkEnv(args) {
 
-  args.root;
   args.cacheRoot;
   args.logPrefixes ||= [];
 
   const env = {};
   env.parent = null;
 
-  env.root = args.root;
-
   env.cache = new Cache(args.cacheRoot);
   env.log = new Logger(args.logPrefixes);
 
   env.descend = function() {
     const child = mkEnv({
-      root: args.root,
       cacheRoot: args.cacheRoot,
       logPrefixes: [...args.logPrefixes],
     });

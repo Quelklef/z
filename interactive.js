@@ -11,16 +11,20 @@ const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
 exports.main =
-function main({ serverPort, websocketPort }) {
+function main({
+  sourcePath,
+  destPath,
+  serverPort,
+  websocketPort,
+}) {
 
   const env = mkEnv({
-    root: process.env.PWD,
-    cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
+    cacheRoot: plib.resolve(destPath, '.cache'),
   });
 
 
   const server = new StaticServer({
-    rootPath: plib.resolve(process.env.PWD, 'out'),
+    rootPath: destPath,
     port: serverPort,
     host: '0.0.0.0',
     followSymlink: true,  // assets are symlink'd
@@ -33,7 +37,7 @@ function main({ serverPort, websocketPort }) {
   const watcher = chokidar
     .watch(
       [
-        plib.resolve(process.env.PWD, 'notes'),
+        plib.resolve(sourcePath),
         plib.resolve(__dirname, '*.js'),
         plib.resolve(__dirname, 'fmt/**/*.*'),
       ],
@@ -65,39 +69,6 @@ function main({ serverPort, websocketPort }) {
 
 
 
-  const diffMode = {
-    enabled: false,
-
-    doDiff() {
-      if (!fss.exists('./out-cmp')) return;
-
-      fss.move({ source: './out/.cache', dest: './.cache-save-hack' });
-      try {
-        child_process.execSync(
-          'git --no-pager diff --unified=0 --no-index ./out-cmp ./out --minimal --word-diff=color || true',
-          { stdio: 'inherit' },
-        );
-      } finally {
-        fss.move({ source: './.cache-save-hack', dest: './out/.cache' });
-      }
-    },
-
-    commit() {
-      if (fss.exists('./out-cmp')) fss.remove('./out-cmp');
-      fss.copy({ source: './out', dest: './out-cmp' });
-      fss.remove('./out-cmp/.cache');
-    },
-
-    delete() {
-      if (fss.exists('./out-cmp'))
-        fss.remove('./out-cmp');
-    },
-
-    get isEmpty() {
-      return !fss.exists('./out-cmp');
-    },
-  }
-
   async function recompile() {
 
     // Clear screen...
@@ -107,7 +78,7 @@ function main({ serverPort, websocketPort }) {
 
     let compileSuccess = false;
     try {
-      main({ websocketPort });
+      main({ sourcePath, destPath, websocketPort });
       compileSuccess = true;
     } catch (e) {
       console.error(e);
@@ -115,17 +86,6 @@ function main({ serverPort, websocketPort }) {
 
     if (compileSuccess) {
       notify();
-
-      if (diffMode.enabled) {
-        console.log();
-        if (diffMode.isEmpty) {
-          console.log('WARN: DIFF MODE ON BUT CANNOT DIFF WITHOUT BASE COMMIT');
-        } else {
-          console.log('====== DIFF STRT ======');
-          diffMode.doDiff();
-          console.log('====== DIFF STOP ======');
-        }
-      }
     }
 
     const nss = {};
@@ -140,10 +100,6 @@ function main({ serverPort, websocketPort }) {
       '',
       'quit: [q]; recompile: [r]',
       'caches: clear [a] all' + Object.entries(nss).map(([i, ns]) => `; [${i}] ${ns}`).join(''),
-      'diffing: '
-        + (diffMode.enabled ? 'ON' : 'OFF')
-        + '; [d] toggle'
-        + (diffMode.enabled ? '; [C] commit; [D] delete' : '')
     ].join('\n'));
 
     withUserInput(ch => {
@@ -161,22 +117,6 @@ function main({ serverPort, websocketPort }) {
       }
       else if (ch in nss) {
         env.cache.clearNamespace(nss[ch]);
-        recompile();
-        return true;
-      }
-      else if (ch === 'd') {
-        diffMode.enabled = !diffMode.enabled;
-        recompile();
-        return true;
-      }
-      else if (ch === 'C') {
-        console.log('Committing current state');
-        diffMode.commit();
-        recompile();
-        return true;
-      }
-      else if (ch === 'D') {
-        diffMode.delete();
         recompile();
         return true;
       }

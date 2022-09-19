@@ -8,17 +8,18 @@ const fss = squire('./fss.js');
 
 const main =
 exports.main =
-function main(args) {
+function main({
+  sourcePath,  // location of source files
+  destPath,  // compilation destination
+  serverPort,
+  websocketPort,
+}) {
 
   const callTime = Date.now();
 
-  let { websocketPort } = args ?? {};
-  websocketPort ??= null;
-
-  fss.mkdir(plib.resolve(process.env.PWD, 'out'));
+  fss.mkdir(destPath);
   const env = mkEnv({
-    root: process.env.PWD,
-    cacheRoot: plib.resolve(process.env.PWD, 'out', '.cache'),
+    cacheRoot: plib.resolve(destPath, '.cache'),
   });
 
   // Holds transient (ie, not cached) information
@@ -27,7 +28,7 @@ function main(args) {
   const formats = {};
   const formatsHome = plib.resolve(__dirname, 'fmt');
   for (const dname of fss.list(formatsHome, { type: 'd' })) {
-    const floc = plib.resolve(env.root, 'fmt', dname, 'format.js');
+    const floc = plib.resolve(formatsHome, dname, 'format.js');
 
     const format = squire(floc).default;
     const name = plib.parse(floc).dir.split(plib.sep).reverse()[0];
@@ -39,10 +40,7 @@ function main(args) {
   const graph = {};
   graph.notes = [];
 
-  const files = fss.list(
-    plib.resolve(env.root, 'notes'),
-    { type: 'f', recursive: true },
-  );
+  const files = fss.list(sourcePath, { type: 'f', recursive: true });
 
   for (const floc of files) {
     if (plib.extname(floc) !== '.z') continue;
@@ -156,32 +154,32 @@ function main(args) {
   });
 
   // Empty out dir except for cache
-  for (const loc of fss.list(plib.resolve(env.root, 'out'))) {
+  for (const loc of fss.list(destPath)) {
     const isCache = plib.resolve(loc) === plib.resolve(env.cache.root);
     if (!isCache) fss.remove(loc);
   }
 
-  fss.write(plib.resolve(env.root, 'out', 'index.html'), renderIndex(graph));
+  fss.write(plib.resolve(destPath, 'index.html'), renderIndex(graph));
 
   env.log.info(`Writing...`);
 
   for (const note of graph.notes) {
     fss.write(
-      plib.resolve(env.root, 'out', 'raw', note.relativeLoc),
+      plib.resolve(destPath, 'raw', note.relativeLoc),
       '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
       + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'  // for <iframe> resizing
       + note.html
     );
 
     fss.write(
-      plib.resolve(env.root, 'out', note.relativeLoc),
+      plib.resolve(destPath, note.relativeLoc),
       withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`, websocketPort),
     );
   }
 
-  fss.mkdir(plib.resolve(env.root, 'out', 'assets'));
+  fss.mkdir(plib.resolve(destPath, 'assets'));
   for (const [assetLoc, assetHref] of Object.entries(graph.resolvedAssetHrefs)) {
-    const dest = plib.join(env.root, 'out', assetHref);
+    const dest = plib.join(destPath, assetHref);
     if (process.env.Z_SYMLINKS_OK === '1') {
       fss.symlink({ source: assetLoc, dest });  // symlink for speed
     } else {
