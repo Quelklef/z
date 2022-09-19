@@ -229,23 +229,57 @@ function renderSearchIndex(graph, env) {
   });
 }
 
-function renderSearchClient() {
-  return String.raw`
-    <span id="search-bar"></span>
+const searchClient = `
+    <span id="search-root"></span>
     <script>
+
+function mkHtml(html) {
+  /* Render a single element */
+  const template = document.createElement('template');
+  html = html.trim(); // Never return a text node of whitespace as the result
+  template.innerHTML = html;
+  return template.content.firstChild;
+}
+
+function component({ init, render }) {
+  const $node = mkHtml(\`<div style="display: contents">\`);
+  const comp = { update, modify, getState, $node };
+
+  let state = init;
+
+  function modify(endo) {
+    state = endo(state);
+    $node.innerHTML = '';
+    $node.append(render(state));
+  }
+  modify(x => x);
+
+  function update(newState) {
+    modify(_ => newState);
+  }
+
+  // This feels wrong ...
+  function getState() {
+    return state;
+  }
+
+  return comp;
+}
 
 (async function() {
   const searchIndex = await (await fetch('/search.json')).json();
 
+  const showCount = 12;
+
   function doSearch(query) {
+    const tokens = tokenize(query);
+    if (tokens.length === 0) return [];
+
     const scores = {};
     for (const pageId in searchIndex) {
       const totWordCount = Object.values(searchIndex[pageId]).reduce((a, b) => a + b, 0);
       const score = (
-        query
-        .split(/\W/g)
-        .filter(word => !!word)
-        .map(word => word.toLowerCase())
+        tokens
         .map(word => searchIndex[pageId][word] || 0)
         .reduce((a, b) => a + b, 0)
       ) / totWordCount;
@@ -256,61 +290,116 @@ function renderSearchClient() {
     pageIds.sort((a, b) => scores[b] - scores[a]);
     return (
       pageIds
-      .slice(0, 16)
+      .slice(0, showCount)
       .filter(pageId => scores[pageId] > 0)
       .map(pageId => ({ pageId, score: scores[pageId] }))
     );
+
+    function tokenize(str) {
+      return str.split(/\W/g).filter(tok => !!tok).map(tok => tok.toLowerCase());
+    }
   }
 
-  const $bar = document.createElement('input');
-  document.getElementById('search-bar').append($bar);
-  $bar.type = 'text';
-  $bar.style.padding = '.5em 1em';
-  $bar.style.width = '40ch';
+  const $root = document.getElementById('search-root');
 
-  const $results = document.createElement('div');
-  document.getElementById('search-bar').append($results);
+  const $search = mkHtml(\`
+    <div style="position: relative"></div>
+  \`);
+  $root.append($search);
+
+  const $bar = mkHtml(\`
+    <input
+      type="text"
+      style="padding: .5em; width: 40ch"
+      placeholder="Press '/' to search"
+    />
+  \`);
+  $search.append($bar);
+  document.addEventListener('keypress', ev => {
+    if (ev.key === '/') {
+      $bar.focus();
+      ev.preventDefault();
+      ev.stopPropagation();
+    }
+  });
+
+  const $results = component({
+    init: { results: [], selection: null },
+    render({ results, selection }) {
+      if (results.length === 0)
+        return mkHtml('<span>');
+
+      const $box = mkHtml(\`
+        <div
+         style="
+           position: absolute;
+           top: 100%;
+           width: calc(100% + 2px);
+           left: -1px;
+           background: white;
+           z-index: 99;
+           border: 1px solid lightgrey;
+           border-top: none;
+         "
+         ></div>
+      \`);
+
+      for (let i = 0; i < results.length; i++) {
+        const { pageId, score } = results[i];
+        const isSelected = selection === i;
+
+        $box.append(mkHtml(\`
+          <div
+            style="
+              display: flex; justify-content: space-between; font-size: 0.8em;
+              \${isSelected ? 'background-color: rgba(255, 100, 100, 0.1)' : ''}
+            "
+          >
+            <a href="/n/\${pageId}.html" class="--no-link-decor" style="flex: 1; padding: 0 .5em">\${pageId}</a>
+            <span style="margin-left: 1em">\${(score * 100).toFixed(2) + '%'}</span>
+          </div>
+        \`));
+      }
+      return $box;
+    },
+  });
+  $search.append($results.$node);
 
   $bar.addEventListener('input', () => {
     const query = $bar.value;
+    $results.modify(state => ({ ...state, results: doSearch(query) }));
+  });
 
-    if (query === '') {
-      $results.innerHTML = '';
+  $bar.addEventListener('keydown', ev => {
+    if (ev.key === 'ArrowDown') {
+      $results.modify(moveSelection(+1));
+    } else if (ev.key === 'ArrowUp') {
+      $results.modify(moveSelection(-1));
+    } else if (ev.key === 'Enter') {
+      const sel = $results.getState().results[$results.getState().selection];
+      if (sel)
+        window.location = '/n/' + sel.pageId + '.html';
+    } else {
       return;
     }
 
-    const results = doSearch(query);
+    function moveSelection(n) {
+      return state => {
+        const base = Math.min(showCount, $results.getState().results.length);
+        state.selection = (state.selection === null ? 0 : mod(state.selection + n, base));
+        return state;
+      };
+    }
 
-    $results.innerHTML = '';
-    for (const result of results)
-      $results.append(buildResult(result));
+    function mod(n, k) {
+      return ((n % k) + k) % k;
+    }
   });
-
-  function buildResult({ pageId, score }) {
-    const $el = document.createElement('div');
-    $el.style.width = '100%';
-    $el.style.display = 'flex';
-    $el.style.justifyContent = 'space-between';
-    $el.style.fontSize = '0.8em';
-
-    const $l = document.createElement('a');
-    $el.append($l);
-    $l.href = '/n/' + pageId + '.html';
-    $l.innerText = pageId;
-
-    const $r = document.createElement('span');
-    $el.append($r);
-    $r.innerText = (score * 100).toFixed(2) + '%';
-    $r.style.marginLeft = '1em';
-
-    return $el;
-  }
 
 })()
 
     </script>
-  `;
-}
+`;
 
 
 function renderIndex(graph) {
@@ -360,6 +449,10 @@ function withTemplate(mainHtml, websocketPort = null) {
   <script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.min.js"></script>
 <style>
 
+* {
+  box-sizing: border-box;
+}
+
 body {
   padding: 4vh 50px;
   padding-bottom: 25vh;
@@ -378,14 +471,19 @@ nav {
   align-items: center;
 }
 
-a {
+a:not(.--no-link-decor) {
   text-decoration: none;
   color: black;
   border-bottom: 1px solid #C06;
 }
 
-a:hover {
+a:not(.--no-link-decor):hover {
   border-bottom-width: 2px;
+}
+
+a.--no-link-decor {
+  color: inherit;
+  text-decoration: none;
 }
 
 tr:not(:last-child) th {
@@ -422,7 +520,7 @@ iframe {
 
 <nav>
   <span>ζ&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="/">table</a></span>
-  ${renderSearchClient()}
+  ${searchClient}
 </nav>
 
 <main>`);
