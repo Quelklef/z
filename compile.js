@@ -13,6 +13,8 @@ function main({
   destPath,  // compilation destination
   serverPort,
   websocketPort,
+  symlinksOk,
+  emitSensitiveInfo,
 }) {
 
   const callTime = Date.now();
@@ -20,6 +22,9 @@ function main({
   fss.mkdir(destPath);
   const env = mkEnv({
     cacheRoot: plib.resolve(destPath, '.cache'),
+    opts: {
+      emitSensitiveInfo
+    },
   });
 
   // Holds transient (ie, not cached) information
@@ -180,7 +185,7 @@ function main({
   fss.mkdir(plib.resolve(destPath, 'assets'));
   for (const [assetLoc, assetHref] of Object.entries(graph.resolvedAssetHrefs)) {
     const dest = plib.join(destPath, assetHref);
-    if (process.env.Z_SYMLINKS_OK === '1') {
+    if (symlinksOk) {
       fss.symlink({ source: assetLoc, dest });  // symlink for speed
     } else {
       fss.copy({ source: assetLoc, dest });

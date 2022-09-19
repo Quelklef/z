@@ -7,13 +7,16 @@ const help = `HELP
 
     Show this help text
 
-  zeta compile --src=<path> --dest=<path>
+  zeta compile
 
-    Compile a directory of notes
+    --src=<path>                 = Note source location
+    --dest=<path>                = Compilation destination
+    [--symlink]                  = Symlink assets instead of copying
+    [--safe]                     = Emit marked-sensitive info
 
-  zeta interactive --src=<path> --dest=<path> [ --server-port=<port> ] [ --websocket-port=<port> ]
-
-    Enter an interactive session with live updates
+    [--interactive               = Start in interactive mode
+      [--server-port=<port>]
+      [--websocket-port=<port>] ]
 `
 
 function main() {
@@ -31,30 +34,40 @@ function main() {
 
   else if (clargs.has('compile')) {
     clargs.consumeFlag('compile');
+
     const sourcePath = plib.resolve(process.env.PWD, clargs.consumeArg('--src'));
     const destPath = plib.resolve(process.env.PWD, clargs.consumeArg('--dest'));
+
+    const symlinksOk = clargs.consumeFlag('--symlink');
+    const emitSensitiveInfo = clargs.consumeFlag('--safe');
+
+    const isInteractive = clargs.consumeFlag('--interactive');
+    const serverPort = !isInteractive ? null : Number(clargs.consumeArg('--server-port', '8000'));
+    const websocketPort = !isInteractive ? null : Number(clargs.consumeArg('--websocket-port', '8001'));
+
     clargs.done();
 
-    require('./compile.js').main({
+    const mainArgs = {
       sourcePath,
       destPath,
-    });
-  }
+      websocketPort,
+      symlinksOk,
+      emitSensitiveInfo,
+    };
 
-  else if (clargs.has('interactive')) {
-    clargs.consumeFlag('interactive');
-    const sourcePath = plib.resolve(process.env.PWD, clargs.consumeArg('--src'));
-    const destPath = plib.resolve(process.env.PWD, clargs.consumeArg('--dest'));
-    const serverPort = Number(clargs.consumeArg('--server-port', '8000'));
-    const websocketPort = Number(clargs.consumeArg('--websocket-port', '8001'));
-    clargs.done();
-
-    require('./interactive.js').main({
+    const interactiveArgs = {
       sourcePath,
       destPath,
       serverPort,
       websocketPort,
-    });
+      mainArgs,
+    };
+
+    if (isInteractive) {
+      require('./interactive.js').main(interactiveArgs);
+    } else {
+      require('./compile.js').main(mainArgs);
+    }
   }
 
   else {

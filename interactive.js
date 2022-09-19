@@ -16,6 +16,7 @@ function main({
   destPath,
   serverPort,
   websocketPort,
+  mainArgs,
 }) {
 
   const env = mkEnv({
@@ -78,7 +79,7 @@ function main({
 
     let compileSuccess = false;
     try {
-      main({ sourcePath, destPath, websocketPort });
+      main(mainArgs);
       compileSuccess = true;
     } catch (e) {
       console.error(e);

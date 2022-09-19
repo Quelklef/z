@@ -13,11 +13,11 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
-const emitSensitiveInfo = process.env.Z_EMIT_SENSITIVE_INFO === '1';
-
 const t = Symbol('t');
 
 function * parseTranscription(floc, source, graph, env) {
+
+  const { emitSensitiveInfo } = env.opts;
 
   rand.seed(0);  // make deterministic to prevent misleading diffs
 
@@ -292,6 +292,8 @@ function escapeHtml(s) {
 
 
 function parseBody(body, env) {
+
+  const { emitSensitiveInfo } = env.opts;
 
   body += '\n';
 

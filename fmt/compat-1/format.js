@@ -18,7 +18,7 @@ function * (floc, source, graph, env) {
 
   // big ol hack!
   const isSensitive = floc.includes('/le/');
-  const shouldEmit = !isSensitive || process.env.Z_EMIT_SENSITIVE_INFO === '1';
+  const shouldEmit = !isSensitive || env.opts.emitSensitiveInfo;
   if (!shouldEmit) return;
 
   yield mkNote(floc, source, graph, env);

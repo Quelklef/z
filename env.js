@@ -16,6 +16,9 @@ function mkEnv(args) {
   const env = {};
   env.parent = null;
 
+  // reader monad
+  env.opts = args.opts;
+
   env.cache = new Cache(args.cacheRoot);
   env.log = new Logger(args.logPrefixes);
 
