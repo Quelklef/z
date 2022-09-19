@@ -158,10 +158,11 @@ function main({
     return resolved;
   });
 
-  // Empty out dir except for cache
+  // Empty out dir except for cache and .git (used for something)
   for (const loc of fss.list(destPath)) {
     const isCache = plib.resolve(loc) === plib.resolve(env.cache.root);
-    if (!isCache) fss.remove(loc);
+    const isGit = loc.endsWith('.git');
+    if (!isCache && !isGit) fss.remove(loc);
   }
 
   fss.write(plib.resolve(destPath, 'index.html'), renderIndex(graph));
