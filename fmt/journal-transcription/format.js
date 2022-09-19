@@ -13,8 +13,6 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
-const t = Symbol('t');
-
 function * parseTranscription(floc, source, graph, env) {
 
   const { emitSensitiveInfo } = env.opts;
@@ -46,8 +44,7 @@ function * parseTranscription(floc, source, graph, env) {
         newPage.journalInfo = { number: journalNumber };
         newPage.doEmitThisPage = emitSensitiveInfo;
 
-        Object.defineProperty(newPage, t, { enumerable: false, value: {} });
-        newPage[t].source = new Cats();
+        newPage.source = new Cats();
 
         if (curPage && iso(curPage.range[1], x => x + 1) !== newPage.range[0])
           throw Error(`Bad indexing ${curPage.range[1]} -> ${newPage.range[0]}`);
@@ -74,13 +71,14 @@ function * parseTranscription(floc, source, graph, env) {
     // Content
     } else {
       if (!curPage) continue;
-      curPage[t].source.add(line, '\n');
+      curPage.source.add(line, '\n');
     }
 
   }
 
   for (const page of pages) {
-    const [_, hasAnyCensoring] = parseBody(page[t].source.toString().trim(), env);
+    page.source = page.source.toString();
+    const [_, hasAnyCensoring] = parseBody(page.source.toString().trim(), env);
 
     const doImages = (page.doEmitThisPage && !hasAnyCensoring) || emitSensitiveInfo;
 
@@ -128,12 +126,12 @@ function iso(num, f) {
 }
 
 function isSameJournal(there, here) {
-  return t in there && there.journalInfo.number === here.journalInfo.number;
+  return 'journalInfo' in there && there.journalInfo.number === here.journalInfo.number;
 }
 
 function mkHtml(page, graph, env) {
 
-  const [html, _] = parseBody(page[t].source.toString().trim(), env);
+  const [html, _] = parseBody(page.source.toString().trim(), env);
 
   const emphasizeImages = html.trim().split('\n').length === 1;
 

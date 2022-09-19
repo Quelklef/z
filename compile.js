@@ -6,6 +6,8 @@ const { lazyAss, Cats, iife } = squire('./util.js');
 const { mkEnv } = squire('./env.js');
 const fss = squire('./fss.js');
 
+const fileSrc = fss.read(__filename).toString();
+
 const main =
 exports.main =
 function main({
@@ -22,9 +24,7 @@ function main({
   fss.mkdir(destPath);
   const env = mkEnv({
     cacheRoot: plib.resolve(destPath, '.cache'),
-    opts: {
-      emitSensitiveInfo
-    },
+    opts: { emitSensitiveInfo },
   });
 
   // Holds transient (ie, not cached) information
@@ -165,10 +165,9 @@ function main({
     if (!isCache && !isGit) fss.remove(loc);
   }
 
-  fss.write(plib.resolve(destPath, 'index.html'), renderIndex(graph));
-
   env.log.info(`Writing...`);
 
+  // Write notes
   for (const note of graph.notes) {
     fss.write(
       plib.resolve(destPath, 'raw', note.relativeLoc),
@@ -183,6 +182,13 @@ function main({
     );
   }
 
+  // Write index
+  fss.write(plib.resolve(destPath, 'index.html'), renderIndex(graph));
+
+  // Write search index
+  fss.write(plib.resolve(destPath, 'search.json'), renderSearchIndex(graph, env));
+
+  // Write assets
   fss.mkdir(plib.resolve(destPath, 'assets'));
   for (const [assetLoc, assetHref] of Object.entries(graph.resolvedAssetHrefs)) {
     const dest = plib.join(destPath, assetHref);
@@ -203,6 +209,107 @@ function main({
   const tookSecs = ((doneTime - callTime) / 1000).toFixed(1);
   env.log.success(`Done! (${tookSecs}s)`);
 
+}
+
+
+function renderSearchIndex(graph, env) {
+  return env.cache.at('search', ['index'], () => {
+    env.log.info('Building search index');
+    const index = {};
+    for (const note of graph.notes) {
+      const freqs = {};
+      index[note.id] = freqs;
+      for (let word of note.source.split(/\W/g)) {
+        word = word.toLowerCase();
+        if (!(word in freqs)) freqs[word] = 0;
+        freqs[word] += 1;
+      }
+    }
+    return JSON.stringify(index);
+  });
+}
+
+function renderSearchClient() {
+  return String.raw`
+    <span id="search-bar"></span>
+    <script>
+
+(async function() {
+  const searchIndex = await (await fetch('/search.json')).json();
+
+  function doSearch(query) {
+    const scores = {};
+    for (const pageId in searchIndex) {
+      const totWordCount = Object.values(searchIndex[pageId]).reduce((a, b) => a + b, 0);
+      const score = (
+        query
+        .split(/\W/g)
+        .filter(word => !!word)
+        .map(word => word.toLowerCase())
+        .map(word => searchIndex[pageId][word] || 0)
+        .reduce((a, b) => a + b, 0)
+      ) / totWordCount;
+      scores[pageId] = score;
+    }
+
+    const pageIds = Object.keys(searchIndex);
+    pageIds.sort((a, b) => scores[b] - scores[a]);
+    return (
+      pageIds
+      .slice(0, 16)
+      .filter(pageId => scores[pageId] > 0)
+      .map(pageId => ({ pageId, score: scores[pageId] }))
+    );
+  }
+
+  const $bar = document.createElement('input');
+  document.getElementById('search-bar').append($bar);
+  $bar.type = 'text';
+  $bar.style.padding = '.5em 1em';
+  $bar.style.width = '40ch';
+
+  const $results = document.createElement('div');
+  document.getElementById('search-bar').append($results);
+
+  $bar.addEventListener('input', () => {
+    const query = $bar.value;
+
+    if (query === '') {
+      $results.innerHTML = '';
+      return;
+    }
+
+    const results = doSearch(query);
+
+    $results.innerHTML = '';
+    for (const result of results)
+      $results.append(buildResult(result));
+  });
+
+  function buildResult({ pageId, score }) {
+    const $el = document.createElement('div');
+    $el.style.width = '100%';
+    $el.style.display = 'flex';
+    $el.style.justifyContent = 'space-between';
+    $el.style.fontSize = '0.8em';
+
+    const $l = document.createElement('a');
+    $el.append($l);
+    $l.href = '/n/' + pageId + '.html';
+    $l.innerText = pageId;
+
+    const $r = document.createElement('span');
+    $el.append($r);
+    $r.innerText = (score * 100).toFixed(2) + '%';
+    $r.style.marginLeft = '1em';
+
+    return $el;
+  }
+
+})()
+
+    </script>
+  `;
 }
 
 
@@ -266,6 +373,9 @@ body {
 
 nav {
   margin-bottom: 3em;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
 a {
@@ -310,7 +420,10 @@ iframe {
 
 <body>
 
-<nav>ζ&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="/">table</a></nav>
+<nav>
+  <span>ζ&nbsp;&nbsp;&bull;&nbsp;&nbsp;<a href="/">table</a></span>
+  ${renderSearchClient()}
+</nav>
 
 <main>`);
 
