@@ -171,8 +171,23 @@ function main({
   for (const note of graph.notes) {
     fss.write(
       plib.resolve(destPath, 'raw', note.relativeLoc),
-      '<base target="_parent">\n'  // makes clicking on <a> break out of <iframe>
-      + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'  // for <iframe> resizing
+
+      // make clicking on <a> break out of <iframe>
+      '<base target="_parent">\n'
+
+      // for <iframe> resizing
+      + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'
+
+      // have events bubble out of <iframe>
+      + `<script>
+           const evNames = ['keypress']
+           for (const evName of evNames) {
+             window.addEventListener(evName, ev => {
+               const clone = new ev.constructor(ev.type, ev);
+               window.parent.document.dispatchEvent(clone);
+             });
+           }
+         </script>`
       + note.html
     );
 
@@ -213,16 +228,37 @@ function main({
 
 
 function renderSearchIndex(graph, env) {
-  return env.cache.at('search', ['index'], () => {
+  return env.cache.at('search', ['index', renderSearchIndex.toString()], () => {
     env.log.info('Building search index');
+
     const index = {};
+
+    // must have no free variables, since it gets .toString()'d
+    const tokenize = source => (
+        source
+        .replace(/_/g, '')
+        .split(/\W/g)
+        .filter(tok => !!tok)
+        .map(tok => tok.toLowerCase())
+    );
+
+    index.tokenize = tokenize.toString();
+
+    index.notes = {};
+
     for (const note of graph.notes) {
-      const freqs = {};
-      index[note.id] = freqs;
-      for (let word of note.source.split(/\W/g)) {
-        word = word.toLowerCase();
-        if (!(word in freqs)) freqs[word] = 0;
-        freqs[word] += 1;
+      const noteInfo = {};
+      index.notes[note.id] = noteInfo;
+
+      const noteTokens = tokenize(note.id + ' ' + note.source);
+
+      noteInfo.id = note.id;
+      noteInfo.totalWordCount = noteTokens.length;
+
+      const counts = noteInfo.counts = {};
+      for (let word of noteTokens) {
+        if (!(word in counts)) counts[word] = 0;
+        counts[word] += 1;
       }
     }
     return JSON.stringify(index);
@@ -271,33 +307,30 @@ function component({ init, render }) {
 
   const showCount = 12;
 
+  const tokenize = eval(searchIndex.tokenize);
+
   function doSearch(query) {
     const tokens = tokenize(query);
     if (tokens.length === 0) return [];
 
     const scores = {};
-    for (const pageId in searchIndex) {
-      const totWordCount = Object.values(searchIndex[pageId]).reduce((a, b) => a + b, 0);
+    for (const note of Object.values(searchIndex.notes)) {
       const score = (
         tokens
-        .map(word => searchIndex[pageId][word] || 0)
+        .map(tok => note.counts[tok] || 0)
         .reduce((a, b) => a + b, 0)
-      ) / totWordCount;
-      scores[pageId] = score;
+      ) / note.totalWordCount;
+      scores[note.id] = score;
     }
 
-    const pageIds = Object.keys(searchIndex);
-    pageIds.sort((a, b) => scores[b] - scores[a]);
+    const noteIds = Object.keys(searchIndex.notes);
     return (
-      pageIds
+      noteIds
+      .sort((a, b) => scores[b] - scores[a])
       .slice(0, showCount)
-      .filter(pageId => scores[pageId] > 0)
-      .map(pageId => ({ pageId, score: scores[pageId] }))
+      .filter(noteId => scores[noteId] > 0)
+      .map(noteId => ({ noteId, score: scores[noteId] }))
     );
-
-    function tokenize(str) {
-      return str.split(/\W/g).filter(tok => !!tok).map(tok => tok.toLowerCase());
-    }
   }
 
   const $root = document.getElementById('search-root');
@@ -345,7 +378,7 @@ function component({ init, render }) {
       \`);
 
       for (let i = 0; i < results.length; i++) {
-        const { pageId, score } = results[i];
+        const { noteId, score } = results[i];
         const isSelected = selection === i;
 
         $box.append(mkHtml(\`
@@ -355,8 +388,8 @@ function component({ init, render }) {
               \${isSelected ? 'background-color: rgba(255, 100, 100, 0.1)' : ''}
             "
           >
-            <a href="/n/\${pageId}.html" class="--no-link-decor" style="flex: 1; padding: 0 .5em">\${pageId}</a>
-            <span style="margin-left: 1em">\${(score * 100).toFixed(2) + '%'}</span>
+            <a href="/n/\${noteId}.html" class="--no-link-decor" style="flex: 1; padding: 0 .5em">\${noteId}</a>
+            <span style="padding: 0 .5em">\${(score * 100).toFixed(2) + '%'}</span>
           </div>
         \`));
       }
@@ -373,12 +406,21 @@ function component({ init, render }) {
   $bar.addEventListener('keydown', ev => {
     if (ev.key === 'ArrowDown') {
       $results.modify(moveSelection(+1));
+      ev.preventDefault();
     } else if (ev.key === 'ArrowUp') {
       $results.modify(moveSelection(-1));
+      ev.preventDefault();
+    } else if (ev.key === 'Escape') {
+      $bar.blur();
     } else if (ev.key === 'Enter') {
       const sel = $results.getState().results[$results.getState().selection];
-      if (sel)
-        window.location = '/n/' + sel.pageId + '.html';
+      if (sel) {
+        const url = '/n/' + sel.noteId + '.html';
+        if (ev.shiftKey || ev.ctrlKey)
+          window.open(url, '_blank');
+        else
+          window.location = url;
+      }
     } else {
       return;
     }
