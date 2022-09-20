@@ -809,7 +809,7 @@ commands['katex-prelude'] = function(s) {
   p_take(s, ';\n');
   s.katexPrefix.add(String.raw`
     \newcommand{\cl}[1]{ \mathcal{#1} }
-    \newcommand{\sc}[1]{ \mathcal{#1} }
+    \newcommand{\sc}[1]{ \mathscr{#1} }
     \newcommand{\bb}[1]{ \mathbb{#1} }
     \newcommand{\mag}[1]{ { \lvert {#1} \rvert } }
     \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }

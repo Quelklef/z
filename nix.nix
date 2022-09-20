@@ -23,10 +23,10 @@ gitignoreSource =
 
 src = gitignoreSource ./.;
 
-runtime-deps = [
-  pkgs.nodejs-17_x
-  pkgs.texlive.combined.scheme-full
-  pkgs.dhall-json
+runtime-deps = with pkgs; [
+  nodejs-17_x
+  texlive.combined.scheme-full
+  dhall-json
 ];
 
 deriv =
