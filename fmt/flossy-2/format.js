@@ -305,7 +305,7 @@ function p_dhallExpr(s, { takeToEol }) {
 }
 
 function evalDhall(expr, env) {
-  return env.cache.at('dhall', [expr], () => {
+  return env.cache.at('note-parts', ['dhall', expr], () => {
     return fss.withTempDir(tmp => {
 
       env.log.info(`Evaluating Dhall [${expr.length}]`);

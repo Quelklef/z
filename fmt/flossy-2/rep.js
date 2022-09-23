@@ -163,7 +163,7 @@ class Katex extends Rep {
   }
 
   toHtml(env) {
-    return env.cache.at('katex', [this.katex, this.displayMode], () => {
+    return env.cache.at('note-parts', ['katex', this.katex, this.displayMode], () => {
       try {
         return libKatex.renderToString(this.katex, { displayMode: this.displayMode });
       } catch (e) {
@@ -219,7 +219,7 @@ ${tex}
 \end{document}
 `;
 
-    let html = env.cache.at('tex', [tex], () => {
+    let html = env.cache.at('note-parts', ['tex', tex], () => {
       return fss.withTempDir(tmp => {
 
         env.log.info(`Rendering LaTeX [${tex.length}]`);

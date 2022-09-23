@@ -228,7 +228,7 @@ function main({
 
 
 function renderSearchIndex(graph, env) {
-  return env.cache.at('search', ['index', renderSearchIndex.toString()], () => {
+  return env.cache.at('metadata', ['search-index', renderSearchIndex.toString()], () => {
     env.log.info('Building search index');
 
     const index = {};
