@@ -1,11 +1,10 @@
-let
+{ system }: let
 
 pkgs =
-  let fetched = builtins.fetchGit {
-        url = "https://github.com/NixOS/nixpkgs";
-        rev = "02b279323f3b5b031cd8aeb6440d76f0b735855e";
-      };
-  in import fetched { };
+  let
+    rev = "02b279323f3b5b031cd8aeb6440d76f0b735855e";
+    fetched = builtins.fetchTarball "https://github.com/NixOS/nixpkgs/archive/${rev}.tar.gz";
+  in import fetched { inherit system; };
 
 npmlock2nix =
   let fetched = builtins.fetchGit {
