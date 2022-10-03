@@ -380,6 +380,7 @@ class ReferencedBy extends Rep {
   toHtml() {
     if (!this.referencedBy) return '';
     const html = new Cats();
+    html.add('<div class="hide-on-print">');
     html.add('<br /><br />');
     html.add('<hr />');
     html.add('<p>Referenced by:</p>');
@@ -388,6 +389,7 @@ class ReferencedBy extends Rep {
       html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
     }
     html.add('</ul>');
+    html.add('</div>');
     return html;
   }
 
