@@ -808,13 +808,25 @@ commands['katex-prelude'] = function(s) {
   p_spaces(s);
   p_take(s, ';\n');
   s.katexPrefix.add(String.raw`
+    % shorthands
     \newcommand{\cl}[1]{ \mathcal{#1} }
     \newcommand{\sc}[1]{ \mathscr{#1} }
     \newcommand{\bb}[1]{ \mathbb{#1} }
-    \newcommand{\mag}[1]{ { \lvert {#1} \rvert } }
+    \newcommand{\fk}[1]{ \mathfrak{#1} }
+    \renewcommand{\bf}[1]{ \mathbf{#1} }
+
     \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
     \newcommand{\ol}[1]{ \overline{#1} }
     \newcommand{\t}[1]{ \text{#1} }
+
+    % "magnitude"
+    \newcommand{\mag}[1]{ { \lvert {#1} \rvert } }
+
+    % cardinality
+    \newcommand{\card}{ \t{card} }
+
+    % disjoint untion
+    \newcommand{\dcup}{ \sqcup }
 
     % represents an anonymous parameter
     % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
@@ -846,6 +858,28 @@ commands.tikz = function(s) {
 
   tex = s.texPrefix + tex;
   return new Rep.Tex({ tex, isTikz: true, isBlock: kind === 'block' });
+}
+
+commands['tikz-gen'] = function(s) {
+  p_spaces(s);
+
+  const script = p_block(s, p_toplevel_verbatim);
+
+  let tex = eval(`
+    (function() {
+      const gen = (function * () {
+        ${script}
+      })();
+      let result = '';
+      for (const part of gen)
+        result += part + '\\n';
+      return result;
+    })();
+  `);
+  console.log(tex);
+  tex = s.texPrefix + tex;
+
+  return new Rep.Tex({ tex, isTikz: true, isBlock: true });
 }
 
 
