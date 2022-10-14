@@ -55,9 +55,9 @@ exports.commands.Given = function(s) {
             `</span>`,
           );
         };
-        const sp = { ...s, extraParsers: [...s.extraParsers, parseRef] };
+        const sp = { ...s, parsers: [...s.parsers, parseRef] };
         const [by, _] = p_enclosed(sp, p_toplevel_markup);
-        Object.assign(s, { ...sp, extraParsers: s.extraParsers });
+        Object.assign(s, { ...sp, parsers: s.parsers });
         return by;
       });
       const number = s.GivenIndex;

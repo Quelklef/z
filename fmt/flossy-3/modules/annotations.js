@@ -2,6 +2,11 @@ const { squire } = require('../../../squire.js');
 const Rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
+exports.stateInit = () => ({
+  annotNameQueue: [],
+  annotNameStack: (function * () { for (let i = 1;; i++) yield ('' + i); })(),
+});
+
 exports.commands = {};
 
 // Annotation reference

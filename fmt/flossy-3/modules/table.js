@@ -95,3 +95,26 @@ exports.commands.table = function(s) {
   return result;
 
 }
+
+exports.prelude = String.raw`
+
+table {
+  border-collapse: collapse;
+  font-size: 1em;
+}
+table, tr, th, td {
+  border: 1px solid var(--color-static);
+}
+th, td {
+  padding: .3em .6em;
+}
+table.headers-horiz tr:first-child {
+  border-bottom-width: 2px;
+}
+table.headers-vert td:first-child,
+table.headers-vert th:first-child
+{
+  border-right-width: 2px;
+}
+
+`;

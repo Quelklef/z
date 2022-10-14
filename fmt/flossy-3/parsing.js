@@ -357,10 +357,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
   const parsers = (
     verbatim
       ? []
-      : [
-          ...s.extraParsers,
-          ...s.finalParsers,
-        ]
+      : s.parsers
   );
 
   const result = new Rep.Seq();
