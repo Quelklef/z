@@ -2,7 +2,7 @@ const clc = require('cli-color');
 
 const { squire } = require('../../squire.js');
 const { Cats, lazyAss } = squire('../../util.js');
-const { clone, indexOf } = require('./util.js');
+const { indexOf } = require('./util.js');
 const Rep = require('./rep.js');
 
 /*
@@ -17,7 +17,7 @@ with
 That is, they take some arguments and the current state s, and perform some
 parsing, mutating the state s, and producing a result r.
 
-If you want lookahead, pass in s.clone().
+If you want lookahead, pass in s._sm.clone(s).
 
 Parsers fail by throwing ParseError.
 
@@ -92,7 +92,7 @@ function p_integer(s) {
 const p_backtracking =
 exports.p_backtracking =
 function p_backtracking(s, parser) {
-  const sc = s.clone();
+  const sc = s._sm.clone(s);
   let result;
   try {
     result = parser(sc);
@@ -280,7 +280,7 @@ function p_block(s, p_toplevel) {
     p_spaces(s);
     p_take(s, '\n');
 
-    const srec = { ...s.clone(), indents: [] };
+    const srec = { ...s._sm.clone(s), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
     const result = p_toplevel(srec, done);
     p_take(srec, `==/${sentinel}==`);

@@ -3,12 +3,11 @@ const rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
 exports.commands = {};
-exports.stateInit = () => stateInit;
-
-const stateInit = {
+exports.StateT = [ 'annotNameQueue', 'annotIndex' ];
+exports.stateInit = () => ({
   annotNameQueue: [],
   annotIndex: 1,
-}
+});
 
 // WANT: stop distinguishing between super and non-super
 
@@ -20,7 +19,7 @@ exports.commands.aref = function(s) {
   if (!";[{(<:".includes(s.text[s.i])) {
     name = p_word(s).toString();
   } else {
-    name = s.gensym('annot');
+    name = s._sm.gensym(s, 'annot');
     s.annotNameQueue.push(name);
   }
 
@@ -40,7 +39,7 @@ exports.commands.aref = function(s) {
 
   const isSuperClass = isSuper ? 'super' : '';
   return new rep.Seq(
-    `<span class="annotation-reference ${isSuperClass}" id="${s.gensym('annot-id')}" data-refers-to="${name}">`,
+    `<span class="annotation-reference ${isSuperClass}" id="${s._sm.gensym(s, 'annot-id')}" data-refers-to="${name}">`,
     body,
     '</span>'
   );

@@ -56,7 +56,7 @@ exports.commands.Given = function(s) {
             `</span>`,
           );
         };
-        return s.local(s => {
+        return s._sm.local(s, s => {
           s.parsers.push(parseRef);
           const [by, _] = p_enclosed(s, p_toplevel_markup);
           return by;

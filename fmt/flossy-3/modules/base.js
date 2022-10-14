@@ -166,12 +166,12 @@ exports.commands.ref = function(s) {
   if (!toNoteId) throw mkError(s.text, s.i, "Missing note ID");
   p_spaces(s);
 
-  const body = s.local(s => {
+  const body = s._sm.local(s, s => {
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);
   });
 
-  const toNote = s.env.graph.notesById[toNoteId];
+  const toNote = s._sm.env.graph.notesById[toNoteId];
   return new Explicit({ toNoteId, toNote, body });
 }
 
@@ -296,7 +296,7 @@ exports.commands.href = function(s) {
   p_take(s, '>');
   p_spaces(s)
 
-  const body = s.local(s => {
+  const body = s._sm.local(s, s => {
     // Nested <a> tags are forbidden in HTML
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);

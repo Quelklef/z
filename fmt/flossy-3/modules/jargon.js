@@ -23,7 +23,7 @@ exports.commands.jarg = function(s) {
     forms = new Set([...forms, ...jargs]);
   }
 
-  const body = s.local(s => {
+  const body = s._sm.local(s, s => {
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);
   });
@@ -40,7 +40,7 @@ function p_implicitReference(s) {
   if (r === null) return '';
 
   const [jarg, stepAmt] = r;
-  const defNotes = s.env.graph.jargonToDefiningNoteSet[jarg];
+  const defNotes = s._sm.env.graph.jargonToDefiningNoteSet[jarg];
 
   const toNote = (
     defNotes && defNotes.size > 0

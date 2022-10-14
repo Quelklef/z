@@ -14,7 +14,7 @@ exports.commands.mermaid = function(s) {
   // a chart outwide of a browser environment.
   // So instead we have to defer rendering to the client.
 
-  const divId = s.gensym('mermaid');
+  const divId = s._sm.gensym(s, 'mermaid');
   return new rep.Seq(String.raw`
     <div id="${divId}">${escapeHtml(body)}</div>
     <script> window.renderMermaid('${divId}'); </script>

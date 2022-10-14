@@ -69,7 +69,7 @@ function p_indent(s) {
 
     return new Indented({
       indent: dIndent,
-      body: new Expand({ line, body, id: s.gensym('expand') }),
+      body: new Expand({ line, body, id: s._sm.gensym(s, 'expand') }),
     });
 
   } else {

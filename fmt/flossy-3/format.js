@@ -55,6 +55,7 @@ function mkNote(floc, source, graph, env) {
   note.source = source;
   note.source += '\n';  // allows parsers to assume lines end with \n
 
+  // WANT: some way to include entire closure?
   note.hash = hash(floc, source, scriptSrc);
 
   note.id = noteId;
@@ -129,88 +130,86 @@ function parse(args) {
 
   // Initialize parser state
   const s = {};
-  {
 
-    // MUTABLE STATE (ala StateT) //
+  // MUTABLE STATE (ala StateT) //
 
-    // Index in text
-    s.i = 0;
+  // Index in text
+  s.i = 0;
 
-    // Symbol generation
-    s.cursyms = {};
-
-    // Tracks which keys are mutable
-    s.StateT = [ 'i', 'cursyms' ];
+  // Symbol generation
+  s.cursyms = {};
 
 
-    // LOCAL STATE (ala ReaderT) //
+  // LOCAL STATE (ala ReaderT) //
 
-    // Environmental references
-    // These are very powerful!
-    s.env = { graph, note, env };
+  // Indentation stack
+  s.indents = [];
 
-    // Indentation stack
-    s.indents = [];
+  // Source text
+  s.text = text;
 
-    // Source text
-    s.text = text;
+  // Parsers
+  s.parsers = [];
+  s.parsers.push(p_command);
+  for (const module of Object.values(modules))
+    s.parsers = [...s.parsers, ...(module.parsers ?? [])];
 
-    // Parsers
-    s.parsers = [];
-    s.parsers.push(p_command);
-    for (const module of Object.values(modules))
-      s.parsers = [...s.parsers, ...(module.parsers ?? [])];
-
-    // Commands mapping
-    s.commands = {};
-    s.commands.scope = command_scope;
-    for (const module of Object.values(modules))
-      Object.assign(s.commands, module.commands);
+  // Commands mapping
+  s.commands = {};
+  s.commands.scope = command_scope;
+  for (const module of Object.values(modules))
+    Object.assign(s.commands, module.commands);
 
 
-    // METHODS //
+  // WANT: give modules namespaces?
+  for (const module of Object.values(modules))
+    if (module.stateInit)
+      Object.assign(s, module.stateInit(args));
 
-    s.gensym = function(namespace = '') {
-      if (!(namespace in this.cursyms)) this.cursyms[namespace] = 0;
-      return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
-    };
 
-    s.clone = function() {
-      const s = this;
-      const c = {};
-      for (const k in s) {
-        if (k === 'env')
-          c[k] = s[k];
-        else
-          c[k] = clone(s[k]);
-      }
-      return c;
-    };
+  // Initialize parser "type"
+  const sm = {};
+  s._sm = sm;
 
-    // Parse with a local state modification
-    s.local = function(inner) {
-      const s = this;
-      const sc = s.clone();
-      const res = inner(sc);
-      for (const key of s.StateT)
-        s[key] = sc[key];
-      return res;
-    };
+  // Tracks which keys are mutable
+  sm.StateT = [ 'i', 'cursyms' ];
+  for (const module of Object.values(modules))
+    if (module.StateT)
+      sm.StateT = [...sm.StateT, module.StateT];
 
-    // WANT: give modules namespaces?
-    for (const module of Object.values(modules)) {
-      if (module.StateT)
-        s.StateT = [...s.StateT, module.StateT];
-      if (module.stateInit)
-        Object.assign(s, module.stateInit(args));
-    }
+  // Environmental references
+  // These are very powerful!
+  sm.env = { graph, note, env };
 
-  }
+  sm.gensym = function(s, namespace = '') {
+    if (!(namespace in s.cursyms)) s.cursyms[namespace] = 0;
+    return 'gensym-' + (namespace ? (namespace + '-') : '') + (s.cursyms[namespace]++);
+  };
+
+  sm.clone = function(s) {
+    const sm = s._sm;
+    s._sm = null;
+    const r = clone(s);
+    r._sm = s._sm = sm;
+    return r;
+  };
+
+  // Parse with a local state modification
+  sm.local = function(s, inner) {
+    const sc = sm.clone(s);
+    const res = inner(sc);
+    for (const key of s._sm.StateT)
+      s[key] = sc[key];
+    return res;
+  };
+
+
+  // BEGIN //
 
   // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
   const meta = p_noteMetadata(s);
-  if (meta) s.env.log.info('metadata is', meta);
+  if (meta) s._sm.env.env.log.info('metadata is', meta);
   if (s.text[s.i] === '\n') s.i++;
 
   const noteRep = new rep.Seq();
@@ -265,7 +264,7 @@ function command_scope(s) {
   const json = p_jsExpr(s);
   p_spaces(s);
 
-  return s.local(s => {
+  return s._sm.local(s, s => {
     if ('inferReferences' in json)
       s.doImplicitReferences = !!json['inferReferences'];
     const [r, _] = p_enclosed(s, p_toplevel_markup);
