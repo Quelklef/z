@@ -5,23 +5,6 @@ const { Cats, lazyAss } = squire('../../util.js');
 const { indexOf } = require('./util.js');
 const Rep = require('./rep.js');
 
-/*
-
-Quick prelude on parsing
-
-Parsers are expected to have the signature
-  r = parser(s, ...args)
-with
-  type(s) extending { text: string, i: int }
-
-That is, they take some arguments and the current state s, and perform some
-parsing, mutating the state s, and producing a result r.
-
-If you want lookahead, pass in s._sm.clone(s).
-
-Parsers fail by throwing ParseError.
-
-*/
 
 const ParseError =
 exports.ParseError =

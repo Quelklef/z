@@ -29,6 +29,7 @@ type Module ≅
   { parsers [optional] :: Array (Parser Rep)
   , commands [optional] :: ObjectOf (Parser Rep)
   , prelude [optional] :: String
+  , StateT [optiona] :: Array String
   }
 
 */
@@ -128,10 +129,58 @@ function parse(args) {
 
   const { text, note, graph, env, doImplicitReferences } = args;
 
+  /*
+
+  Parsing is a little funky. We keep track of three kinds of statE:
+
+  1 Mutable state
+    This is state shared between all parts of the parser
+    Here we keep track of things like the file pointer
+    Think StateT
+
+  2 Immutable state
+    This is like mutable state, but may only be locally modified
+    Here we keep track of things like the indentation stack
+    Think ReaderT
+
+  3 Quasi state
+    This is not 'really' state, because parsers are expected to
+      not modify it at all
+    The reason it's treated as state is that it is still *computed*;
+      namely, it is computed from imported modules
+    Here we keep track of things like how to clone the mutable state
+    Think compile-time parameter
+
+
+  Semantically a parser is a function with signature
+
+    r = parser(ms, is, qs, ...args)
+
+  where
+
+    ms is the mutable state
+    is is the immutable state
+    qs is the quasi state
+
+  and parser:
+
+    may modify the mutable state but not the local- or quasi- state
+    may throw ParseError to signal failure
+
+  For convenience, we wrap up the states into one value
+
+    s = { ...ms, ...is, _sm: qs }
+
+  and pass that around instead
+
+  */
+
+
   // Initialize parser state
   const s = {};
 
-  // MUTABLE STATE (ala StateT) //
+
+  // MUTABLE STATE //
 
   // Index in text
   s.i = 0;
@@ -140,7 +189,7 @@ function parse(args) {
   s.cursyms = {};
 
 
-  // LOCAL STATE (ala ReaderT) //
+  // IMMUTABLE STATE //
 
   // Indentation stack
   s.indents = [];
@@ -167,11 +216,12 @@ function parse(args) {
       Object.assign(s, module.stateInit(args));
 
 
-  // Initialize parser "type"
+  // QUASI STATE //
+
   const sm = {};
   s._sm = sm;
 
-  // Tracks which keys are mutable
+  // Tracks which keys are part of the mutable state
   sm.StateT = [ 'i', 'cursyms' ];
   for (const module of Object.values(modules))
     if (module.StateT)
