@@ -188,12 +188,17 @@ function main({
              });
            }
          </script>`
+
       + note.html
     );
 
     fss.write(
       plib.resolve(destPath, note.relativeLoc),
-      withTemplate(`<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`, websocketPort),
+      withTemplate(
+        `<iframe src="${'/raw/' + note.relativeLoc}"></iframe>`,
+        renderReferencedBy(graph, note),
+        websocketPort,
+      ),
     );
   }
 
@@ -478,7 +483,7 @@ function renderIndex(graph) {
   return withTemplate(html);
 }
 
-function withTemplate(mainHtml, websocketPort = null) {
+function withTemplate(mainHtml, postHtml = '', websocketPort = null) {
   const result = new Cats();
   result.add(String.raw`
 <!DOCTYPE HTML>
@@ -571,6 +576,8 @@ iframe {
 
   result.add(`</main>`);
 
+  result.add(postHtml);
+
   result.add(`
 <script>
 document.addEventListener('DOMContentLoaded', () => {
@@ -594,4 +601,22 @@ document.addEventListener('DOMContentLoaded', () => {
   result.add(`</body></html>`);
 
   return result.toString();
+}
+
+function renderReferencedBy(graph, note) {
+  const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
+
+  if (referencedBy.length === 0) return '';
+  const html = new Cats();
+  html.add('<div class="hide-on-print" style="font-size: .8em; line-height: 1.5em">');  // TODO: remove <style>
+  html.add('<br /><br />');
+  html.add('<hr />');
+  html.add('<p>Referenced by:</p>');
+  html.add('<ul>');
+  for (const refBy of referencedBy) {
+    html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
+  }
+  html.add('</ul>');
+  html.add('</div>');
+  return html;
 }

@@ -49,29 +49,6 @@ function impossible(msg = '') {
   throw Error('uh oh... [' + msg.toString() + ']');
 }
 
-// Clone a sufficiently-simple object
-const clone =
-exports.clone =
-function clone(val) {
-  if (val === null || typeof val !== 'object')
-    return val;
-
-  if (Array.isArray(val))
-    return [...val].map(clone);
-
-  if (val instanceof Set)
-    return new Set([...val].map(clone));
-
-  if (Object.getPrototypeOf(val) !== Object.prototype)
-    throw `Refusing to clone non-plain object of type '${Object.getPrototypeOf(val).constructor.name}'`;
-
-  const res = {};
-  for (const k in val)
-    res[k] = clone(val[k]);
-  return res;
-}
-
-
 // Shallow-clone an iterator
 // Recommendation: don't use this
 const cloneIterator =

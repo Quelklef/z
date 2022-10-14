@@ -88,13 +88,6 @@ function mkNote(floc, source, graph, env) {
 
   lazyAss(note, 'html', () => {
     const rep = note[t].phase2.rep;
-
-    const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
-    rep.traverse(node => {
-      if (node instanceof Rep.ReferencedBy)
-        node.setReferencedBy(referencedBy);
-    });
-
     env.parent.log.info('rendering', note.id);
     return rep.toHtml(env);
   });
@@ -167,8 +160,6 @@ function parse({ text, note, graph, env, doImplicitReferences }) {
 
   const done = s => s.i >= s.text.length;
   rep.add(p_toplevel_markup(s, done));
-
-  rep.add(new Rep.ReferencedBy());
 
   return { rep: template(rep), meta };
 

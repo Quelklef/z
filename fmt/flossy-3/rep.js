@@ -50,37 +50,3 @@ class Seq {
 
 }
 
-// Hacky but allows us to do rendering in 2 passes instead of 3
-const ReferencedBy =
-exports.ReferencedBy =
-class ReferencedBy {
-
-  constructor() {
-    this.referencedBy = null;
-  }
-
-  setReferencedBy(refBy) {
-    this.referencedBy = refBy;
-  }
-
-  toHtml() {
-    if (!this.referencedBy) return '';
-    const html = new Cats();
-    html.add('<div class="hide-on-print">');
-    html.add('<br /><br />');
-    html.add('<hr />');
-    html.add('<p>Referenced by:</p>');
-    html.add('<ul>');
-    for (const refBy of this.referencedBy) {
-      html.add(`<li><a href="${refBy.href}" class="reference explicit">${refBy.id}</a></li>`);
-    }
-    html.add('</ul>');
-    html.add('</div>');
-    return html;
-  }
-
-  children() {
-    return [];
-  }
-
-}
