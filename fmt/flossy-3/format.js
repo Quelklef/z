@@ -5,7 +5,7 @@ const { squire } = require('../../squire.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 const fss = squire('../../fss.js');
 
-const Rep = squire('./rep.js');
+const rep = squire('./rep.js');
 const { Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
 // WANT: switch from p_ prefix to p. module
 const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
@@ -78,9 +78,9 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'defines', () => {
-    const rep = note[t].phase1.rep;
+    const noteRep = note[t].phase1.rep;
     const defines = new Set();
-    Rep.traverse(rep, node => {
+    rep.traverse(noteRep, node => {
       if (node instanceof modules.jargon.Jargon) {
         for (const form of node.forms) {
           defines.add(form);
@@ -100,9 +100,9 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'references', () => {
-    const rep = note[t].phase2.rep;
+    const noteRep = note[t].phase2.rep;
     const references = new Set();
-    Rep.traverse(rep, node => {
+    rep.traverse(noteRep, node => {
       if (node instanceof modules.jargon.Implicit) {
         references.add(node.toNote.id);
       } else if (node instanceof modules.base.Explicit) {
@@ -114,16 +114,16 @@ function mkNote(floc, source, graph, env) {
   });
 
   lazyAss(note, 'html', () => {
-    const rep = note[t].phase2.rep;
+    const noteRep = note[t].phase2.rep;
 
     const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
-    Rep.traverse(rep, node => {
-      if (node instanceof Rep.ReferencedBy)
+    rep.traverse(noteRep, node => {
+      if (node instanceof rep.ReferencedBy)
         node.setReferencedBy(referencedBy);
     });
 
     env.parent.log.info('rendering', note.id);
-    return rep.toHtml(env);
+    return noteRep.toHtml(env);
   });
 
   return note;
@@ -159,17 +159,11 @@ function parse(args) {
       return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
     };
 
-    // parsers
+    // Parsers
     s.parsers = [];
     s.parsers.push(p_command);
     for (const module of Object.values(modules))
       s.parsers = [...s.parsers, ...(module.parsers ?? [])];
-
-    // Prelude
-    s.prelude = new Cats();
-    for (const module of Object.values(modules))
-      s.prelude.add(module.prelude ?? '');
-    s.prelude = s.prelude.toString();
 
     // Commands mapping
     s.commands = {};
@@ -189,7 +183,7 @@ function parse(args) {
       return c;
     };
 
-    // TODO: remove!!
+    // TODO: give modules namespaces?
     for (const module of Object.values(modules))
       if (module.stateInit)
         Object.assign(s, module.stateInit(args));
@@ -202,14 +196,18 @@ function parse(args) {
   if (meta) s.env.log.info('metadata is', meta);
   if (s.text[s.i] === '\n') s.i++;
 
-  const rep = new Rep.Seq();
-
+  const noteRep = new rep.Seq();
   const done = s => s.i >= s.text.length;
-  rep.add(p_toplevel_markup(s, done));
+  noteRep.add(p_toplevel_markup(s, done));
+  noteRep.add(new rep.ReferencedBy());
 
-  rep.add(new Rep.ReferencedBy());
+  // Prelude
+  let prelude = new Cats();
+  for (const module of Object.values(modules))
+    prelude.add(module.prelude ?? '');
+  prelude = prelude.toString();
 
-  return { rep: template(s, rep), meta };
+  return { rep: template(prelude, noteRep), meta };
 
 }
 
@@ -268,8 +266,8 @@ builtinCommands.scope = function(s) {
 
 
 
-function template(s, html) {
-  return new Rep.Seq(String.raw`
+function template(prelude, html) {
+  return new rep.Seq(String.raw`
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -277,7 +275,7 @@ function template(s, html) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
-${ s.prelude }
+${ prelude }
 <style>
 
 * {
