@@ -1,3 +1,5 @@
+const { squire } = require('../../squire.js');
+const { Cats } = squire('../../util.js');
 
 const Trie =
 exports.Trie =
@@ -47,6 +49,34 @@ const impossible =
 exports.impossible =
 function impossible(msg = '') {
   throw Error('uh oh... [' + msg.toString() + ']');
+}
+
+// Knows how to clone a blessed set of types
+const clone =
+exports.clone =
+function clone(val) {
+  if (val === null || typeof val !== 'object')
+    return val;
+
+  if (val instanceof Array)
+    return [...val].map(clone);
+
+  if (val instanceof Set)
+    return new Set([...val].map(clone));
+
+  // idk why "val instanceof Cats" doesnt work
+  if (val.constructor.name === 'Cats')
+    return val.clone();
+
+  const proto = Object.getPrototypeOf(val);
+  if (proto !== Object.prototype) {
+    throw Error(`Refusing to clone non-plain value of type '${proto.constructor.name}'!`);
+  }
+
+  const res = {};
+  for (const k in val)
+    res[k] = clone(val[k]);
+  return res;
 }
 
 // Shallow-clone an iterator

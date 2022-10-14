@@ -7,7 +7,7 @@ exports.stateInit = () => stateInit;
 
 const stateInit = {
   annotNameQueue: [],
-  annotNameStack: (function * () { for (let i = 1;; i++) yield ('' + i); })(),
+  annotIndex: 1,
 }
 
 // WANT: stop distinguishing between super and non-super
@@ -29,9 +29,7 @@ exports.commands.aref = function(s) {
   let body;
   let isSuper;
   if (s.text[s.i] === ';') {
-    const { value, done } = s.annotNameStack.next();
-    if (done)
-      throw mkError(s.text, [s.i, s.i + 1], 'Out of footnote symbols!');
+    const value = (s.annotIndex++);
     s.i++;
     body = value;
     isSuper = true;

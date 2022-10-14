@@ -8,7 +8,7 @@ exports.commands = {};
 exports.parsers = [];
 exports.stateInit = ({ graph, note, doImplicitReferences }) => ({
   doImplicitReferences,
-  jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
+  jargonMatcher: doImplicitReferences && mkJargonMatcher(graph.jargonSet, note.defines),
 });
 
 
@@ -36,11 +36,11 @@ exports.parsers.push(p_implicitReference);
 function p_implicitReference(s) {
   if (!s.doImplicitReferences) return '';
 
-  const r = s.jargonMatcher.findMeAMatch(s.text, s.i);
+  const r = findMeAMatch(s.jargonMatcher, s.text, s.i);
   if (r === null) return '';
 
   const [jarg, stepAmt] = r;
-  const defNotes = s.graph.jargonToDefiningNoteSet[jarg];
+  const defNotes = s.env.graph.jargonToDefiningNoteSet[jarg];
 
   const toNote = (
     defNotes && defNotes.size > 0
@@ -302,44 +302,46 @@ class Implicit {
 
 }
 
-class JargonMatcherJargonMatcher {
-  constructor(jargs, exclude) {
-    const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
-    this.isSignif = c => signifChars.has(c);
-    this.normalize = s => [...s.toLowerCase()].filter(c => this.isSignif(c) || '$])>'.includes(c)).join('');
-      // ^ n.b. we assume that length(norm(s)) <= length(s)
+function mkJargonMatcher(jargs, exclude) {
+  const self = {};
 
-    this.jargs = (
-      [...jargs]
-      .sort((a, b) => b.length - a.length)
-      .map(j => [j, this.normalize(j)])
-    );
-    this.exclude = new Set([...exclude]);
-    this.M = Math.max(...this.jargs.map(([_, nj]) => nj.length));
+  const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
+  self.isSignif = c => signifChars.has(c);
+  self.normalize = s => [...s.toLowerCase()].filter(c => self.isSignif(c) || '$])>'.includes(c)).join('');
+    // ^ n.b. we assume that length(norm(s)) <= length(s)
 
-    this.jargsOfNormLengthEq = {};
+  self.jargs = (
+    [...jargs]
+    .sort((a, b) => b.length - a.length)
+    .map(j => [j, self.normalize(j)])
+  );
+  self.exclude = new Set([...exclude]);
+  self.M = Math.max(...self.jargs.map(([_, nj]) => nj.length));
 
-    {
-      for (let l = 1; l <= this.M; l++)
-        this.jargsOfNormLengthEq[l] = [];
-      for (const [jarg, njarg] of this.jargs)
-        this.jargsOfNormLengthEq[njarg.length].push([jarg, njarg]);
-    }
+  self.jargsOfNormLengthEq = {};
 
+  {
+    for (let l = 1; l <= self.M; l++)
+      self.jargsOfNormLengthEq[l] = [];
+    for (const [jarg, njarg] of self.jargs)
+      self.jargsOfNormLengthEq[njarg.length].push([jarg, njarg]);
   }
 
-  findMeAMatch(str, idx0) {
-    if (this.isSignif(str[idx0 - 1]) || !this.isSignif(str[idx0])) return null;
-    for (let idxf = idx0 + this.M; idxf >= idx0 + 1; idxf--) {
-      if (this.isSignif(str[idxf]) || !this.isSignif(str[idxf - 1])) continue;
-      const normed = this.normalize(str.slice(idx0, idxf));
-      for (const [jarg, njarg] of this.jargsOfNormLengthEq[normed.length]) {
-        if (normed === njarg) {
-          if (this.exclude.has(jarg)) return null;
-          return [jarg, idxf - idx0];
-        }
+  return self;
+
+}
+
+function findMeAMatch(self, str, idx0) {
+  if (self.isSignif(str[idx0 - 1]) || !self.isSignif(str[idx0])) return null;
+  for (let idxf = idx0 + self.M; idxf >= idx0 + 1; idxf--) {
+    if (self.isSignif(str[idxf]) || !self.isSignif(str[idxf - 1])) continue;
+    const normed = self.normalize(str.slice(idx0, idxf));
+    for (const [jarg, njarg] of self.jargsOfNormLengthEq[normed.length]) {
+      if (normed === njarg) {
+        if (self.exclude.has(jarg)) return null;
+        return [jarg, idxf - idx0];
       }
     }
-    return null;
   }
+  return null;
 }

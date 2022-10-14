@@ -2,11 +2,11 @@ const plib = require('path');
 const child_process = require('child_process');
 
 const { squire } = require('../../squire.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 const fss = squire('../../fss.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 
 const rep = squire('./rep.js');
-const { Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
+const { clone, Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
 // WANT: switch from p_ prefix to p. module
 const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
 
@@ -140,15 +140,14 @@ function parse(args) {
     s.cursyms = {};
 
 
-    // IMMUTABLE STATE (ala ReaderT) //
+    // LOCAL STATE (ala ReaderT) //
+
+    // Environmental references
+    // These are very powerful!
+    s.env = { graph, note, env };
 
     // Indentation stack
     s.indents = [];
-
-    // Environmental references
-    s.graph = graph;
-    s.note = note;
-    s.env = env;
 
     // Source text
     s.text = text;
@@ -174,14 +173,14 @@ function parse(args) {
     };
 
     s.clone = function() {
-      const c = { ...this };
-      c.cursyms = {...c.cursyms};
-      c.indents = [...c.indents];
-      c.parsers = [...c.parsers];
-      c.annotNameQueue = [...c.annotNameQueue];
-      c.annotNameStack = cloneIterator(c.annotNameStack);
-      c.katexPrefix = c.katexPrefix.clone();
-      c.texPrefix = c.texPrefix.clone();
+      const s = this;
+      const c = {};
+      for (const k in s) {
+        if (k === 'env')
+          c[k] = s[k];
+        else
+          c[k] = clone(s[k]);
+      }
       return c;
     };
 

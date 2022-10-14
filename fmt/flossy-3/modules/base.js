@@ -171,7 +171,7 @@ exports.commands.ref = function(s) {
     return p_inline(s, p_toplevel_markup);
   });
 
-  const toNote = s.graph.notesById[toNoteId];
+  const toNote = s.env.graph.notesById[toNoteId];
   return new Explicit({ toNoteId, toNote, body });
 }
 
