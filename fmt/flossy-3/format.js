@@ -17,6 +17,32 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
+/*
+
+type Rep
+  ≅ String
+  | ({ toHtml :: () -> String
+     , children :: () -> Array Rep
+     })
+
+type Module ≅
+  { parsers [optional] :: Array (Parser Rep)
+  , commands [optional] :: ObjectOf (Parser Rep)
+  , prelude [optional] :: String
+  }
+
+*/
+const modules = {
+  indent      : squire('./modules/indent.js'),
+  base        : squire('./modules/base.js'),
+  tex         : squire('./modules/tex.js'),
+  annotations : squire('./modules/annotations.js'),
+  mermaid     : squire('./modules/mermaid.js'),
+  given       : squire('./modules/given.js'),
+  jargon      : squire('./modules/jargon.js'),
+  table       : squire('./modules/table.js'),
+};
+
 function mkNote(floc, source, graph, env) {
 
   const noteId = plib.basename(floc, '.z');
@@ -51,14 +77,11 @@ function mkNote(floc, source, graph, env) {
     return note[t].phase1.meta?.starred === true;
   });
 
-  const mod_jarg = squire('./modules/jargon.js');
-  const mod_base = squire('./modules/base.js');
-
   lazyAss(note, 'defines', () => {
     const rep = note[t].phase1.rep;
     const defines = new Set();
     rep.traverse(node => {
-      if (node instanceof mod_jarg.Jargon) {  // TODO
+      if (node instanceof modules.jargon.Jargon) {
         for (const form of node.forms) {
           defines.add(form);
         }
@@ -80,9 +103,9 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase2.rep;
     const references = new Set();
     rep.traverse(node => {
-      if (node instanceof mod_jarg.Implicit) {  // TODO
+      if (node instanceof modules.jargon.Implicit) {
         references.add(node.toNote.id);
-      } else if (node instanceof mod_base.Explicit) {  // TODO
+      } else if (node instanceof modules.base.Explicit) {
         if (!!node.toNote)
           references.add(node.toNote.id);
       }
@@ -106,26 +129,6 @@ function mkNote(floc, source, graph, env) {
   return note;
 }
 
-
-/*
-
-type Module =
-  { parsers [optional] :: Array (Parser Rep)
-  , commands [optional] :: ObjectOf (Parser Rep)
-  , prelude [optional] :: String
-  }
-
-*/
-const modules = [
-  squire('./modules/indent.js'),
-  squire('./modules/base.js'),
-  squire('./modules/tex.js'),
-  squire('./modules/annotations.js'),
-  squire('./modules/mermaid.js'),
-  squire('./modules/given.js'),
-  squire('./modules/jargon.js'),
-  squire('./modules/table.js'),
-];
 
 function parse(args) {
 
@@ -159,19 +162,19 @@ function parse(args) {
     // parsers
     s.parsers = [];
     s.parsers.push(p_command);
-    for (const module of modules)
+    for (const module of Object.values(modules))
       s.parsers = [...s.parsers, ...(module.parsers ?? [])];
 
     // Prelude
     s.prelude = new Cats();
-    for (const module of modules)
+    for (const module of Object.values(modules))
       s.prelude.add(module.prelude ?? '');
     s.prelude = s.prelude.toString();
 
     // Commands mapping
     s.commands = {};
     Object.assign(s.commands, builtinCommands);
-    for (const module of modules)
+    for (const module of Object.values(modules))
       Object.assign(s.commands, module.commands);
 
     // TODO
@@ -187,7 +190,7 @@ function parse(args) {
     };
 
     // TODO: remove!!
-    for (const module of modules)
+    for (const module of Object.values(modules))
       if (module.stateInit)
         Object.assign(s, module.stateInit(args));
 
