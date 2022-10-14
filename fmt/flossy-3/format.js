@@ -4,11 +4,11 @@ const child_process = require('child_process');
 const { squire } = require('../../squire.js');
 const fss = squire('../../fss.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
-
 const rep = squire('./rep.js');
 const { clone, Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
 // WANT: switch from p_ prefix to p. module
 const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
+const state = squire('./state.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -17,34 +17,36 @@ function * (floc, source, graph, env) {
 
 const scriptSrc = fss.read(__filename).toString();
 
-/*
-
-type Rep
-  ≅ String
-  | ({ toHtml :: () -> String
-     , children :: () -> Array Rep
-     })
-
-type Module ≅
-  { parsers [optional] :: Array (Parser Rep)
-  , commands [optional] :: ObjectOf (Parser Rep)
-  , prelude [optional] :: String
-  , StateT [optiona] :: Array String
-  }
-
-*/
-const modules = {
-  indent      : squire('./modules/indent.js'),
-  base        : squire('./modules/base.js'),
-  tex         : squire('./modules/tex.js'),
-  annotations : squire('./modules/annotations.js'),
-  mermaid     : squire('./modules/mermaid.js'),
-  given       : squire('./modules/given.js'),
-  jargon      : squire('./modules/jargon.js'),
-  table       : squire('./modules/table.js'),
-};
 
 function mkNote(floc, source, graph, env) {
+
+  /*
+
+  type Rep
+    ≅ String
+    | Cats
+    | ({ toHtml :: () -> String
+       , children :: () -> Array Rep
+       })
+
+  type Module ≅
+    { parsers [optional] :: Array (Parser Rep)
+    , commands [optional] :: Map String (Parser Rep)
+    , prelude [optional] :: String
+    , StateT [optiona] :: Array String
+    }
+
+  */
+  const modules = {
+    indent      : squire('./modules/indent.js'),
+    base        : squire('./modules/base.js'),
+    tex         : squire('./modules/tex.js'),
+    annotations : squire('./modules/annotations.js'),
+    mermaid     : squire('./modules/mermaid.js'),
+    given       : squire('./modules/given.js'),
+    jargon      : squire('./modules/jargon.js'),
+    table       : squire('./modules/table.js'),
+  };
 
   const noteId = plib.basename(floc, '.z');
 
@@ -56,13 +58,13 @@ function mkNote(floc, source, graph, env) {
   note.source = source;
   note.source += '\n';  // allows parsers to assume lines end with \n
 
-  // WANT: some way to include entire closure?
+  // WANT: some way to include entire script closure instead of just scriptSrc?
   note.hash = hash(floc, source, scriptSrc);
 
   note.id = noteId;
 
   // note[t] holds transient (non-cached) data
-  const t = Symbol('fmt-flossy-3.t');
+  const t = Symbol('flossy-3.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
 
@@ -72,6 +74,7 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: false,
+      modules,
     });
   });
 
@@ -98,6 +101,7 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: true,
+      modules,
     });
   });
 
@@ -124,57 +128,11 @@ function mkNote(floc, source, graph, env) {
   return note;
 }
 
+function initState(args) {
 
-function parse(args) {
+  // See state.js for context
 
-  const { text, note, graph, env, doImplicitReferences } = args;
-
-  /*
-
-  Parsing is a little funky. We keep track of three kinds of statE:
-
-  1 Mutable state
-    This is state shared between all parts of the parser
-    Here we keep track of things like the file pointer
-    Think StateT
-
-  2 Immutable state
-    This is like mutable state, but may only be locally modified
-    Here we keep track of things like the indentation stack
-    Think ReaderT
-
-  3 Quasi state
-    This is not 'really' state, because parsers are expected to
-      not modify it at all
-    The reason it's treated as state is that it is still *computed*;
-      namely, it is computed from imported modules
-    Here we keep track of things like how to clone the mutable state
-    Think compile-time parameter
-
-
-  Semantically a parser is a function with signature
-
-    r = parser(ms, is, qs, ...args)
-
-  where
-
-    ms is the mutable state
-    is is the immutable state
-    qs is the quasi state
-
-  and parser:
-
-    may modify the mutable state but not the local- or quasi- state
-    may throw ParseError to signal failure
-
-  For convenience, we wrap up the states into one value
-
-    s = { ...ms, ...is, _sm: qs }
-
-  and pass that around instead
-
-  */
-
+  const { text, note, graph, env, modules } = args;
 
   // Initialize parser state
   const s = {};
@@ -214,6 +172,7 @@ function parse(args) {
   for (const module of Object.values(modules))
     if (module.stateInit)
       Object.assign(s, module.stateInit(args));
+        // ^ TODO: passing all of 'args' is bad
 
 
   // QUASI STATE //
@@ -231,30 +190,16 @@ function parse(args) {
   // These are very powerful!
   sm.env = { graph, note, env };
 
-  sm.gensym = function(s, namespace = '') {
-    if (!(namespace in s.cursyms)) s.cursyms[namespace] = 0;
-    return 'gensym-' + (namespace ? (namespace + '-') : '') + (s.cursyms[namespace]++);
-  };
+  return s;
 
-  sm.clone = function(s) {
-    const sm = s._sm;
-    s._sm = null;
-    const r = clone(s);
-    r._sm = s._sm = sm;
-    return r;
-  };
-
-  // Parse with a local state modification
-  sm.local = function(s, inner) {
-    const sc = sm.clone(s);
-    const res = inner(sc);
-    for (const key of s._sm.StateT)
-      s[key] = sc[key];
-    return res;
-  };
+}
 
 
-  // BEGIN //
+function parse(args) {
+
+  const { modules } = args;
+
+  const s = initState(args);
 
   // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
@@ -314,7 +259,7 @@ function command_scope(s) {
   const json = p_jsExpr(s);
   p_spaces(s);
 
-  return s._sm.local(s, s => {
+  return state.local(s, s => {
     if ('inferReferences' in json)
       s.doImplicitReferences = !!json['inferReferences'];
     const [r, _] = p_enclosed(s, p_toplevel_markup);

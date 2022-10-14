@@ -1,6 +1,7 @@
 const { squire } = require('../../../squire.js');
 const rep = squire('../rep.js');
 const { p_block, p_enclosed, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const state = squire('../state.js');
 
 exports.commands = {};
 
@@ -56,7 +57,7 @@ exports.commands.Given = function(s) {
             `</span>`,
           );
         };
-        return s._sm.local(s, s => {
+        return state.local(s, s => {
           s.parsers.push(parseRef);
           const [by, _] = p_enclosed(s, p_toplevel_markup);
           return by;

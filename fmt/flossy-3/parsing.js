@@ -3,6 +3,7 @@ const clc = require('cli-color');
 const { squire } = require('../../squire.js');
 const { Cats, lazyAss } = squire('../../util.js');
 const { indexOf } = require('./util.js');
+const state = require('./state.js');
 const Rep = require('./rep.js');
 
 
@@ -75,7 +76,7 @@ function p_integer(s) {
 const p_backtracking =
 exports.p_backtracking =
 function p_backtracking(s, parser) {
-  const sc = s._sm.clone(s);
+  const sc = state.clone(s);
   let result;
   try {
     result = parser(sc);

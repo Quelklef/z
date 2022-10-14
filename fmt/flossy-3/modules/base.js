@@ -2,6 +2,7 @@ const hljs = require('highlight.js');
 
 const { squire } = require('../../../squire.js');
 const rep = squire('../rep.js');
+const state = squire('../state.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_enclosed, p_toplevel_verbatim, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 const { Cats } = squire('../../../util.js');
 const { Trie, htmlEscapes, escapeHtml } = squire('../util.js');
@@ -166,7 +167,7 @@ exports.commands.ref = function(s) {
   if (!toNoteId) throw mkError(s.text, s.i, "Missing note ID");
   p_spaces(s);
 
-  const body = s._sm.local(s, s => {
+  const body = state.local(s, s => {
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);
   });
@@ -296,7 +297,7 @@ exports.commands.href = function(s) {
   p_take(s, '>');
   p_spaces(s)
 
-  const body = s._sm.local(s, s => {
+  const body = state.local(s, s => {
     // Nested <a> tags are forbidden in HTML
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);

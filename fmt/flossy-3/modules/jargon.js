@@ -2,6 +2,7 @@ const { squire } = require('../../../squire.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('../parsing.js');
 const { Cats } = squire('../../../util.js');
 const rep = require('../rep.js');
+const state = squire('../state.js');
 const { escapeHtml } = require('../util.js');
 
 exports.commands = {};
@@ -23,7 +24,7 @@ exports.commands.jarg = function(s) {
     forms = new Set([...forms, ...jargs]);
   }
 
-  const body = s._sm.local(s, s => {
+  const body = state.local(s, s => {
     s.doImplicitReferences = false;
     return p_inline(s, p_toplevel_markup);
   });

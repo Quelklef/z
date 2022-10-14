@@ -2,6 +2,7 @@ const { squire } = require('../../../squire.js');
 const rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 const { Cats } = squire('../../../util.js');
+const state = squire('../state.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -69,7 +70,7 @@ function p_indent(s) {
 
     return new Indented({
       indent: dIndent,
-      body: new Expand({ line, body, id: s._sm.gensym(s, 'expand') }),
+      body: new Expand({ line, body, id: state.gensym(s, 'expand') }),
     });
 
   } else {
