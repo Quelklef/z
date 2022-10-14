@@ -36,6 +36,7 @@ class Trie {
   }
 }
 
+// WANT: rename
 // indexOf but on fail return str.length instead of -1
 const indexOf =
 exports.indexOf =
@@ -52,6 +53,7 @@ function impossible(msg = '') {
 }
 
 // Knows how to clone a blessed set of types
+// Assumes that functions are pure and not monkeypatched!
 const clone =
 exports.clone =
 function clone(val) {
@@ -78,49 +80,6 @@ function clone(val) {
     res[k] = clone(val[k]);
   return res;
 }
-
-// Shallow-clone an iterator
-// Recommendation: don't use this
-const cloneIterator =
-exports.cloneIterator =
-function cloneIterator(iter) {
-
-  const next = iter.next.bind(iter);
-
-  const queue = [];
-  const idxs = { left: 0, right: 0 };
-
-  function lrNext(lr) {
-
-    if (queue.length <= idxs[lr]) {
-      const { value, done } = next();
-      if (done)
-        return { value: null, done: true };
-      queue.push(value);
-    }
-
-    const value = queue[idxs[lr]];
-    idxs[lr]++;
-
-    if (idxs.left > 0 && idxs.right > 0) {
-      queue.splice(0, 1);
-      idxs.left--;
-      idxs.right--;
-    }
-
-    return { value, done: false };
-  }
-
-  const left = iter;
-  left.next = () => lrNext('left');
-
-  const right = {};
-  right.next = () => lrNext('right');
-
-  return right;
-
-}
-
 
 const htmlEscapes =
 exports.htmlEscapes =

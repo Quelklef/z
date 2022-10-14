@@ -139,6 +139,9 @@ function parse(args) {
     // Symbol generation
     s.cursyms = {};
 
+    // Tracks which keys are mutable
+    s.StateT = [ 'i', 'cursyms' ];
+
 
     // LOCAL STATE (ala ReaderT) //
 
@@ -189,17 +192,18 @@ function parse(args) {
       const s = this;
       const sc = s.clone();
       const res = inner(sc);
-      // TODO: annotName{Stack,Queue} should not be known in this module
-      const bubble = ['i', 'cursyms', 'annotNameStack', 'annotNameQueue'];
-      for (const key of bubble)
+      for (const key of s.StateT)
         s[key] = sc[key];
       return res;
     };
 
     // WANT: give modules namespaces?
-    for (const module of Object.values(modules))
+    for (const module of Object.values(modules)) {
+      if (module.StateT)
+        s.StateT = [...s.StateT, module.StateT];
       if (module.stateInit)
         Object.assign(s, module.stateInit(args));
+    }
 
   }
 
