@@ -23,13 +23,11 @@ exports.commands.jarg = function(s) {
     forms = new Set([...forms, ...jargs]);
   }
 
-  // TODO: more reucurrence happening here!
-  const doImplicitReferences = s.doImplicitReferences;
-  const srec = { ...s.clone(), doImplicitReferences: false };
-  const body = p_inline(srec, p_toplevel_markup);
-  Object.assign(s, { ...srec, doImplicitReferences });
+  const body = s.local(s => {
+    s.doImplicitReferences = false;
+    return p_inline(s, p_toplevel_markup);
+  });
 
-  // WANT: move module-specific rep types into the respective modules
   return new Jargon({ forms, body });
 }
 

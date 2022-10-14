@@ -13,10 +13,8 @@ exports.commands.table = function(s) {
   p_whitespace(s);
   const opts = {};
   while (true) {
-    const sb = s.clone();
-    p_whitespace(sb);
-    if (!/[\w-]/.test(sb.text[sb.i])) break;
-    Object.assign(s, sb);
+    p_whitespace(s);
+    if (!/[\w-]/.test(s.text[s.i])) break;
 
     const key = p_word(s);
     p_take(s, '=');

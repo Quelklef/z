@@ -166,12 +166,10 @@ exports.commands.ref = function(s) {
   if (!toNoteId) throw mkError(s.text, s.i, "Missing note ID");
   p_spaces(s);
 
-  const sr = s.clone();
-  sr.doImplicitReferences = false;
-  const body = p_inline(sr, p_toplevel_markup);
-  Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
-    // ^ TODO: Technically, this is bugged! (B*)
-    //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
+  const body = s.local(s => {
+    s.doImplicitReferences = false;
+    return p_inline(s, p_toplevel_markup);
+  });
 
   const toNote = s.graph.notesById[toNoteId];
   return new Explicit({ toNoteId, toNote, body });
@@ -298,44 +296,13 @@ exports.commands.href = function(s) {
   p_take(s, '>');
   p_spaces(s)
 
-  const doImplicitReferences = s.doImplicitReferences;
-  const srec = { ...s.clone(), doImplicitReferences: false };
-    // ^ Nested <a> tags are forbidden in HTML
-  const body = p_inline(srec, p_toplevel_markup);
-  Object.assign(s, { ...srec, doImplicitReferences });
+  const body = s.local(s => {
+    // Nested <a> tags are forbidden in HTML
+    s.doImplicitReferences = false;
+    return p_inline(s, p_toplevel_markup);
+  });
 
   return new rep.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
-}
-
-// Experimenal execute command
-exports.commands.x = function(s) {
-  s.env.log.warn(`use of \\x`);
-
-  const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
-
-  const code =
-    kind === 'inline'
-      ? body.toString()
-    : kind === 'block'
-      ? `(function(){\n${body}\n})()`
-    : null;
-
-  // Set up eval() environment
-  // TODO: both this codeblock and p_indent do some wack recursion shit that should be reified
-  const parse = str => {
-    const srec = s.clone();
-    srec.text = str;
-    srec.i = 0;
-    const result = p_toplevel_markup(srec, s => s.i >= s.text.length);
-    Object.assign(s, {
-        ...srec,
-        text: s.text,
-        i: s.i,
-    });
-    return result;
-  };
-
-  return eval(code) || '';
 }
 
 exports.commands['unsafe-raw-html'] = function(s) {

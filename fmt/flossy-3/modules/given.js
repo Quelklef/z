@@ -7,6 +7,7 @@ exports.commands = {};
 exports.commands.Given = function(s) {
 
   const parseLines = (s, sentinel) => {
+    // !!!! init state here??? bad!!!
     s.GivenIndex ??= 1;
     s.Given_lineIdentToNumber ??= {};
 
@@ -55,10 +56,11 @@ exports.commands.Given = function(s) {
             `</span>`,
           );
         };
-        const sp = { ...s, parsers: [...s.parsers, parseRef] };
-        const [by, _] = p_enclosed(sp, p_toplevel_markup);
-        Object.assign(s, { ...sp, parsers: s.parsers });
-        return by;
+        return s.local(s => {
+          s.parsers.push(parseRef);
+          const [by, _] = p_enclosed(s, p_toplevel_markup);
+          return by;
+        });
       });
       const number = s.GivenIndex;
       s.Given_lineIdentToNumber[ident] = number;

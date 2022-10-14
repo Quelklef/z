@@ -2,7 +2,7 @@ const clc = require('cli-color');
 
 const { squire } = require('../../squire.js');
 const { Cats, lazyAss } = squire('../../util.js');
-const { indexOf } = require('./util.js');
+const { clone, indexOf } = require('./util.js');
 const Rep = require('./rep.js');
 
 /*
@@ -70,7 +70,7 @@ function p_word(s) {
   }
   word = word.toString();
   if (!word)
-    throw mkError(s.text, xi0, "Expected word");
+    throw mkError(s.text, xi0, "Expected word (ie, /[\w-]+/)");
   return word;
 }
 
@@ -108,7 +108,7 @@ function p_backtracking(s, parser) {
 
 
 // mkError(text, idx, msg)
-// mkError(text, [i0, iF], msg)    range is [inc, exc]
+// mkError(text, [i0, iF], msg)    range is inclusive/exclusive
 const mkError =
 exports.mkError =
 function mkError(...args) {

@@ -50,17 +50,14 @@ exports.commands.aref = function(s) {
 
 // Annotation definition
 exports.commands.adef = function(s) {
-  const sx = s.clone();
-
   p_spaces(s);
-
   let name;
   if (!"[{(<:=".includes(s.text[s.i])) {
     name = p_word(s);
     p_spaces(s);
   } else {
     if (s.annotNameQueue.length === 0)
-      throw mkError(sx.text, sx.i, "Unpaired \\adef");
+      throw mkError(s.text, s.i, "Unpaired \\adef");
     name = s.annotNameQueue[0];
     s.annotNameQueue.splice(0, 1);
   }

@@ -138,6 +138,20 @@ function parse(args) {
   const s = {};
   {
 
+    // MUTABLE STATE (ala StateT) //
+
+    // Index in text
+    s.i = 0;
+
+    // Symbol generation
+    s.cursyms = {};
+
+
+    // IMMUTABLE STATE (ala ReaderT) //
+
+    // Indentation stack
+    s.indents = [];
+
     // Environmental references
     s.graph = graph;
     s.note = note;
@@ -145,19 +159,6 @@ function parse(args) {
 
     // Source text
     s.text = text;
-
-    // Index in text
-    s.i = 0;
-
-    // Indentation stack
-    s.indents = [];
-
-    // Symbol generation
-    s.cursyms = {};
-    s.gensym = function(namespace = '') {
-      if (!(namespace in this.cursyms)) this.cursyms[namespace] = 0;
-      return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
-    };
 
     // Parsers
     s.parsers = [];
@@ -167,13 +168,21 @@ function parse(args) {
 
     // Commands mapping
     s.commands = {};
-    Object.assign(s.commands, builtinCommands);
+    s.commands.scope = command_scope;
     for (const module of Object.values(modules))
       Object.assign(s.commands, module.commands);
 
-    // TODO
+
+    // METHODS //
+
+    s.gensym = function(namespace = '') {
+      if (!(namespace in this.cursyms)) this.cursyms[namespace] = 0;
+      return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
+    };
+
     s.clone = function() {
       const c = { ...this };
+      c.cursyms = {...c.cursyms};
       c.indents = [...c.indents];
       c.parsers = [...c.parsers];
       c.annotNameQueue = [...c.annotNameQueue];
@@ -183,7 +192,19 @@ function parse(args) {
       return c;
     };
 
-    // TODO: give modules namespaces?
+    // Parse with a local state modification
+    s.local = function(inner) {
+      const s = this;
+      const sc = s.clone();
+      const res = inner(sc);
+      // TODO: annotName{Stack,Queue} should not be known in this module
+      const bubble = ['i', 'cursyms', 'annotNameStack', 'annotNameQueue'];
+      for (const key of bubble)
+        s[key] = sc[key];
+      return res;
+    };
+
+    // WANT: give modules namespaces?
     for (const module of Object.values(modules))
       if (module.stateInit)
         Object.assign(s, module.stateInit(args));
@@ -243,25 +264,18 @@ function p_command(s) {
   return command(s);
 }
 
-const builtinCommands = {};
-
 // Local evaluator modification
-builtinCommands.scope = function(s) {
+function command_scope(s) {
   p_spaces(s);
   const json = p_jsExpr(s);
   p_spaces(s);
 
-  const srec = s.clone();
-
-  if ('inferReferences' in json)
-    srec.doImplicitReferences = !!json['infer-references'];
-
-  const [r, _] = p_enclosed(srec, p_toplevel_markup);
-
-  Object.assign(s, { ...srec, doImplicitReferences: s.doImplicitReferences });
-    // ^ TODO: bugged; see (B*)
-
-  return r;
+  return s.local(s => {
+    if ('inferReferences' in json)
+      s.doImplicitReferences = !!json['inferReferences'];
+    const [r, _] = p_enclosed(s, p_toplevel_markup);
+    return r;
+  });
 }
 
 
