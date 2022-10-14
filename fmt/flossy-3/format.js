@@ -128,43 +128,39 @@ function parse(args) {
 
   const { text, note, graph, env, doImplicitReferences } = args;
 
-  let baseParsers = [];
-  for (const module of modules)
-    baseParsers = [...baseParsers, ...(module.parsers ?? [])];
-
-  // Initial parser state
-  let s = {
+  // Initialize parser state
+  const s = {};
+  {
 
     // Environmental references
-    graph, note, env,
-
-    // Note metadata (initialized below)
-    meta: null,
+    s.graph = graph;
+    s.note = note;
+    s.env = env;
 
     // Source text
-    text,
+    s.text = text;
 
     // Index in text
-    i: 0,
+    s.i = 0;
 
     // Indentation stack
-    indents: [],
+    s.indents = [];
 
     // Symbol generation
-    cursyms: {},
-    gensym(namespace = '') {
+    s.cursyms = {};
+    s.gensym = function(namespace = '') {
       if (!(namespace in this.cursyms)) this.cursyms[namespace] = 0;
       return 'gensym-' + (namespace ? (namespace + '-') : '') + (this.cursyms[namespace]++);
-    },
+    };
 
     // parsers
-    parsers: [
-      p_command,
-      ...baseParsers,
-    ],
+    s.parsers = [];
+    s.parsers.push(p_command);
+    for (const module of modules)
+      s.parsers = [...s.parsers, ...(module.parsers ?? [])];
 
     // TODO
-    clone() {
+    s.clone = function() {
       const c = { ...this };
       c.indents = [...c.indents];
       c.parsers = [...c.parsers];
@@ -173,13 +169,14 @@ function parse(args) {
       c.katexPrefix = c.katexPrefix.clone();
       c.texPrefix = c.texPrefix.clone();
       return c;
-    },
+    };
 
-  };
+    // TODO: remove!!
+    for (const module of modules)
+      if (module.stateInit)
+        Object.assign(s, module.stateInit(args));
 
-  for (const module of modules)
-    if (module.stateInit)
-      Object.assign(s, module.stateInit(args));
+  }
 
   // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
