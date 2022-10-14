@@ -1,17 +1,16 @@
 const { squire } = require('../../../squire.js');
-const Rep = require('../rep.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('../parsing.js');
-// WANT: import audit on all format modules
+const { Cats } = squire('../../../util.js');
+const Rep = require('../rep.js');
+const { escapeHtml } = require('../util.js');
 
-
+exports.commands = {};
+exports.parsers = [];
 exports.stateInit = ({ graph, note, doImplicitReferences }) => ({
   doImplicitReferences,
   jargonMatcher: doImplicitReferences && new JargonMatcherJargonMatcher(graph.jargonSet, note.defines),
 });
 
-
-exports.commands = {};
 
 // Jargon
 exports.commands.jarg = function(s) {
@@ -35,6 +34,7 @@ exports.commands.jarg = function(s) {
 }
 
 // Jargon-lead implicit references
+exports.parsers.push(p_implicitReference);
 function p_implicitReference(s) {
   if (!s.doImplicitReferences) return '';
 
@@ -136,9 +136,6 @@ function p_jargonAux(s) {
   }
 
 }
-
-exports.parsers = [ p_implicitReference ];
-
 
 exports.prelude = String.raw`
 
@@ -263,14 +260,50 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
-// WANT: dedup me as well
-const htmlEscapes = {
-  '<': '&lt;',
-  '>': '&gt;',
-  '&': '&amp;',
-};
-function escapeHtml(s) {
-  return [...s].map(c => htmlEscapes[c] || c).join('');
+
+const Jargon =
+exports.Jargon =
+class Jargon extends Rep.Rep {
+
+  constructor({ forms, body }) {
+    super();
+    this.forms = forms;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    return new Cats(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+const Implicit =
+exports.Implicit =
+class Implicit extends Rep.Rep {
+
+  constructor({ fromJargon, toNote, body }) {
+    super();
+    this.fromJargon = fromJargon;
+    this.toNote = toNote;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    if (!this.toNote) {
+      env.log.warn(`Bad jargon '${jarg}'!`);
+    }
+    const href = this.toNote?.href ?? '#';
+    return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
 }
 
 class JargonMatcherJargonMatcher {
@@ -313,52 +346,4 @@ class JargonMatcherJargonMatcher {
     }
     return null;
   }
-}
-
-
-
-const Jargon =
-exports.Jargon =
-class Jargon extends Rep.Rep {
-
-  constructor({ forms, body }) {
-    super();
-    this.forms = forms;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    return new Cats(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
-  }
-
-  children() {
-    return [this.body];
-  }
-
-}
-
-
-const Implicit =
-exports.Implicit =
-class Implicit extends Rep.Rep {
-
-  constructor({ fromJargon, toNote, body }) {
-    super();
-    this.fromJargon = fromJargon;
-    this.toNote = toNote;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    if (!this.toNote) {
-      env.log.warn(`Bad jargon '${jarg}'!`);
-    }
-    const href = this.toNote?.href ?? '#';
-    return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
-  }
-
-  children() {
-    return [this.body];
-  }
-
 }

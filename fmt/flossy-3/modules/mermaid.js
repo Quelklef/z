@@ -1,6 +1,7 @@
 const { squire } = require('../../../squire.js');
-const Rep = squire('../rep.js');
 const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const Rep = squire('../rep.js');
+const { escapeHtml } = squire('../util.js');
 
 exports.commands = {};
 
@@ -55,13 +56,3 @@ async function loadMermaid() {
 </script>
 
 `;
-
-// WANT: deduplicate from here and parsing.js
-function escapeHtml(s) {
-  return [...s].map(c => htmlEscapes[c] || c).join('');
-}
-const htmlEscapes = {
-  '<': '&lt;',
-  '>': '&gt;',
-  '&': '&amp;',
-};

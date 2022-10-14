@@ -270,20 +270,21 @@ builtinCommands.scope = function(s) {
 
 function template(s, html) {
   return new Rep.Seq(String.raw`
-
 <!DOCTYPE HTML>
 <html>
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
     ${ s.prelude }
   </head>
 <body>
 
 <style>
+
+* {
+  box-sizing: border-box;
+}
 
 :root {
   --color-static-rgb: 117, 19, 128;
@@ -348,7 +349,6 @@ syncFromUrl();
 
 </body>
 </html>
-
 `);
 }
 

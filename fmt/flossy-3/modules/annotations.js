@@ -2,12 +2,15 @@ const { squire } = require('../../../squire.js');
 const Rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
-exports.stateInit = () => ({
+exports.commands = {};
+exports.stateInit = () => stateInit;
+
+const stateInit = {
   annotNameQueue: [],
   annotNameStack: (function * () { for (let i = 1;; i++) yield ('' + i); })(),
-});
+}
 
-exports.commands = {};
+// WANT: stop distinguishing between super and non-super
 
 // Annotation reference
 exports.commands.aref = function(s) {
@@ -69,10 +72,7 @@ exports.prelude = String.raw`
 
 <style>
 
-* { box-sizing: border-box; }
-
-.annotation-reference.super
-{
+.annotation-reference.super {
   vertical-align: super;
   font-size: .9em;
   position: relative;

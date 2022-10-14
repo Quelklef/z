@@ -3,6 +3,7 @@ const Rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_enclosed, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
 exports.commands = {};
+exports.prelude = '';
 
 // tables
 exports.commands.table = function(s) {
@@ -96,7 +97,7 @@ exports.commands.table = function(s) {
 
 }
 
-exports.prelude = String.raw`
+exports.prelude += String.raw`
 
 <style>
 

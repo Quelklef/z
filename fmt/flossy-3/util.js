@@ -91,3 +91,18 @@ function cloneIterator(iter) {
   return right;
 
 }
+
+
+const htmlEscapes =
+exports.htmlEscapes =
+{
+  '<': '&lt;',
+  '>': '&gt;',
+  '&': '&amp;',
+};
+
+const escapeHtml =
+exports.escapeHtml =
+function escapeHtml(s) {
+  return [...s].map(c => htmlEscapes[c] || c).join('');
+}
