@@ -7,46 +7,24 @@ const fss = squire('../../fss.js');
 
 const { mkError } = squire('./parsing.js');
 
-const Rep =
-exports.Rep =
-class Rep {
+const traverse =
+exports.traverse =
+function traverse(rep, func) {
+  for (const node of tree(rep))
+    func(node);
 
-  // note: Think of this class as an abstract class
-  // playing the role of a typeclass. This is not
-  // to be interpreted as a type.
-
-  // Expected methods:
-  // .toHtml : () -> string | Cats
-  // .children : () -> Iterable<Rep>
-
-  // Derived methods:
-
-  *tree() {
-    for (const elem of this.children()) {
-      if (typeof elem === 'string' || elem instanceof Cats) {
-        yield elem;
-      } else {
-        yield elem;
-        yield* elem.tree();
-      }
-    }
+  function * tree(node) {
+    yield node;
+    if (node.children)
+      yield * node.children().flatMap(tree);
   }
-
-  traverse(func) {
-    for (const node of this.tree()) {
-      func(node);
-    }
-  }
-
 }
-
 
 const Seq =
 exports.Seq =
-class Seq extends Rep {
+class Seq {
 
   constructor(...parts) {
-    super();
     this.parts = parts;
   }
 
@@ -75,10 +53,9 @@ class Seq extends Rep {
 // Hacky but allows us to do rendering in 2 passes instead of 3
 const ReferencedBy =
 exports.ReferencedBy =
-class ReferencedBy extends Rep {
+class ReferencedBy {
 
   constructor() {
-    super();
     this.referencedBy = null;
   }
 

@@ -60,7 +60,7 @@ function mkNote(floc, source, graph, env) {
   note.id = noteId;
 
   // note[t] holds transient (non-cached) data
-  const t = Symbol('fmt-proper.t');
+  const t = Symbol('fmt-flossy-3.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
 
@@ -80,7 +80,7 @@ function mkNote(floc, source, graph, env) {
   lazyAss(note, 'defines', () => {
     const rep = note[t].phase1.rep;
     const defines = new Set();
-    rep.traverse(node => {
+    Rep.traverse(rep, node => {
       if (node instanceof modules.jargon.Jargon) {
         for (const form of node.forms) {
           defines.add(form);
@@ -102,7 +102,7 @@ function mkNote(floc, source, graph, env) {
   lazyAss(note, 'references', () => {
     const rep = note[t].phase2.rep;
     const references = new Set();
-    rep.traverse(node => {
+    Rep.traverse(rep, node => {
       if (node instanceof modules.jargon.Implicit) {
         references.add(node.toNote.id);
       } else if (node instanceof modules.base.Explicit) {
@@ -117,7 +117,7 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase2.rep;
 
     const referencedBy = [...note.referencedBy].map(id => graph.notesById[id]);
-    rep.traverse(node => {
+    Rep.traverse(rep, node => {
       if (node instanceof Rep.ReferencedBy)
         node.setReferencedBy(referencedBy);
     });
@@ -272,14 +272,12 @@ function template(s, html) {
   return new Rep.Seq(String.raw`
 <!DOCTYPE HTML>
 <html>
-  <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
-    ${ s.prelude }
-  </head>
-<body>
+<head>
 
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+${ s.prelude }
 <style>
 
 * {
@@ -317,8 +315,6 @@ a {
 }
 
 </style>
-
-
 <script>
 
 // <-> URL sync helpers
@@ -344,6 +340,8 @@ syncFromUrl();
 
 </script>
 
+</head>
+<body>
 
 <main>`, html, `</main>
 

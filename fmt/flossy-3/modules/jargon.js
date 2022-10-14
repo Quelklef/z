@@ -1,7 +1,7 @@
 const { squire } = require('../../../squire.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('../parsing.js');
 const { Cats } = squire('../../../util.js');
-const Rep = require('../rep.js');
+const rep = require('../rep.js');
 const { escapeHtml } = require('../util.js');
 
 exports.commands = {};
@@ -29,7 +29,7 @@ exports.commands.jarg = function(s) {
   const body = p_inline(srec, p_toplevel_markup);
   Object.assign(s, { ...srec, doImplicitReferences });
 
-  // WANT: move module-specific Rep types into the respective modules
+  // WANT: move module-specific rep types into the respective modules
   return new Jargon({ forms, body });
 }
 
@@ -263,10 +263,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const Jargon =
 exports.Jargon =
-class Jargon extends Rep.Rep {
+class Jargon {
 
   constructor({ forms, body }) {
-    super();
     this.forms = forms;
     this.body = body;
   }
@@ -283,10 +282,9 @@ class Jargon extends Rep.Rep {
 
 const Implicit =
 exports.Implicit =
-class Implicit extends Rep.Rep {
+class Implicit {
 
   constructor({ fromJargon, toNote, body }) {
-    super();
     this.fromJargon = fromJargon;
     this.toNote = toNote;
     this.body = body;

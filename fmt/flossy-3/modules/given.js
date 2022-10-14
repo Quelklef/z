@@ -1,5 +1,5 @@
 const { squire } = require('../../../squire.js');
-const Rep = squire('../rep.js');
+const rep = squire('../rep.js');
 const { p_block, p_enclosed, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
 exports.commands = {};
@@ -49,7 +49,7 @@ exports.commands.Given = function(s) {
             const ident = p_word(s);
             toNum = s.Given_lineIdentToNumber[ident];
           }
-          return new Rep.Seq(
+          return new rep.Seq(
             `<span class="given-by-ref" data-to="${toNum}">`,
             toNum + '',
             `</span>`,
@@ -73,7 +73,7 @@ exports.commands.Given = function(s) {
   const then = parseLines(s, ';');
 
   const renderLine = ([number, name, body, by, isNb, isBlock]) => (
-    new Rep.Seq(
+    new rep.Seq(
       `<span class="given-line" data-name="${number}">`,
         ...(!isBlock ? [
           `<span class="given-line-number ${isNb ? 'nb' : ''}">`,
@@ -90,7 +90,7 @@ exports.commands.Given = function(s) {
     )
   );
 
-  return new Rep.Seq(
+  return new rep.Seq(
     '<div class="given">',
     ...given.map(renderLine),
     '<span class="given-rule"></span>',

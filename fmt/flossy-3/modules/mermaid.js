@@ -1,6 +1,6 @@
 const { squire } = require('../../../squire.js');
 const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
-const Rep = squire('../rep.js');
+const rep = squire('../rep.js');
 const { escapeHtml } = squire('../util.js');
 
 exports.commands = {};
@@ -15,7 +15,7 @@ exports.commands.mermaid = function(s) {
   // So instead we have to defer rendering to the client.
 
   const divId = s.gensym('mermaid');
-  return new Rep.Seq(String.raw`
+  return new rep.Seq(String.raw`
     <div id="${divId}">${escapeHtml(body)}</div>
     <script> window.renderMermaid('${divId}'); </script>
   `);

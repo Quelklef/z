@@ -1,5 +1,5 @@
 const { squire } = require('../../../squire.js');
-const Rep = squire('../rep.js');
+const rep = squire('../rep.js');
 const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
 
 exports.commands = {};
@@ -41,7 +41,7 @@ exports.commands.aref = function(s) {
   }
 
   const isSuperClass = isSuper ? 'super' : '';
-  return new Rep.Seq(
+  return new rep.Seq(
     `<span class="annotation-reference ${isSuperClass}" id="${s.gensym('annot-id')}" data-refers-to="${name}">`,
     body,
     '</span>'
@@ -65,7 +65,7 @@ exports.commands.adef = function(s) {
     s.annotNameQueue.splice(0, 1);
   }
 
-  return new Rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+  return new rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
 }
 
 exports.prelude = String.raw`
