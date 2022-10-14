@@ -380,6 +380,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
+      result.add(parser(s));
       if (s.i !== i0)
         continue parsing;
     }

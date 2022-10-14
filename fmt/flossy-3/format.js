@@ -809,11 +809,11 @@ commands.quote = function(s) {
 
 
 const modules = [
-  require('./modules/annotations.js'),
-  require('./modules/mermaid.js'),
-  require('./modules/given.js'),
-  require('./modules/jargon.js'),
-  require('./modules/table.js'),
+  squire('./modules/annotations.js'),
+  squire('./modules/mermaid.js'),
+  squire('./modules/given.js'),
+  squire('./modules/jargon.js'),
+  squire('./modules/table.js'),//
 ];
 
 let prelude = new Cats();
