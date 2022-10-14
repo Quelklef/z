@@ -107,6 +107,7 @@ function mkNote(floc, source, graph, env) {
 const commands = {};
 
 const modules = [
+  squire('./modules/indent.js'),
   squire('./modules/base.js'),
   squire('./modules/tex.js'),
   squire('./modules/annotations.js'),
@@ -158,7 +159,6 @@ function parse(args) {
 
     // parsers
     parsers: [
-      p_indent,
       p_command,
       ...baseParsers,
     ],
@@ -366,74 +366,6 @@ function evalDhall(expr, env) {
 
 
 
-// Lists and indented blocks
-function p_indent(s) {
-  const curIndent = s.indents[s.indents.length - 1] || 0;
-  const isStartOfLine = (
-    [undefined, '\n'].includes(s.text[s.i - curIndent - 1])
-    && s.text.slice(s.i - curIndent - 1, s.i).trim() === ''
-  )
-  if (!isStartOfLine) return '';
-
-  // Calculate line column
-  let i = s.i;
-  while (s.text[i] === ' ') i++;
-  let dIndent = i - s.i;
-
-  s.i += dIndent;
-
-  // Find bullet
-  let style = null;
-  {
-    if (p_backtracking(s, s => p_take(s, '- '))) {
-      style = '-';
-    }
-    else if (p_backtracking(s, s => p_take(s, '> '))) {
-      style = '>';
-    }
-    else if (p_backtracking(s, s => p_take(s, '# '))) {
-      style = '#';
-    }
-  }
-
-  if (style)
-    dIndent += 2;
-
-  // If line not further indented, bail
-  if (dIndent <= 0)
-    return '';
-
-  const newIndent = curIndent + dIndent;
-
-  if (style === '>') {
-
-    const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
-    p_take(s, '\n');
-
-    s.indents.push(newIndent);
-    const body = p_toplevel_markup(s);
-    s.indents.pop();
-
-    return new Rep.Indented({
-      indent: dIndent,
-      body: new Rep.Expand({ line, body, id: s.gensym('expand') }),
-    });
-
-  } else {
-
-    s.indents.push(newIndent);
-    body = p_toplevel_markup(s);
-    s.indents.pop();
-    if (style)
-      body = new Rep.Bulleted({
-        body,
-        isNumbered: style === '#',
-      });
-    return new Rep.Indented({ indent: dIndent, body });
-
-  }
-}
-
 
 
 
@@ -455,31 +387,6 @@ function p_command(s) {
   return command(s);
 }
 
-
-
-
-
-// Explicit note reference
-commands.ref = function(s) {
-  const sx = s.clone();
-
-  p_spaces(s);
-
-  const toNoteId = p_backtracking(s, p_word);
-  if (!toNoteId) throw mkError(sx.text, sx.i, "Missing note ID");
-  p_spaces(s);
-
-  const sr = s.clone();
-  sr.doImplicitReferences = false;
-  const body = p_inline(sr, p_toplevel_markup);
-  Object.assign(s, { ...sr, doImplicitReferences: s.doImplicitReferences });
-    // ^ TODO: Technically, this is bugged! (B*)
-    //         If a callee also sets doImplicitReferences=false, this will wrongly overwrite that.
-
-  const toNote = s.graph.notesById[toNoteId];
-  return new Rep.Explicit({ toNoteId, toNote, body });
-}
-
 // Local evaluator modification
 commands.scope = function(s) {
   p_spaces(s);
@@ -498,29 +405,6 @@ commands.scope = function(s) {
 
   return r;
 }
-
-
-
-
-
-
-
-
-// Expanding bullets
-commands.fold = function(s) {
-  p_spaces(s);
-  const [line, _] = p_enclosed(s, p_toplevel_markup);
-  p_spaces(s);
-  const body = p_block(s, p_toplevel_markup);
-  return new Rep.Indented({ indent: 2, body: new Rep.Expand({ line, body, id: s.gensym('expand') }) });
-}
-
-
-
-
-
-
-
 
 
 
@@ -560,20 +444,15 @@ main {
   line-height: 1.5em;
 }
 
-
 a {
   color: var(--color-dynamic);
 }
-
-
 
 @media print {
   .hide-on-print {
     display: none;
   }
 }
-
-
 
 </style>
 
@@ -582,7 +461,8 @@ a {
 
 // <-> URL sync helpers
 // Blunt, but it works
-// TODO: better API
+// Used by several format modules
+// WANT: better API
 
 window.urlSynchronizedState = {};
 
@@ -606,8 +486,6 @@ syncFromUrl();
 
 prelude,
 
-expandableListsImplementation,
-
 `
 
 <main>`, html, `</main>
@@ -621,87 +499,6 @@ expandableListsImplementation,
 
 
 
-const expandableListsImplementation = String.raw`
-
-<style>
-
-.expand > .expand-line {
-  display: list-item;
-  list-style-type: disclosure-closed;
-  cursor: pointer;
-}
-.expand > .expand-line:hover {
-  background-color: rgba(var(--color-dynamic-rgb), .05);
-}
-.expand > .expand-line::marker {
-  color: var(--color-dynamic);
-}
-.expand > .expand-body {
-  border-top: 1px dashed rgba(var(--color-static-rgb), 0.3);
-  margin-top: .5em;
-  padding-top: .5em;
-  margin-bottom: .5em;
-  padding-bottom: .5em;
-  position: relative;
-}
-.expand > .expand-body::before {
-  content: '';
-  display: inline-block;
-  position: absolute;
-  background-color: var(--color-dynamic);
-  width: 1px;
-  left: -1.5ch;  /* TODO: baked */
-  top: 0;
-  height: 100%;
-}
-.expand:not(.open) > .expand-body {
-  display: none;
-}
-.expand.open > .expand-line {
-  list-style-type: disclosure-open;
-}
-
-</style>
-
-<script>
-
-document.addEventListener('DOMContentLoaded', () => {
-
-  const openExpands = new Set(urlSynchronizedState.openExpands || []);
-
-  for (const $exp of document.querySelectorAll('.expand')) {
-    const $line = $exp.querySelector('.expand-line');
-    const $body = $exp.querySelector('.expand-body');
-
-    let isExpanded = openExpands.has($exp.id);;
-
-    function rerender() {
-      if (isExpanded)
-        $exp.classList.add('open');
-      else
-        $exp.classList.remove('open');
-    }
-
-    rerender();
-
-    $line.addEventListener('click', () => {
-      isExpanded = !isExpanded;
-      rerender();
-
-      if (isExpanded)
-        openExpands.add($exp.id);
-      else
-        openExpands.delete($exp.id);
-      urlSynchronizedState.openExpands = [...openExpands];
-      syncToUrl();
-    });
-  }
-
-});
-
-</script>
-
-`;
 
 
 function ruled(str, pref='>|') {
