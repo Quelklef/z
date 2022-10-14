@@ -55,7 +55,7 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase1.rep;
     const defines = new Set();
     rep.traverse(node => {
-      if (node instanceof Rep.Jargon) {
+      if (node instanceof squire('./modules/jargon.js').Jargon) {  // TODO
         for (const form of node.forms) {
           defines.add(form);
         }
@@ -77,9 +77,9 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase2.rep;
     const references = new Set();
     rep.traverse(node => {
-      if (node instanceof Rep.Implicit) {
+      if (node instanceof squire('./modules/jargon.js').Implicit) {  // TODO
         references.add(node.toNote.id);
-      } else if (node instanceof Rep.Explicit) {
+      } else if (node instanceof squire('./modules/base.js').Explicit) {  // TODO
         if (!!node.toNote)
           references.add(node.toNote.id);
       }
@@ -104,8 +104,15 @@ function mkNote(floc, source, graph, env) {
 }
 
 
-const commands = {};
+/*
 
+type Module =
+  { parsers [optional] :: Array (Parser Rep)
+  , commands [optional] :: ObjectOf (Parser Rep)
+  , prelude [optional] :: String
+  }
+
+*/
 const modules = [
   squire('./modules/indent.js'),
   squire('./modules/base.js'),
@@ -116,13 +123,6 @@ const modules = [
   squire('./modules/jargon.js'),
   squire('./modules/table.js'),
 ];
-
-let prelude = new Cats();
-for (const module of modules) {
-  Object.assign(commands, module.commands);
-  prelude.add(module.prelude ?? '');
-}
-prelude = prelude.toString();
 
 function parse(args) {
 
@@ -159,6 +159,18 @@ function parse(args) {
     for (const module of modules)
       s.parsers = [...s.parsers, ...(module.parsers ?? [])];
 
+    // Prelude
+    s.prelude = new Cats();
+    for (const module of modules)
+      s.prelude.add(module.prelude ?? '');
+    s.prelude = s.prelude.toString();
+
+    // Commands mapping
+    s.commands = {};
+    Object.assign(s.commands, builtinCommands);
+    for (const module of modules)
+      Object.assign(s.commands, module.commands);
+
     // TODO
     s.clone = function() {
       const c = { ...this };
@@ -191,7 +203,7 @@ function parse(args) {
 
   rep.add(new Rep.ReferencedBy());
 
-  return { rep: template(rep), meta };
+  return { rep: template(s, rep), meta };
 
 }
 
@@ -377,15 +389,17 @@ function p_command(s) {
 
   const name = p_word(s);
 
-  const command = commands[name];
+  const command = s.commands[name];
   if (!command)
     throw mkError(s.text, [xi0, s.i], `No command '${name}'!`);
 
   return command(s);
 }
 
+const builtinCommands = {};
+
 // Local evaluator modification
-commands.scope = function(s) {
+builtinCommands.scope = function(s) {
   p_spaces(s);
   const expr = p_dhallExpr(s, { takeToEol: false });
   const json = evalDhall(expr, s.env);
@@ -405,7 +419,7 @@ commands.scope = function(s) {
 
 
 
-function template(html) {
+function template(s, html) {
   return new Rep.Seq(String.raw`
 
 <!DOCTYPE HTML>
@@ -416,6 +430,7 @@ function template(html) {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css">
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+    ${ s.prelude }
   </head>
 <body>
 
@@ -479,11 +494,6 @@ syncFromUrl();
 
 </script>
 
-`,
-
-prelude,
-
-`
 
 <main>`, html, `</main>
 
@@ -495,18 +505,15 @@ prelude,
 
 
 
-
-
-
-function ruled(str, pref='>|') {
-  const bar = '------';
-  return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
-}
-
-function sample(str, from = 0, linec = 5) {
-  return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
-}
-
 function sample_s(s, linec = 4) {
   return sample(s.text, s.i, linec);
+
+  function sample(str, from = 0, linec = 5) {
+    return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
+  }
+
+  function ruled(str, pref='>|') {
+    const bar = '------';
+    return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
+  }
 }

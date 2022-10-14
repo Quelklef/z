@@ -1,5 +1,6 @@
-// const { squire } = require('../../../squire.js');
+const { squire } = require('../../../squire.js');
 const Rep = require('../rep.js');
+const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('../parsing.js');
 
 
@@ -29,7 +30,7 @@ exports.commands.jarg = function(s) {
   Object.assign(s, { ...srec, doImplicitReferences });
 
   // WANT: move module-specific Rep types into the respective modules
-  return new Rep.Jargon({ forms, body });
+  return new Jargon({ forms, body });
 }
 
 // Jargon-lead implicit references
@@ -51,7 +52,7 @@ function p_implicitReference(s) {
   const body = escapeHtml(s.text.slice(s.i, s.i + stepAmt));
   s.i += stepAmt;
 
-  return new Rep.Implicit({ fromJargon: jarg, toNote, body });
+  return new Implicit({ fromJargon: jarg, toNote, body });
 }
 
 function p_jargon(s) {
@@ -314,3 +315,49 @@ class JargonMatcherJargonMatcher {
 }
 
 
+
+const Jargon =
+exports.Jargon =
+class Jargon extends Rep.Rep {
+
+  constructor({ forms, body }) {
+    super();
+    this.forms = forms;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    return new Cats(`<span class="jargon" data-forms="${[...this.forms].join(';')}">`, this.body.toHtml(env), '</span>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+const Implicit =
+exports.Implicit =
+class Implicit extends Rep.Rep {
+
+  constructor({ fromJargon, toNote, body }) {
+    super();
+    this.fromJargon = fromJargon;
+    this.toNote = toNote;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    if (!this.toNote) {
+      env.log.warn(`Bad jargon '${jarg}'!`);
+    }
+    const href = this.toNote?.href ?? '#';
+    return new Cats(`<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">`, this.body, '</a>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}

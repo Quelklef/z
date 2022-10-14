@@ -98,6 +98,8 @@ exports.commands.table = function(s) {
 
 exports.prelude = String.raw`
 
+<style>
+
 table {
   border-collapse: collapse;
   font-size: 1em;
@@ -116,5 +118,7 @@ table.headers-vert th:first-child
 {
   border-right-width: 2px;
 }
+
+</style>
 
 `;
