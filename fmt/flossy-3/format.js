@@ -51,11 +51,14 @@ function mkNote(floc, source, graph, env) {
     return note[t].phase1.meta?.starred === true;
   });
 
+  const mod_jarg = squire('./modules/jargon.js');
+  const mod_base = squire('./modules/base.js');
+
   lazyAss(note, 'defines', () => {
     const rep = note[t].phase1.rep;
     const defines = new Set();
     rep.traverse(node => {
-      if (node instanceof squire('./modules/jargon.js').Jargon) {  // TODO
+      if (node instanceof mod_jarg.Jargon) {  // TODO
         for (const form of node.forms) {
           defines.add(form);
         }
@@ -77,9 +80,9 @@ function mkNote(floc, source, graph, env) {
     const rep = note[t].phase2.rep;
     const references = new Set();
     rep.traverse(node => {
-      if (node instanceof squire('./modules/jargon.js').Implicit) {  // TODO
+      if (node instanceof mod_jarg.Implicit) {  // TODO
         references.add(node.toNote.id);
-      } else if (node instanceof squire('./modules/base.js').Explicit) {  // TODO
+      } else if (node instanceof mod_base.Explicit) {  // TODO
         if (!!node.toNote)
           references.add(node.toNote.id);
       }
@@ -209,174 +212,17 @@ function parse(args) {
 
 
 function p_noteMetadata(s) {
-  const prefix = 'meta:';
-
-  if (!s.text.startsWith(prefix, s.i))
+  if (!s.text.startsWith('meta:', s.i))
     return null;
 
-  s.i += prefix.length;
-  p_spaces(s);
-
-  const expr = p_dhallExpr(s, { takeToEol: true });
-  return evalDhall(expr, s.env);
+  p_take(s, 'meta');
+  return p_jsExpr(s);
 }
 
-// Scan a single Dhall expression
-// Because Dhall uses whitespace to juxtapose, it's not possible to
-// know whan an expression has ended.
-// If your expressions are being cut off, wrap them in parens.
-function p_dhallExpr(s, { takeToEol }) {
-
-  let delims = [];
-
-  const i0 = s.i;
-
-  parsing:
-  while (true) {
-
-    if (s.i >= s.text.length)
-      break parsing;
-
-    const topDelim = delims[delims.length - 1]
-    switch (topDelim) {
-
-      // Expression
-      case undefined:
-      case '${':
-      case '(':
-      case '[':
-      case '{':
-      {
-
-        const pairs = {
-          "''": null,
-          '"': null,
-          "{-": null,
-          "(": ")",
-          "[": "]",
-          "{": "}",
-        };
-
-        for (const [opener, closer] of Object.entries(pairs)) {
-          if (s.text.startsWith(opener, s.i)) {
-            s.i += opener.length;
-            delims.push(opener);
-            continue parsing;
-          }
-          if (closer && s.text.startsWith(closer, s.i)) {
-            if (pairs[topDelim] !== closer)
-              throw mkError(s.text, [i0, s.i], `Unpaired '${closer}'`);
-            s.i += closer.length;
-            delims.pop();
-            continue parsing;
-          }
-        }
-
-        s.i++;
-
-      }
-      break;
-
-      // String
-      case '"':
-      case "''":
-      {
-        if (s.text.startsWith('\\', s.i)) {
-          s.i += 2;
-        }
-        else if (s.text.startsWith(topDelim, s.i)) {
-          s.i += topDelim.length;
-          delims.pop();
-        }
-        else if (s.text.startsWith('${', s.i)) {
-          s.i += 2;
-          delims.push('${');
-        }
-        else {
-          s.i++;
-        }
-      }
-      break;
-
-      // Line comment
-      case '--':
-      {
-        if (s.text.startsWith('\n', s.i))
-          delims.pop();
-        s.i++;
-      }
-      break;
-
-      // Block comment
-      case '{-':
-      {
-        if (s.text.startsWith('{-', s.i)) {
-          s.i += 2;
-          delims.push('{-');
-        }
-        else if (s.text.startsWith('-}', s.i)) {
-          s.i += 2;
-          delims.pop();
-        }
-        else {
-          s.i++;
-        }
-      }
-      break;
-
-      default:
-        impossible(topDelim);
-
-    }
-
-    if (delims.length === 0)
-      break parsing;
-
-  }
-
-  if (takeToEol)
-    s.i = indexOf(s.text, '\n', s.i);
-
-  return s.text.slice(i0, s.i);
-
+function p_jsExpr(s) {
+  const [expr, _] = p_enclosed(s, p_toplevel_verbatim);
+  return eval('(' + expr + ')');
 }
-
-function evalDhall(expr, env) {
-  return env.cache.at('note-parts', ['dhall', expr], () => {
-    return fss.withTempDir(tmp => {
-
-      env.log.info(`Evaluating Dhall [${expr.length}]`);
-
-      fss.write(plib.resolve(tmp, 'it.dhall'), expr);
-
-      const cmd = String.raw`
-        cd ${tmp} \
-        && dhall-to-json --file it.dhall --compact
-      `;
-
-      let result;
-      try {
-        result = child_process.execSync(cmd).toString();
-      } catch (err) {
-        env.log.error(err.stderr.toString());  // meh
-        throw 'Dhall eval failed; see above!';  // TODO
-      }
-
-      result = JSON.parse(result);
-      env.log.info(`Evaluating Dhall [done] [${expr.length}]`);
-      return result;
-
-    });
-  });
-}
-
-
-
-
-
-
-
-
 
 
 // Execute a backslash command
@@ -401,12 +247,12 @@ const builtinCommands = {};
 // Local evaluator modification
 builtinCommands.scope = function(s) {
   p_spaces(s);
-  const expr = p_dhallExpr(s, { takeToEol: false });
-  const json = evalDhall(expr, s.env);
+  const json = p_jsExpr(s);
+  p_spaces(s);
 
   const srec = s.clone();
 
-  if ('infer-references' in json)
+  if ('inferReferences' in json)
     srec.doImplicitReferences = !!json['infer-references'];
 
   const [r, _] = p_enclosed(srec, p_toplevel_markup);

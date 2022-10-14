@@ -2,6 +2,7 @@ const { squire } = require('../../../squire.js');
 const Rep = require('../rep.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
 const { p_block, p_toplevel_markup, p_inline, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('../parsing.js');
+// WANT: import audit on all format modules
 
 
 exports.stateInit = ({ graph, note, doImplicitReferences }) => ({
