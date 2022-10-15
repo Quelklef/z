@@ -3,43 +3,37 @@ const repm = squire('../repm.js');
 const p = squire('../parse.js');
 
 exports.commands = {};
-exports.nonlocalStateKeys = [ 'annotNameQueue', 'annotNameIndex' ];
+exports.nonlocalStateKeys = [ 'adefNameQueue', 'adefNameIndex' ];
 exports.stateInit = {
-  annotNameQueue: [],
-  annotNameIndex: 1,
+  adefNameQueue: [],
+  adefNameIndex: 1,
 };
-
-// WANT: stop distinguishing between super and non-super
 
 // Annotation reference
 exports.commands.aref = function(s) {
   p.p_spaces(s);
 
-  let name;
-  if (!";[{(<:".includes(s.text[s.i])) {
-    name = p.p_word(s).toString();
-  } else {
-    name = p.gensym(s, 'annot');
-    s.annotNameQueue.push(name);
+  let adefName;
+  adefName = p.p_backtracking(s, p.p_word);
+  if (!adefName) {
+    adefName = p.gensym(s, 'adef');
+    s.adefNameQueue.push(adefName);
   }
 
   p.p_spaces(s);
 
   let body;
-  let isSuper;
   if (s.text[s.i] === ';') {
-    const value = (s.annotNameIndex++);
+    const value = (s.adefNameIndex++);
     s.i++;
     body = value;
-    isSuper = true;
   } else {
     body = p.p_inline(s, p.p_toplevel_markup)
-    isSuper = false;
   }
 
-  const isSuperClass = isSuper ? 'super' : '';
+  const arefName = p.gensym(s, 'aref');
   return new repm.Seq(
-    `<span class="annotation-reference ${isSuperClass}" id="${p.gensym(s, 'annot-id')}" data-refers-to="${name}">`,
+    `<span class="annotation-reference" data-name="${arefName}" data-refers-to="${adefName}">`,
     body,
     '</span>'
   );
@@ -49,82 +43,89 @@ exports.commands.aref = function(s) {
 exports.commands.adef = function(s) {
   p.p_spaces(s);
   let name;
-  if (!"[{(<:=".includes(s.text[s.i])) {
-    name = p.p_word(s);
-    p.p_spaces(s);
-  } else {
-    if (s.annotNameQueue.length === 0)
-      throw mkError(s.text, s.i, "Unpaired \\adef");
-    name = s.annotNameQueue[0];
-    s.annotNameQueue.splice(0, 1);
+  name = p.p_backtracking(s, p.p_word);
+  if (!name) {
+    if (s.adefNameQueue.length === 0)
+      throw p.mkError(s.text, s.i, "Unpaired \\adef");
+    name = s.adefNameQueue[0];
+    s.adefNameQueue.splice(0, 1);
   }
 
-  return new repm.Seq(`<div class="annotation-definition" data-name="${name}">`, p.p_block(s, p.p_toplevel_markup), '</div>');
+  return new repm.Seq(
+    `<div class="annotation-definition" data-name="${name}">`,
+    p.p_block(s, p.p_toplevel_markup),
+    '</div>',
+  );
 }
 
 exports.prelude = String.raw`
 
 <style>
 
-.annotation-reference.super {
+.annotation-reference
+{
   vertical-align: super;
   font-size: .9em;
   position: relative;
   padding: 0 1px;
-}
-
-/* Increase effective clickable area */
-.annotation-reference.super:before {
-  content: '';
-  position: absolute;
-  width: 25px;
-  height: 25px;
-  border-radius: 100%;
-  left: calc(50% - 25px / 2);
-  top: calc(50% - 25px / 2);
-  /* background-color: rgba(var(--color-dynamic-rgb), .1); */
-}
-
-.annotation-reference:not(.super):before { content: '['; }
-.annotation-reference:not(.super):after { content: ']'; }
-
-.annotation-reference:before,
-.annotation-reference:after,
-.annotation-reference
-{
   color: rgba(var(--color-dynamic-rgb), .65);
   cursor: pointer;
 }
 
-.annotation-reference:hover:before,
-.annotation-reference:hover:after,
 .annotation-reference:hover,
-.annotation-reference.active:before,
-.annotation-reference.active:after,
 .annotation-reference.active
 {
   color: var(--color-dynamic);
 }
 
-.annotation-reference.active:before,
-.annotation-reference.active:after,
-.annotation-reference.active
-{
+.annotation-reference.active {
   font-weight: bold;
 }
 
+/* Increase effective clickable area */
+.annotation-reference:before {
+  content: '';
+  position: absolute;
+  width: calc(100% + 1.5em);
+  height: calc(100% + 0.5em);
+  border-radius: 25%;
+  left: calc(-1.5em / 2);
+  top: calc(-0.5em / 2);
+  /* background-color: rgba(var(--color-dynamic-rgb), .1); */
+}
+
 .annotation-definition {
-  background: rgba(250, 250, 250);
-  box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15);
+  /* background: rgba(250, 250, 250); */
+  /* box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15); */
   border: 1px solid rgba(var(--color-static-rgb), .5);
   border-radius: 3px;
-
   padding: .5em 1em;
   margin: .5em 0;
 }
 
+/* lil triangle */
+.annotation-definition {
+  position: relative;
+}
+.annotation-definition:before {
+  content: '';
+  width: 0;
+  height: 0;
+  position: absolute;
+  top: -10px;
+  left: calc(var(--triangle-left) - 10px/2 - 2px);  /* var gets set by JS */
+  border: 5px solid transparent;
+  border-bottom-color: var(--color-static);
+}
+
 .annotation-definition:not(.revealed) {
-  display: none;
+  max-height: 0;
+  overflow: hidden;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  /* nb. doing this over display:none fixes an issue
+         regarding nested annotations */
 }
 
 </style>
@@ -133,25 +134,37 @@ exports.prelude = String.raw`
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  // id set of expanded \aref nodes
-  let expandedRefs = new Set(window.urlSynchronizedState.expandedRefs || []);
+  // name set of expanded \aref nodes
+  let expanded = new Set(window.urlSynchronizedState.expanded || []);
 
   function stateToDom() {
-    for (const $ref of document.querySelectorAll('.annotation-reference')) {
-      const isExpanded = expandedRefs.has($ref.id);
+    const $refs = Array.from(document.querySelectorAll('.annotation-reference'));
+    const $defs = Array.from(document.querySelectorAll('.annotation-definition'));
+    for (const $ref of $refs) {
+      const shouldExpand = expanded.has($ref.dataset.name);
 
-      const $def = document.querySelector('.annotation-definition[data-name="' + $ref.dataset.refersTo + '"]');
+      const $def = $defs.find($def => $def.dataset.name === $ref.dataset.refersTo);
       if (!$def) {
-        console.warn("Unable to find annotation definition with name: '" + name + "'", 'due to reference', $ref);
+        console.warn("Unable to find annotation definition");
         return;
       }
 
-      if (isExpanded) {
-        $def.classList.add('revealed');
-        $ref.classList.add('active');
-      } else {
+      if (!shouldExpand) {
         $def.classList.remove('revealed');
-        $ref.classList.remove('active');
+      }
+      else {
+        let $eos = getEndOfSentence($ref)
+        if (!$eos) {
+          console.warn('Annotation getEndOfSentence fallback');
+          $eos = $ref;
+        }
+        $eos.after($def);
+        $def.classList.add('revealed');
+
+        const left = (
+          $ref.offsetLeft - $def.offsetLeft + $ref.offsetWidth / 2
+        );
+        $def.style.setProperty('--triangle-left', left + 'px');
       }
     }
   }
@@ -160,15 +173,59 @@ document.addEventListener('DOMContentLoaded', () => {
 
   for (const $ref of document.querySelectorAll('.annotation-reference')) {
     $ref.addEventListener('click', () => {
-      const isExpanded = expandedRefs.has($ref.id);
-      if (isExpanded) expandedRefs.delete($ref.id);
-      else expandedRefs.add($ref.id);
+      const isExpanded = expanded.has($ref.dataset.name);
+      if (isExpanded) expanded.delete($ref.dataset.name);
+      else expanded.add($ref.dataset.name);
 
       stateToDom();
 
-      window.urlSynchronizedState.expandedRefs = [...expandedRefs];
+      window.urlSynchronizedState.expanded = [...expanded];
       syncToUrl();
     });
+  }
+
+
+  function getEndOfSentence($node) {
+    // Wow this is tricky to get right
+    // BTW, it's extremeley effectful
+
+    let $prev = $node;
+    let prevY = getY($node);
+    let nodeY;
+
+    while (true) {
+      $node = next($prev);
+      if (!$node) return null;
+      [$node, nodeY] = getY($node);
+      if (nodeY > prevY + 15) return $prev;
+      [$prev, prevY] = [$node, nodeY];
+    }
+
+    function next($targ) {
+      if (!$targ) return null;
+      return $targ.nextSibling ?? first(next($targ.parentNode));
+    }
+    function first($targ) {
+      if (!$targ) return null;
+      return first($targ.firstChild) ?? $targ;
+    }
+
+    function getY($targ) {
+      if ($targ.nodeName === '#text') {
+        const i = $targ.textContent.search(/\s/);
+        if (i === 0) {
+          $targ.splitText(1);
+        } else if (i !== -1) {
+          $targ.splitText(i);
+        }
+        const $span = document.createElement('span');
+        $targ.before($span);
+        $span.append($targ);
+        $targ = $span
+      }
+      const y = $targ.getBoundingClientRect().top;
+      return [$targ, y];
+    }
   }
 
 });
