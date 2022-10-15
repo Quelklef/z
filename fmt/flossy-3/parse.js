@@ -68,32 +68,32 @@ This is what the module knows:
 
 type State =
 
-  -- Base state --
-  { text :: String                       -- Source text
-  , i :: Int                             -- File pointer
-  , indents :: Array Int                 -- Indent stack
+  // Base state //
+  { text    :: String          // Source text [local]
+  , i       :: Int             // File pointer [nonlocal]
+  , indents :: Array Int       // Indent stack [nonlocal]
+  , cursyms :: Map String Int  // Gensym state [nonlocal]
 
-  -- Extensibility-related state --
-  , parsers :: Array (Parser repm)       -- Parser list
-  , commands :: Map String (Parser repm) -- Command list
+  // Extensibility-related state //
+  , parsers  :: Array (Parser repm)       // Parser list [local]
+  , commands :: Map String (Parser repm)  // Command list [local]
 
-  , cursyms :: Map String Int            -- Gensym state
-
-  -- Quasi-state --
-  , quasi :: Quasi                       -- Quasi-state
+  // Quasi-state //
+  , quasi :: Quasi  // Quasi-state [quasi]
 
   , ...
   }
 
 type Quasi =
-  { StateT :: Array String
+  { nonlocalStateKeys :: Array String
   , ...
   }
 
 type Module =
-  { parsers [optional] :: Array (Parser repm)
-  , commands [optional] :: Map String (Parser repm)
-  , StateT [optiona] :: Array String
+  { parsers           [optional] :: Array (Parser repm)
+  , commands          [optional] :: Map String (Parser repm)
+  , nonlocalStateKeys [optional] :: Array String
+  , prelude           [optional] :: String
   }
 
 */
@@ -148,10 +148,11 @@ function initState({
   s.quasi = quasi;
 
   // Tracks which keys are part of the mutable state
-  s.quasi.StateT = [ 'i', 'cursyms' ];
+  s.quasi.nonlocalStateKeys ??= [];
+  s.quasi.nonlocalStateKeys = [ ...s.quasi.nonlocalStateKeys, 'i', 'cursyms' ];
   for (const module of Object.values(modules))
-    if (module.StateT)
-      s.quasi.StateT = [...s.quasi.StateT, module.StateT];
+    if (module.nonlocalStateKeys)
+      s.quasi.nonlocalStateKeys.push(...module.nonlocalStateKeys);
 
   return s;
 
@@ -184,7 +185,7 @@ const local =
 exports.local = function(s, inner) {
   const sc = clone(s);
   const res = inner(sc);
-  for (const key of s.quasi.StateT)
+  for (const key of s.quasi.nonlocalStateKeys)
     s[key] = sc[key];
   return res;
 };
@@ -273,118 +274,6 @@ function p_backtracking(s, parser) {
   Object.assign(s, sc);
   return result;
 }
-
-
-// mkError(text, idx, msg)
-// mkError(text, [i0, iF], msg)    range is inclusive/exclusive
-const mkError =
-exports.mkError =
-function mkError(...args) {
-
-  const err = new ParseError();
-
-  lazyAss(err, 'message', () => mkErrorMsg(...args))
-  // nb Compute lazily in case error is swallowed without
-  // observing its message (eg when backtracking)
-
-  return err;
-
-}
-
-function mkErrorMsg(text, loc, err) {
-
-  const linesAround = 2;
-  const wrapWidth = 85;
-  const textLines = text.split('\n').map(ln => ln + '\n');
-  const textLineC = textLines.length - 1;
-
-  let y0, x0, yf, xf;
-  {
-    const range = typeof loc === 'number' ? [loc, loc + 1] : loc;
-    const [i0, iF] = range;
-    [y0, x0] = toCoords(i0);
-    [yf, xf] = toCoords(iF);
-    yf++;  // end-exclusive range
-  }
-
-  const y0A = Math.max(y0 - linesAround, 0);
-  const yfA = Math.min(yf + linesAround, textLineC);
-
-  const lineNumberingWidth = ('' + yfA).length;
-
-  const result = new Cats();
-  result.add('\n')
-  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┬─────\n');
-  for (let y = y0A; y <= yfA; y++) {
-    const line = textLines[y];
-    const lineNumber = clc.green((y + 1 + '').padStart(lineNumberingWidth));
-    const lineNumberBlank = strrepm(' ', lineNumberingWidth);
-    const sigil = y0 <= y && y < yf ? clc.yellow('▶ ') : '  ';
-
-    // Highlight range for this line
-    let hlI0, hlIF;
-    if (y0 <= y && y < yf) {
-      hlI0 = y === y0 ? x0 : 0;
-      hlIF = y === yf - 1 ? xf : wrapWidth;
-    } else {
-      hlI0 = line.length;
-      hlIF = line.length;
-    }
-
-    const noNewline = line.slice(0, line.length - 1);
-    const wrapped = wrapText(noNewline);
-    wrapText(noNewline).forEach((wrp, wrpI) => {
-      const wrpI0 = wrpI * wrapWidth;
-      const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
-      wrp = wrp.slice(0, wrpHlI0) + clc.bgYellow.black(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
-
-      const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
-      result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
-    });
-  }
-  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┼─────\n');
-  for (const wrp of wrapText('Error: ' + err))
-    result.add(strrepm(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
-  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┴─────\n');
-
-  return '\n' + result.toString();
-
-  function toCoords(idx) {
-    idx = Math.min(Math.max(idx, 0), text.length - 1);
-    let sol = 0, y = 0;
-    while (true) {
-      const eol = indexOf(text, '\n', sol);
-      if (eol >= idx) {
-        const x = idx - sol;
-        return [y, x];
-      }
-      y++;
-      sol = eol + 1;
-    }
-  }
-
-  function strrepm(s, n) {
-    let result = '';
-    for (let i = 0; i < n; i++)
-      result += s;
-    return result;
-  }
-
-  function wrapText(s) {
-    const result = [];
-    for (const ln of s.split('\n'))
-      for (let i = 0; i * wrapWidth < ln.length; i++)
-        result.push(ln.slice(i * wrapWidth, (i + 1) * wrapWidth) + '\n');
-    if (result.length === 0)
-      result.push('\n');
-    return result;
-  }
-
-}
-
-
-
-
 
 // Parse block or inline
 const p_enclosed =
@@ -599,4 +488,112 @@ function getNextNonemptyLine(text, i0 = 0) {
     }
   }
   return null;
+}
+
+
+// mkError(text, idx, msg)
+// mkError(text, [i0, iF], msg)    range is inclusive/exclusive
+const mkError =
+exports.mkError =
+function mkError(...args) {
+
+  const err = new ParseError();
+
+  lazyAss(err, 'message', () => mkErrorMsg(...args))
+  // nb Compute lazily in case error is swallowed without
+  // observing its message (eg when backtracking)
+
+  return err;
+
+}
+
+function mkErrorMsg(text, loc, err) {
+
+  const linesAround = 2;
+  const wrapWidth = 85;
+  const textLines = text.split('\n').map(ln => ln + '\n');
+  const textLineC = textLines.length - 1;
+
+  let y0, x0, yf, xf;
+  {
+    const range = typeof loc === 'number' ? [loc, loc + 1] : loc;
+    const [i0, iF] = range;
+    [y0, x0] = toCoords(i0);
+    [yf, xf] = toCoords(iF);
+    yf++;  // end-exclusive range
+  }
+
+  const y0A = Math.max(y0 - linesAround, 0);
+  const yfA = Math.min(yf + linesAround, textLineC);
+
+  const lineNumberingWidth = ('' + yfA).length;
+
+  const result = new Cats();
+  result.add('\n')
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┬─────\n');
+  for (let y = y0A; y <= yfA; y++) {
+    const line = textLines[y];
+    const lineNumber = clc.green((y + 1 + '').padStart(lineNumberingWidth));
+    const lineNumberBlank = strrepm(' ', lineNumberingWidth);
+    const sigil = y0 <= y && y < yf ? clc.yellow('▶ ') : '  ';
+
+    // Highlight range for this line
+    let hlI0, hlIF;
+    if (y0 <= y && y < yf) {
+      hlI0 = y === y0 ? x0 : 0;
+      hlIF = y === yf - 1 ? xf : wrapWidth;
+    } else {
+      hlI0 = line.length;
+      hlIF = line.length;
+    }
+
+    const noNewline = line.slice(0, line.length - 1);
+    const wrapped = wrapText(noNewline);
+    wrapText(noNewline).forEach((wrp, wrpI) => {
+      const wrpI0 = wrpI * wrapWidth;
+      const [wrpHlI0, wrpHlIF] = [Math.max(0, hlI0 - wrpI0), Math.max(0, hlIF - wrpI0)];
+      wrp = wrp.slice(0, wrpHlI0) + clc.bgYellow.black(wrp.slice(wrpHlI0, wrpHlIF)) + wrp.slice(wrpHlIF);
+
+      const lineNo = wrpI === 0 ? lineNumber : lineNumberBlank;
+      result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
+    });
+  }
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┼─────\n');
+  for (const wrp of wrapText('Error: ' + err))
+    result.add(strrepm(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┴─────\n');
+
+  return '\n' + result.toString();
+
+  function toCoords(idx) {
+    idx = Math.min(Math.max(idx, 0), text.length - 1);
+    let sol = 0, y = 0;
+    while (true) {
+      const eol = indexOf(text, '\n', sol);
+      if (eol >= idx) {
+        const x = idx - sol;
+        return [y, x];
+      }
+      y++;
+      sol = eol + 1;
+    }
+  }
+
+  function strrepm(s, n) {
+    let result = '';
+    for (let i = 0; i < n; i++)
+      result += s;
+    return result;
+  }
+
+  function wrapText(s) {
+    const result = [];
+    for (const ln of s.split('\n'))
+      for (let i = 0; i * wrapWidth < ln.length; i++)
+        result.push(ln.slice(i * wrapWidth, (i + 1) * wrapWidth) + '\n');
+    if (result.length === 0)
+      result.push('\n');
+    return result;
+  }
+
 }

@@ -3,7 +3,7 @@ const repm = squire('../repm.js');
 const p = squire('../parse.js');
 
 exports.commands = {};
-exports.StateT = [ 'annotNameQueue', 'annotIndex' ];
+exports.nonlocalStateKeys = [ 'annotNameQueue', 'annotIndex' ];
 exports.stateInit = {
   annotNameQueue: [],
   annotIndex: 1,
