@@ -3,10 +3,10 @@ const repm = squire('../repm.js');
 const p = squire('../parse.js');
 
 exports.commands = {};
-exports.nonlocalStateKeys = [ 'annotNameQueue', 'annotIndex' ];
+exports.nonlocalStateKeys = [ 'annotNameQueue', 'annotNameIndex' ];
 exports.stateInit = {
   annotNameQueue: [],
-  annotIndex: 1,
+  annotNameIndex: 1,
 };
 
 // WANT: stop distinguishing between super and non-super
@@ -28,7 +28,7 @@ exports.commands.aref = function(s) {
   let body;
   let isSuper;
   if (s.text[s.i] === ';') {
-    const value = (s.annotIndex++);
+    const value = (s.annotNameIndex++);
     s.i++;
     body = value;
     isSuper = true;

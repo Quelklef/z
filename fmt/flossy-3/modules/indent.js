@@ -9,7 +9,9 @@ exports.parsers = [];
 //       and how much belongs in a format module
 
 // Expanding bullets
-exports.commands.fold = function(s) {
+exports.commands.ddn =
+exports.commands.dropdown =
+function(s) {
   p.p_spaces(s);
   const [line, _] = p.p_enclosed(s, p.p_toplevel_markup);
   p.p_spaces(s);

@@ -101,9 +101,9 @@ type Module =
 const initState =
 exports.initState =
 function initState({
-  text,       // Parser text
-  modules,    // Array Module
-  quasi,      // Initial quasi-state value of type Quasi
+  text,     // Parser text
+  modules,  // :: Array Module
+  quasi,    // Initial quasi-state
 }) {
 
   // Initialize parser state
@@ -137,7 +137,7 @@ function initState({
   for (const module of Object.values(modules))
     Object.assign(s.commands, module.commands);
 
-  // WANT: give modules namespaces?
+  // Module state initialization
   for (const module of Object.values(modules))
     if (module.stateInit)
       Object.assign(s, module.stateInit);
@@ -148,8 +148,7 @@ function initState({
   s.quasi = quasi;
 
   // Tracks which keys are part of the mutable state
-  s.quasi.nonlocalStateKeys ??= [];
-  s.quasi.nonlocalStateKeys = [ ...s.quasi.nonlocalStateKeys, 'i', 'cursyms' ];
+  s.quasi.nonlocalStateKeys = [ 'i', 'cursyms' ];
   for (const module of Object.values(modules))
     if (module.nonlocalStateKeys)
       s.quasi.nonlocalStateKeys.push(...module.nonlocalStateKeys);

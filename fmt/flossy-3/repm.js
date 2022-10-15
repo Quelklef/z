@@ -1,10 +1,4 @@
-const plib = require('path');
-const child_process = require('child_process');
-
 const { squire } = require('../../squire.js');
-const { Cats, withTempDir } = squire('../../util.js');
-const fss = squire('../../fss.js');
-const p = squire('./parse.js');
 
 /*
 

@@ -1,11 +1,10 @@
 const plib = require('path');
-const child_process = require('child_process');
 
 const { squire } = require('../../squire.js');
+const { lazyAss, Cats, hash } = squire('../../util.js');
+const { indexOf } = squire('./util.js');
 const fss = squire('../../fss.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
 const repm = squire('./repm.js');
-const { clone, Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
 const p = squire('./parse.js');
 
 exports.default =
