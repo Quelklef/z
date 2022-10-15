@@ -68,16 +68,19 @@ This is what the module knows:
 
 type State =
 
-  { text :: String
-  , i :: Int
+  -- Base state --
+  { text :: String                       -- Source text
+  , i :: Int                             -- File pointer
+  , indents :: Array Int                 -- Indent stack
 
-  , indents :: Array Int
-  , parsers :: Array (Parser repm)
-  , commands :: Map String (Parser repm)
+  -- Extensibility-related state --
+  , parsers :: Array (Parser repm)       -- Parser list
+  , commands :: Map String (Parser repm) -- Command list
 
-  , cursyms :: Map String Int
+  , cursyms :: Map String Int            -- Gensym state
 
-  , quasi :: Quasi
+  -- Quasi-state --
+  , quasi :: Quasi                       -- Quasi-state
 
   , ...
   }
@@ -155,6 +158,7 @@ function initState({
 }
 
 // Generate a fresh symbol under a given namespace
+// WANT: rename to p_gensym?
 exports.gensym = function(s, namespace = '') {
   if (!(namespace in s.cursyms)) s.cursyms[namespace] = 0;
   const sym = s.cursyms[namespace]++
@@ -164,6 +168,7 @@ exports.gensym = function(s, namespace = '') {
 // Clone the parser state
 // This implementation makes sense only because we mandate that
 // the quasi-state not be modified during parsing
+// WANT: rename to p_clone?
 const clone =
 exports.clone = function(s) {
   const sm = s.quasi;
@@ -174,6 +179,7 @@ exports.clone = function(s) {
 };
 
 // Parse with a local state modification
+// WANT: rename to p_scope
 const local =
 exports.local = function(s, inner) {
   const sc = clone(s);
@@ -250,6 +256,7 @@ function p_integer(s) {
   return parseInt(digs, 10);
 }
 
+// WANT: rename to p_try
 const p_backtracking =
 exports.p_backtracking =
 function p_backtracking(s, parser) {
@@ -441,12 +448,12 @@ function p_block(s, p_toplevel) {
     p_spaces(s);
     p_take(s, '\n');
 
-    const srec = { ...s.quasi.clone(s), indents: [] };
-    const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
-    const result = p_toplevel(srec, done);
-    p_take(srec, `==/${sentinel}==`);
-    Object.assign(s, { ...srec, indents: s.indents });
-    return result;
+    return local(s, s => {
+      const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
+      const result = p_toplevel(s, done);
+      p_take(s, `==/${sentinel}==\n`);
+      return result;
+    });
   }
 
   // \cmd <stuff> ;;
