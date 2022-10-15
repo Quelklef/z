@@ -1,17 +1,17 @@
 const libKatex = require('katex');
 
 const { squire } = require('../../../squire.js');
-const rep = squire('../rep.js');
+const repm = squire('../repm.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
-const { p_block, p_toplevel_verbatim, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const p = squire('../parse.js');
 
 exports.commands = {};
 exports.parsers = [];
-exports.stateInit = () => ({
+exports.stateInit = {
   // tex-related state
   katexPrefix: new Cats(),
   texPrefix: new Cats(),
-});
+};
 
 exports.parsers.push(p_katex);
 function p_katex(s) {
@@ -20,8 +20,8 @@ function p_katex(s) {
   const xi0 = s.i;
   s.i++;
   const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
-  const body = p_toplevel_verbatim(s, done);
-  p_take(s, '$');
+  const body = p.p_toplevel_verbatim(s, done);
+  p.p_take(s, '$');
   const xif = s.i;
 
   return new Katex({
@@ -34,16 +34,16 @@ function p_katex(s) {
 
 // KaTeX
 exports.commands.katex = function(s) {
-  p_spaces(s);
+  p.p_spaces(s);
 
   const append = s.text.startsWith('pre', s.i);
   if (append) {
-    p_take(s, 'pre');
-    p_spaces(s);
+    p.p_take(s, 'pre');
+    p.p_spaces(s);
   }
 
   const xi0 = s.i;
-  const [body, kind] = p_enclosed(s, p_toplevel_verbatim);
+  const [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   const xif = s.i;
 
   if (append) {
@@ -61,8 +61,8 @@ exports.commands.katex = function(s) {
 }
 
 exports.commands['katex-prelude'] = function(s) {
-  p_spaces(s);
-  p_take(s, ';\n');
+  p.p_spaces(s);
+  p.p_take(s, ';\n');
   s.katexPrefix.add(String.raw`
     % shorthands
     \newcommand{\cl}[1]{ \mathcal{#1} }
@@ -91,21 +91,21 @@ exports.commands['katex-prelude'] = function(s) {
     % tuples
     \newcommand{\tup}[1]{ \langle {#1} \rangle }
   `);
-  return new rep.Seq('');
+  return new repm.Seq('');
 }
 
 // TeX, TikZ
 exports.commands.tikz = function(s) {
-  p_spaces(s);
+  p.p_spaces(s);
 
   let append = s.text.startsWith('pre', s.i);
   if (append) {
-    p_take(s, 'pre');
-    p_spaces(s);
+    p.p_take(s, 'pre');
+    p.p_spaces(s);
   }
 
   let tex, kind;
-  [tex, kind] = p_enclosed(s, p_toplevel_verbatim);
+  [tex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
   if (append) {
     s.texPrefix.add(tex);
@@ -117,9 +117,9 @@ exports.commands.tikz = function(s) {
 }
 
 exports.commands['tikz-gen'] = function(s) {
-  p_spaces(s);
+  p.p_spaces(s);
 
-  const script = p_block(s, p_toplevel_verbatim);
+  const script = p.p_block(s, p.p_toplevel_verbatim);
 
   let tex = eval(`
     (function() {

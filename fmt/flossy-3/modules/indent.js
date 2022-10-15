@@ -1,8 +1,6 @@
 const { squire } = require('../../../squire.js');
-const rep = squire('../rep.js');
-const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const p = squire('../parse.js');
 const { Cats } = squire('../../../util.js');
-const state = squire('../state.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -12,11 +10,11 @@ exports.parsers = [];
 
 // Expanding bullets
 exports.commands.fold = function(s) {
-  p_spaces(s);
-  const [line, _] = p_enclosed(s, p_toplevel_markup);
-  p_spaces(s);
-  const body = p_block(s, p_toplevel_markup);
-  return new rep.Indented({ indent: 2, body: new rep.Expand({ line, body, id: s.gensym('expand') }) });
+  p.p_spaces(s);
+  const [line, _] = p.p_enclosed(s, p.p_toplevel_markup);
+  p.p_spaces(s);
+  const body = p.p_block(s, p.p_toplevel_markup);
+  return new Indented({ indent: 2, body: new Expand({ line, body, id: s.gensym('expand') }) });
 }
 
 // Lists and indented blocks
@@ -39,13 +37,13 @@ function p_indent(s) {
   // Find bullet
   let style = null;
   {
-    if (p_backtracking(s, s => p_take(s, '- '))) {
+    if (p.p_backtracking(s, s => p.p_take(s, '- '))) {
       style = '-';
     }
-    else if (p_backtracking(s, s => p_take(s, '> '))) {
+    else if (p.p_backtracking(s, s => p.p_take(s, '> '))) {
       style = '>';
     }
-    else if (p_backtracking(s, s => p_take(s, '# '))) {
+    else if (p.p_backtracking(s, s => p.p_take(s, '# '))) {
       style = '#';
     }
   }
@@ -61,22 +59,22 @@ function p_indent(s) {
 
   if (style === '>') {
 
-    const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
-    p_take(s, '\n');
+    const line = p.p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
+    p.p_take(s, '\n');
 
     s.indents.push(newIndent);
-    const body = p_toplevel_markup(s);
+    const body = p.p_toplevel_markup(s);
     s.indents.pop();
 
     return new Indented({
       indent: dIndent,
-      body: new Expand({ line, body, id: state.gensym(s, 'expand') }),
+      body: new Expand({ line, body, id: p.gensym(s, 'expand') }),
     });
 
   } else {
 
     s.indents.push(newIndent);
-    body = p_toplevel_markup(s);
+    body = p.p_toplevel_markup(s);
     s.indents.pop();
     if (style)
       body = new Bulleted({

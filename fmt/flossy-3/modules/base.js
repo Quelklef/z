@@ -1,9 +1,8 @@
 const hljs = require('highlight.js');
 
 const { squire } = require('../../../squire.js');
-const rep = squire('../rep.js');
-const state = squire('../state.js');
-const { p_block, p_toplevel_markup, p_inline, p_take, p_enclosed, p_toplevel_verbatim, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const repm = squire('../repm.js');
+const p = squire('../parse.js');
 const { Cats } = squire('../../../util.js');
 const { Trie, htmlEscapes, escapeHtml } = squire('../util.js');
 
@@ -18,12 +17,12 @@ exports.prelude = '';
 
 // Title
 exports.commands.title = function(s) {
-  return new rep.Seq('<div class="title">', p_block(s, p_toplevel_markup), '</div>');
+  return new repm.Seq('<div class="title">', p.p_block(s, p.p_toplevel_markup), '</div>');
 }
 
 // Section header
 exports.commands.sec = function(s) {
-  return new rep.Seq('<div class="section-header">', p_block(s, p_toplevel_markup), '</div>');
+  return new repm.Seq('<div class="section-header">', p.p_block(s, p.p_toplevel_markup), '</div>');
 }
 
 exports.prelude += String.raw`
@@ -60,10 +59,10 @@ exports.commands.c = function(s) {
 }
 
 exports.commands.code = function(s) {
-  p_spaces(s);
-  let language = /\w/.test(s.text[s.i]) ? p_word(s).toString() : null;
-  p_spaces(s);
-  let [body, kind] = p_enclosed(s, p_toplevel_verbatim);
+  p.p_spaces(s);
+  let language = /\w/.test(s.text[s.i]) ? p.p_word(s).toString() : null;
+  p.p_spaces(s);
+  let [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return new Code({ language, body, isBlock: kind === 'block' });
 }
 
@@ -125,9 +124,9 @@ code.block {
 // -------------------------------------------------------------------------- //
 
 exports.commands.quote = function(s) {
-  p_spaces(s);
-  const [body, _] = p_enclosed(s, p_toplevel_markup);
-  return new rep.Seq('<blockquote>', body, '</blockquote>');
+  p.p_spaces(s);
+  const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
+  return new repm.Seq('<blockquote>', body, '</blockquote>');
 }
 
 exports.prelude += String.raw`
@@ -162,18 +161,30 @@ blockquote::before {
 // -------------------------------------------------------------------------- //
 
 exports.commands.ref = function(s) {
-  p_spaces(s);
-  const toNoteId = p_backtracking(s, p_word);
+  p.p_spaces(s);
+  const toNoteId = p.p_backtracking(s, p.p_word);
   if (!toNoteId) throw mkError(s.text, s.i, "Missing note ID");
-  p_spaces(s);
+  p.p_spaces(s);
 
-  const body = state.local(s, s => {
+  const body = p.local(s, s => {
     s.doImplicitReferences = false;
-    return p_inline(s, p_toplevel_markup);
+    return p.p_inline(s, p.p_toplevel_markup);
   });
 
-  const toNote = s._sm.env.graph.notesById[toNoteId];
+  const toNote = s.quasi.env.graph.notesById[toNoteId];
   return new Explicit({ toNoteId, toNote, body });
+}
+
+exports.getExplicitReferences =
+function(rep)
+{
+  const references = new Set();
+  repm.traverse(rep, node => {
+    if (node instanceof Explicit)
+      if (!!node.toNote)
+        references.add(node.toNote.id);
+  })
+  return references;
 }
 
 const Explicit =
@@ -278,37 +289,37 @@ function p_quotes(s) {
 // Italic, bold, underline, strikethrough
 for (const tag of 'ibus') {
   exports.commands[tag] = function(s) {
-    return new rep.Seq(`<${tag}>`, p_inline(s, p_toplevel_markup), `</${tag}>`);
+    return new repm.Seq(`<${tag}>`, p.p_inline(s, p.p_toplevel_markup), `</${tag}>`);
   }
 }
 
 // Comment (REMark)
 exports.commands.rem = function(s) {
-  p_spaces(s);
-  const [comment, _] = p_enclosed(s, p_toplevel_verbatim);
+  p.p_spaces(s);
+  const [comment, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return '';
 }
 
 // External (hyper-)reference
 exports.commands.href = function(s) {
-  p_spaces(s)
-  p_take(s, '<');
-  const href = p_takeTo(s, '>');
-  p_take(s, '>');
-  p_spaces(s)
+  p.p_spaces(s)
+  p.p_take(s, '<');
+  const href = p.p_takeTo(s, '>');
+  p.p_take(s, '>');
+  p.p_spaces(s)
 
-  const body = state.local(s, s => {
+  const body = p.local(s, s => {
     // Nested <a> tags are forbidden in HTML
     s.doImplicitReferences = false;
-    return p_inline(s, p_toplevel_markup);
+    return p.p_inline(s, p.p_toplevel_markup);
   });
 
-  return new rep.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+  return new repm.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
 }
 
 exports.commands['unsafe-raw-html'] = function(s) {
   s.env.log.warn(`use of \\unsafe-raw-html`);
-  p_spaces(s);
-  const [html, _] = p_enclosed(s, p_toplevel_verbatim);
-  return new rep.Seq(html);
+  p.p_spaces(s);
+  const [html, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
+  return new repm.Seq(html);
 }

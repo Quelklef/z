@@ -4,8 +4,16 @@ const child_process = require('child_process');
 const { squire } = require('../../squire.js');
 const { Cats, withTempDir } = squire('../../util.js');
 const fss = squire('../../fss.js');
+const p = squire('./parse.js');
 
-const { mkError } = squire('./parsing.js');
+/*
+
+type Rep =
+  { children :: () -> Array Rep
+  , toHtml :: Env -> String
+  }
+
+*/
 
 const traverse =
 exports.traverse =
@@ -13,10 +21,11 @@ function traverse(rep, func) {
   for (const node of tree(rep))
     func(node);
 
-  function * tree(node) {
-    yield node;
-    if (node.children)
-      yield * node.children().flatMap(tree);
+  function * tree(rep) {
+    yield rep;
+    if (rep.children)
+      for (const ch of rep.children())
+      yield * tree(ch);
   }
 }
 

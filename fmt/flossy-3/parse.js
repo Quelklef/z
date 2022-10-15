@@ -2,9 +2,186 @@ const clc = require('cli-color');
 
 const { squire } = require('../../squire.js');
 const { Cats, lazyAss } = squire('../../util.js');
-const { indexOf } = require('./util.js');
-const state = require('./state.js');
-const Rep = require('./rep.js');
+const util = require('./util.js');
+const { indexOf } = util;
+const repm = require('./repm.js');
+
+/*
+
+Parser module
+
+
+Parsing intro
+-------------
+
+Parsing is a little funky. We keep track of three kinds of state:
+
+1 Nonlocal state
+  This is state shared between all parts of the parser
+  Here we keep track of things like the file pointer
+  Think StateT
+
+2 Local state
+  This is state whose modifications are restricted to local-only
+  Here we keep track of things like the indentation stack
+  Think ReaderT
+
+3 Quasi state
+  This is not 'really' state, because parsers are expected to
+    not modify it at all
+  The reason it's treated as state is that it is still *computed*;
+    namely, it is computed from imported modules
+  Here we keep track of things like how to clone the mutable state
+  Think compile-time parameter
+
+
+Conceptually a parser is a function with signature
+
+  r = parser(ns, ls, qs, ...args)
+
+where
+
+  ns is the nonlocal state
+  ls is the local state
+  qs is the quasi state
+
+and the parser
+
+  may modify the mutable or immutable state, but not the quasi-state
+  may throw ParseError to signal failure
+
+For convenience, we wrap up the states into one value
+
+  s = { ...ns, ...ls, quasi: qs }
+
+and pass that around instead
+
+
+Module knowledge
+----------------
+
+In terms of abstraction, this module is mid-level, knowing certain
+specific features of the target grammar but certainly not all, and
+providing affordances for generic parser extension.
+
+This is what the module knows:
+
+type State =
+
+  { text :: String
+  , i :: Int
+
+  , indents :: Array Int
+  , parsers :: Array (Parser repm)
+  , commands :: Map String (Parser repm)
+
+  , cursyms :: Map String Int
+
+  , quasi :: Quasi
+
+  , ...
+  }
+
+type Quasi =
+  { StateT :: Array String
+  , ...
+  }
+
+type Module =
+  { parsers [optional] :: Array (Parser repm)
+  , commands [optional] :: Map String (Parser repm)
+  , StateT [optiona] :: Array String
+  }
+
+*/
+
+const initState =
+exports.initState =
+function initState({
+  text,       // Parser text
+  modules,    // Array Module
+  quasi,      // Initial quasi-state value of type Quasi
+}) {
+
+  // Initialize parser state
+  const s = {};
+
+
+  // NONLOCAL STATE //
+
+  // Index in text
+  s.i = 0;
+
+  // Symbol generation
+  s.cursyms = {};
+
+
+  // LOCAL STATE //
+
+  // Indentation stack
+  s.indents = [];
+
+  // Source text
+  s.text = text;
+
+  // Parsers
+  s.parsers = [];
+  for (const module of Object.values(modules))
+    s.parsers = [...s.parsers, ...(module.parsers ?? [])];
+
+  // Commands mapping
+  s.commands = {};
+  for (const module of Object.values(modules))
+    Object.assign(s.commands, module.commands);
+
+  // WANT: give modules namespaces?
+  for (const module of Object.values(modules))
+    if (module.stateInit)
+      Object.assign(s, module.stateInit);
+
+
+  // QUASI STATE //
+
+  s.quasi = quasi;
+
+  // Tracks which keys are part of the mutable state
+  s.quasi.StateT = [ 'i', 'cursyms' ];
+  for (const module of Object.values(modules))
+    if (module.StateT)
+      s.quasi.StateT = [...s.quasi.StateT, module.StateT];
+
+  return s;
+
+}
+
+// Generate a fresh symbol under a given namespace
+exports.gensym = function(s, namespace = '') {
+  if (!(namespace in s.cursyms)) s.cursyms[namespace] = 0;
+  const sym = s.cursyms[namespace]++
+  return 'gensym-' + (namespace ? (namespace + '-') : '') + sym;
+};
+
+// Clone the parser state
+// This implementation makes sense only because we mandate that
+// the quasi-state not be modified during parsing
+const clone =
+exports.clone = function(s) {
+  const sm = s.quasi;
+  s.quasi = null;
+  const r = util.clone(s);
+  r.quasi = s.quasi = sm;
+  return r;
+};
+
+// Parse with a local state modification
+const local =
+exports.local = function(s, inner) {
+  const sc = clone(s);
+  const res = inner(sc);
+  for (const key of s.quasi.StateT)
+    s[key] = sc[key];
+  return res;
+};
 
 
 const ParseError =
@@ -76,7 +253,7 @@ function p_integer(s) {
 const p_backtracking =
 exports.p_backtracking =
 function p_backtracking(s, parser) {
-  const sc = state.clone(s);
+  const sc = clone(s);
   let result;
   try {
     result = parser(sc);
@@ -130,11 +307,11 @@ function mkErrorMsg(text, loc, err) {
 
   const result = new Cats();
   result.add('\n')
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┬─────\n');
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┬─────\n');
   for (let y = y0A; y <= yfA; y++) {
     const line = textLines[y];
     const lineNumber = clc.green((y + 1 + '').padStart(lineNumberingWidth));
-    const lineNumberBlank = strRep(' ', lineNumberingWidth);
+    const lineNumberBlank = strrepm(' ', lineNumberingWidth);
     const sigil = y0 <= y && y < yf ? clc.yellow('▶ ') : '  ';
 
     // Highlight range for this line
@@ -158,10 +335,10 @@ function mkErrorMsg(text, loc, err) {
       result.add('  ' + sigil + lineNo + clc(' │') + ' ' + wrp);
     });
   }
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┼─────\n');
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┼─────\n');
   for (const wrp of wrapText('Error: ' + err))
-    result.add(strRep(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
-  result.add(strRep(' ', lineNumberingWidth + 0) + '─────┴─────\n');
+    result.add(strrepm(' ', lineNumberingWidth + 0) + '     │ ' + clc.yellow(wrp));
+  result.add(strrepm(' ', lineNumberingWidth + 0) + '─────┴─────\n');
 
   return '\n' + result.toString();
 
@@ -179,7 +356,7 @@ function mkErrorMsg(text, loc, err) {
     }
   }
 
-  function strRep(s, n) {
+  function strrepm(s, n) {
     let result = '';
     for (let i = 0; i < n; i++)
       result += s;
@@ -264,7 +441,7 @@ function p_block(s, p_toplevel) {
     p_spaces(s);
     p_take(s, '\n');
 
-    const srec = { ...s._sm.clone(s), indents: [] };
+    const srec = { ...s.quasi.clone(s), indents: [] };
     const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==`, s.i);
     const result = p_toplevel(srec, done);
     p_take(srec, `==/${sentinel}==`);
@@ -344,7 +521,7 @@ function p_toplevel_impl(s, { done, verbatim }) {
       : s.parsers
   );
 
-  const result = new Rep.Seq();
+  const result = new repm.Seq();
 
   if (done(s)) return result;
 

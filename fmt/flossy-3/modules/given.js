@@ -1,7 +1,6 @@
 const { squire } = require('../../../squire.js');
-const rep = squire('../rep.js');
-const { p_block, p_enclosed, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
-const state = squire('../state.js');
+const repm = squire('../repm.js');
+const p = squire('../parse.js');
 
 exports.commands = {};
 
@@ -14,52 +13,52 @@ exports.commands.Given = function(s) {
 
     const lines = [];
     while (true) {
-      p_whitespace(s);
-      if (p_backtracking(s, s => p_take(s, sentinel))) break;
+      p.p_whitespace(s);
+      if (p.p_backtracking(s, s => p.p_take(s, sentinel))) break;
 
-      let ident = p_backtracking(s, s => {
-        const ident = p_word(s);
-        p_take(s, ':');
+      let ident = p.p_backtracking(s, s => {
+        const ident = p.p_word(s);
+        p.p_take(s, ':');
         return ident;
       });
       ident ??= lines.length + '';
 
-      p_whitespace(s);
+      p.p_whitespace(s);
 
-      const isNb = p_backtracking(s, s => {
-        p_take(s, 'nb');
-        p_whitespace(s);
+      const isNb = p.p_backtracking(s, s => {
+        p.p_take(s, 'nb');
+        p.p_whitespace(s);
         return true;
       });
 
       // !!!! very fucking big hack
       const isBlock = s.text.slice(s.i, s.i + 10).includes('\\Given');
 
-      const [body, _] = p_enclosed(s, p_toplevel_markup);
-      p_whitespace(s);
-      const by = p_backtracking(s, s => {
-        p_take(s, 'by');
-        p_whitespace(s);
+      const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
+      p.p_whitespace(s);
+      const by = p.p_backtracking(s, s => {
+        p.p_take(s, 'by');
+        p.p_whitespace(s);
         const parseRef = s => {
           if (!s.text.startsWith('@', s.i)) return '';
-          p_take(s, '@');
+          p.p_take(s, '@');
           let toNum;
           if (s.text.startsWith('@', s.i)) {
-            p_take(s, '@');
+            p.p_take(s, '@');
             toNum = s.GivenIndex - 1 + '';
           } else {
-            const ident = p_word(s);
+            const ident = p.p_word(s);
             toNum = s.Given_lineIdentToNumber[ident];
           }
-          return new rep.Seq(
+          return new repm.Seq(
             `<span class="given-by-ref" data-to="${toNum}">`,
             toNum + '',
             `</span>`,
           );
         };
-        return state.local(s, s => {
+        return p.local(s, s => {
           s.parsers.push(parseRef);
-          const [by, _] = p_enclosed(s, p_toplevel_markup);
+          const [by, _] = p.p_enclosed(s, p.p_toplevel_markup);
           return by;
         });
       });
@@ -76,7 +75,7 @@ exports.commands.Given = function(s) {
   const then = parseLines(s, ';');
 
   const renderLine = ([number, name, body, by, isNb, isBlock]) => (
-    new rep.Seq(
+    new repm.Seq(
       `<span class="given-line" data-name="${number}">`,
         ...(!isBlock ? [
           `<span class="given-line-number ${isNb ? 'nb' : ''}">`,
@@ -93,7 +92,7 @@ exports.commands.Given = function(s) {
     )
   );
 
-  return new rep.Seq(
+  return new repm.Seq(
     '<div class="given">',
     ...given.map(renderLine),
     '<span class="given-rule"></span>',

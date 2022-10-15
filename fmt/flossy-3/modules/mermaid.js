@@ -1,22 +1,21 @@
 const { squire } = require('../../../squire.js');
-const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
-const rep = squire('../rep.js');
 const { escapeHtml } = squire('../util.js');
-const state = squire('../state.js');
+const repm = squire('../repm.js');
+const p = squire('../parse.js');
 
 exports.commands = {};
 
 // MermaidJS support
 exports.commands.mermaid = function(s) {
-  p_spaces(s);
-  const [body, _] = p_enclosed(s, p_toplevel_verbatim);
+  p.p_spaces(s);
+  const [body, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
   // Unfortunately, mermaid does not seem to offer an API for rendering
   // a chart outwide of a browser environment.
   // So instead we have to defer rendering to the client.
 
-  const divId = state.gensym(s, 'mermaid');
-  return new rep.Seq(String.raw`
+  const divId = p.gensym(s, 'mermaid');
+  return new repm.Seq(String.raw`
     <div id="${divId}">${escapeHtml(body)}</div>
     <script> window.renderMermaid('${divId}'); </script>
   `);

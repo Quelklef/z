@@ -1,30 +1,29 @@
 const { squire } = require('../../../squire.js');
-const rep = squire('../rep.js');
-const { p_block, p_toplevel_markup, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
-const state = require('../state.js');
+const repm = squire('../repm.js');
+const p = squire('../parse.js');
 
 exports.commands = {};
 exports.StateT = [ 'annotNameQueue', 'annotIndex' ];
-exports.stateInit = () => ({
+exports.stateInit = {
   annotNameQueue: [],
   annotIndex: 1,
-});
+};
 
 // WANT: stop distinguishing between super and non-super
 
 // Annotation reference
 exports.commands.aref = function(s) {
-  p_spaces(s);
+  p.p_spaces(s);
 
   let name;
   if (!";[{(<:".includes(s.text[s.i])) {
-    name = p_word(s).toString();
+    name = p.p_word(s).toString();
   } else {
-    name = state.gensym(s, 'annot');
+    name = p.gensym(s, 'annot');
     s.annotNameQueue.push(name);
   }
 
-  p_spaces(s);
+  p.p_spaces(s);
 
   let body;
   let isSuper;
@@ -34,13 +33,13 @@ exports.commands.aref = function(s) {
     body = value;
     isSuper = true;
   } else {
-    body = p_inline(s, p_toplevel_markup)
+    body = p.p_inline(s, p.p_toplevel_markup)
     isSuper = false;
   }
 
   const isSuperClass = isSuper ? 'super' : '';
-  return new rep.Seq(
-    `<span class="annotation-reference ${isSuperClass}" id="${state.gensym(s, 'annot-id')}" data-refers-to="${name}">`,
+  return new repm.Seq(
+    `<span class="annotation-reference ${isSuperClass}" id="${p.gensym(s, 'annot-id')}" data-refers-to="${name}">`,
     body,
     '</span>'
   );
@@ -48,11 +47,11 @@ exports.commands.aref = function(s) {
 
 // Annotation definition
 exports.commands.adef = function(s) {
-  p_spaces(s);
+  p.p_spaces(s);
   let name;
   if (!"[{(<:=".includes(s.text[s.i])) {
-    name = p_word(s);
-    p_spaces(s);
+    name = p.p_word(s);
+    p.p_spaces(s);
   } else {
     if (s.annotNameQueue.length === 0)
       throw mkError(s.text, s.i, "Unpaired \\adef");
@@ -60,7 +59,7 @@ exports.commands.adef = function(s) {
     s.annotNameQueue.splice(0, 1);
   }
 
-  return new rep.Seq(`<div class="annotation-definition" data-name="${name}">`, p_block(s, p_toplevel_markup), '</div>');
+  return new repm.Seq(`<div class="annotation-definition" data-name="${name}">`, p.p_block(s, p.p_toplevel_markup), '</div>');
 }
 
 exports.prelude = String.raw`

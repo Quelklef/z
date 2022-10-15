@@ -1,6 +1,6 @@
 const { squire } = require('../../../squire.js');
-const Rep = squire('../rep.js');
-const { p_block, p_toplevel_markup, p_enclosed, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('../parsing.js');
+const repm = squire('../repm.js');
+const p = squire('../parse.js');
 
 exports.commands = {};
 exports.prelude = '';
@@ -10,15 +10,15 @@ exports.commands.table = function(s) {
 
   const xi0 = s.i;
 
-  p_whitespace(s);
+  p.p_whitespace(s);
   const opts = {};
   while (true) {
-    p_whitespace(s);
+    p.p_whitespace(s);
     if (!/[\w-]/.test(s.text[s.i])) break;
 
-    const key = p_word(s);
-    p_take(s, '=');
-    const val = p_word(s);
+    const key = p.p_word(s);
+    p.p_take(s, '=');
+    const val = p.p_word(s);
     opts[key] = val;
   }
 
@@ -47,17 +47,17 @@ exports.commands.table = function(s) {
 
   const rows = [];
   while (true) {
-    const ok = p_backtracking(s, s => {
-      p_whitespace(s);
-      return p_take(s, '|');
+    const ok = p.p_backtracking(s, s => {
+      p.p_whitespace(s);
+      return p.p_take(s, '|');
     });
     if (!ok) break;
 
     const row = [];
     while (true) {
-      const cell = p_backtracking(s, s => {
-        p_whitespace(s);
-        const [body, kind] = p_enclosed(s, p_toplevel_markup);
+      const cell = p.p_backtracking(s, s => {
+        p.p_whitespace(s);
+        const [body, kind] = p.p_enclosed(s, p.p_toplevel_markup);
         return body;
       });
       if (cell === null) break;
@@ -66,15 +66,15 @@ exports.commands.table = function(s) {
     rows.push(row);
   }
 
-  p_backtracking(s, s => {
-    p_spaces(s);
-    p_take(s, '\n');
+  p.p_backtracking(s, s => {
+    p.p_spaces(s);
+    p.p_take(s, '\n');
   });
 
   if (rows.length === 0)
     throw mkError(s.text, [xi0, s.i], "Empty table")
 
-  let result = new Rep.Seq();
+  let result = new repm.Seq();
   const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
   result.add(`<table class="${classes.join(' ')}">`);
   rows.forEach((row, rowI) => {
@@ -89,7 +89,7 @@ exports.commands.table = function(s) {
   result.add('</table>');
 
   if (doCentering)
-    result = new Rep.Seq('<center>', result, '</center>');
+    result = new repm.Seq('<center>', result, '</center>');
 
   return result;
 

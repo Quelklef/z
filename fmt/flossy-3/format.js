@@ -4,11 +4,9 @@ const child_process = require('child_process');
 const { squire } = require('../../squire.js');
 const fss = squire('../../fss.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
-const rep = squire('./rep.js');
+const repm = squire('./repm.js');
 const { clone, Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
-// WANT: switch from p_ prefix to p. module
-const { p_block, p_inline, p_enclosed, p_toplevel, p_toplevel_markup, p_toplevel_verbatim, p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
-const state = squire('./state.js');
+const p = squire('./parse.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -19,34 +17,6 @@ const scriptSrc = fss.read(__filename).toString();
 
 
 function mkNote(floc, source, graph, env) {
-
-  /*
-
-  type Rep
-    ≅ String
-    | Cats
-    | ({ toHtml :: () -> String
-       , children :: () -> Array Rep
-       })
-
-  type Module ≅
-    { parsers [optional] :: Array (Parser Rep)
-    , commands [optional] :: Map String (Parser Rep)
-    , prelude [optional] :: String
-    , StateT [optiona] :: Array String
-    }
-
-  */
-  const modules = {
-    indent      : squire('./modules/indent.js'),
-    base        : squire('./modules/base.js'),
-    tex         : squire('./modules/tex.js'),
-    annotations : squire('./modules/annotations.js'),
-    mermaid     : squire('./modules/mermaid.js'),
-    given       : squire('./modules/given.js'),
-    jargon      : squire('./modules/jargon.js'),
-    table       : squire('./modules/table.js'),
-  };
 
   const noteId = plib.basename(floc, '.z');
 
@@ -67,33 +37,20 @@ function mkNote(floc, source, graph, env) {
   const t = Symbol('flossy-3.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
-
   lazyAss(note[t], 'phase1', () => {
     env.parent.log.info('parsing', note.id);
     return parse({
       text: source,
       note, graph, env,
       doImplicitReferences: false,
-      modules,
     });
   });
 
-  lazyAss(note, 'starred', () => {
-    return note[t].phase1.meta?.starred === true;
-  });
+  lazyAss(note, 'starred', () =>
+    note[t].phase1.meta?.starred === true);
 
-  lazyAss(note, 'defines', () => {
-    const noteRep = note[t].phase1.rep;
-    const defines = new Set();
-    rep.traverse(noteRep, node => {
-      if (node instanceof modules.jargon.Jargon) {
-        for (const form of node.forms) {
-          defines.add(form);
-        }
-      }
-    });
-    return defines;
-  });
+  lazyAss(note, 'defines', () =>
+    note[t].phase1.defines);
 
   lazyAss(note[t], 'phase2', () => {
     env.parent.log.info('parsing (again)', note.id);
@@ -101,23 +58,11 @@ function mkNote(floc, source, graph, env) {
       text: source,
       note, graph, env,
       doImplicitReferences: true,
-      modules,
     });
   });
 
-  lazyAss(note, 'references', () => {
-    const noteRep = note[t].phase2.rep;
-    const references = new Set();
-    rep.traverse(noteRep, node => {
-      if (node instanceof modules.jargon.Implicit) {
-        references.add(node.toNote.id);
-      } else if (node instanceof modules.base.Explicit) {
-        if (!!node.toNote)
-          references.add(node.toNote.id);
-      }
-    });
-    return references;
-  });
+  lazyAss(note, 'references', () =>
+    note[t].phase2.references);
 
   lazyAss(note, 'html', () => {
     const noteRep = note[t].phase2.rep;
@@ -128,96 +73,91 @@ function mkNote(floc, source, graph, env) {
   return note;
 }
 
-function initState(args) {
-
-  // See state.js for context
-
-  const { text, note, graph, env, modules } = args;
-
-  // Initialize parser state
-  const s = {};
 
 
-  // MUTABLE STATE //
 
-  // Index in text
-  s.i = 0;
+function parse({
+  text,
+  doImplicitReferences,
+  graph,
+  note,
+  env,
+}) {
 
-  // Symbol generation
-  s.cursyms = {};
+  /*
 
+  type Module ≅
+    { parsers [optional] :: Array (Parser Rep)
+    , commands [optional] :: Map String (Parser Rep)
+    , prelude [optional] :: String
+    , StateT [optiona] :: Array String
+    }
 
-  // IMMUTABLE STATE //
+  */
+  const modules = {
+    indent      : squire('./modules/indent.js'),
+    base        : squire('./modules/base.js'),
+    tex         : squire('./modules/tex.js'),
+    annotations : squire('./modules/annotations.js'),
+    mermaid     : squire('./modules/mermaid.js'),
+    given       : squire('./modules/given.js'),
+    jargon      : squire('./modules/jargon.js')({ graph, note, doImplicitReferences }),
+    table       : squire('./modules/table.js'),
+  };
 
-  // Indentation stack
-  s.indents = [];
+  const s = p.initState({
 
-  // Source text
-  s.text = text;
+    text: text,
 
-  // Parsers
-  s.parsers = [];
-  s.parsers.push(p_command);
-  for (const module of Object.values(modules))
-    s.parsers = [...s.parsers, ...(module.parsers ?? [])];
+    // Environmental references
+    // These are very powerful!
+    quasi: { env: { graph, note, env } },
 
-  // Commands mapping
-  s.commands = {};
-  s.commands.scope = command_scope;
-  for (const module of Object.values(modules))
-    Object.assign(s.commands, module.commands);
+    modules: [
+      ...Object.values(modules),
+      {
+        parsers: [p_command],
+        commands: {
+          scope: command_scope
+        },
+      }
+    ],
 
-
-  // WANT: give modules namespaces?
-  for (const module of Object.values(modules))
-    if (module.stateInit)
-      Object.assign(s, module.stateInit(args));
-        // ^ TODO: passing all of 'args' is bad
-
-
-  // QUASI STATE //
-
-  const sm = {};
-  s._sm = sm;
-
-  // Tracks which keys are part of the mutable state
-  sm.StateT = [ 'i', 'cursyms' ];
-  for (const module of Object.values(modules))
-    if (module.StateT)
-      sm.StateT = [...sm.StateT, module.StateT];
-
-  // Environmental references
-  // These are very powerful!
-  sm.env = { graph, note, env };
-
-  return s;
-
-}
-
-
-function parse(args) {
-
-  const { modules } = args;
-
-  const s = initState(args);
+  });
 
   // Parse format header, metadata, and optional following newline
   s.i = indexOf(s.text, '\n', s.i) + 1;
   const meta = p_noteMetadata(s);
-  if (meta) s._sm.env.env.log.info('metadata is', meta);
+  if (meta) s.quasi.env.env.log.info('metadata is', meta);
   if (s.text[s.i] === '\n') s.i++;
 
-  const noteRep = new rep.Seq();
+  // Parse note body
+  const noteRep = new repm.Seq();
   const done = s => s.i >= s.text.length;
-  noteRep.add(p_toplevel_markup(s, done));
+  noteRep.add(p.p_toplevel_markup(s, done));
 
-  // Prelude
-  let prelude = new Cats();
-  for (const module of Object.values(modules))
-    prelude.add(module.prelude ?? '');
-  prelude = prelude.toString();
-
-  return { rep: template(prelude, noteRep), meta };
+  const result = {};
+  result.meta = meta;
+  lazyAss(result, 'rep', () => {
+    const prelude = new Cats();
+    for (const module of Object.values(modules))
+      prelude.add(module.prelude ?? '');
+    return template(prelude.toString(), noteRep);
+  });
+  lazyAss(result, 'references', () => {
+    const rep = result.rep;
+    const references = new Set([
+      ...modules.base.getExplicitReferences(rep),
+      ...modules.jargon.getImplicitReferences(rep),
+    ]);
+    return references;
+  })
+  lazyAss(result, 'defines', () => {
+    const rep = result.rep;
+    const defines = modules.jargon.getDefines(rep)
+    return defines;
+  });
+  return result;
 
 }
 
@@ -226,12 +166,12 @@ function p_noteMetadata(s) {
   if (!s.text.startsWith('meta:', s.i))
     return null;
 
-  p_take(s, 'meta');
+  p.p_take(s, 'meta');
   return p_jsExpr(s);
 }
 
 function p_jsExpr(s) {
-  const [expr, _] = p_enclosed(s, p_toplevel_verbatim);
+  const [expr, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return eval('(' + expr + ')');
 }
 
@@ -242,9 +182,9 @@ function p_command(s) {
   if (s.text[s.i] !== '\\') return '';
   s.i++;
 
-  p_spaces(s);
+  p.p_spaces(s);
 
-  const name = p_word(s);
+  const name = p.p_word(s);
 
   const command = s.commands[name];
   if (!command)
@@ -255,14 +195,14 @@ function p_command(s) {
 
 // Local evaluator modification
 function command_scope(s) {
-  p_spaces(s);
+  p.p_spaces(s);
   const json = p_jsExpr(s);
-  p_spaces(s);
+  p.p_spaces(s);
 
-  return state.local(s, s => {
+  return p.local(s, s => {
     if ('inferReferences' in json)
       s.doImplicitReferences = !!json['inferReferences'];
-    const [r, _] = p_enclosed(s, p_toplevel_markup);
+    const [r, _] = p.p_enclosed(s, p.p_toplevel_markup);
     return r;
   });
 }
@@ -270,7 +210,7 @@ function command_scope(s) {
 
 
 function template(prelude, html) {
-  return new rep.Seq(String.raw`
+  return new repm.Seq(String.raw`
 <!DOCTYPE HTML>
 <html>
 <head>
@@ -278,7 +218,7 @@ function template(prelude, html) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
-${ prelude }
+`, prelude, `
 <style>
 
 * {
