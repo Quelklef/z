@@ -4,7 +4,7 @@ const { squire } = require('../../../squire.js');
 const repm = squire('../repm.js');
 const p = squire('../parse.js');
 const { Cats } = squire('../../../util.js');
-const { Trie, htmlEscapes, escapeHtml } = squire('../util.js');
+const { Trie, indexOf, htmlEscapes, escapeHtml } = squire('../util.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -284,6 +284,20 @@ function p_quotes(s) {
   const fancy = mapping[before + ' ' + quot + ' ' + after];
   s.i++;
   return fancy;
+}
+
+// Lines containing only a minus and whitespace are not emitted
+exports.parsers.push(p_skipLine);
+function p_skipLine(s) {
+  const eol = indexOf(s.text, '\n', s.i);
+  if (
+    p.isStartOfLine(s)
+    && s.text[s.i] === '-'
+    && s.text.slice(s.i + 1, eol).trim() === ''
+  ) {
+    s.i = eol + 1;
+  }
+  return '';
 }
 
 // Italic, bold, underline, strikethrough

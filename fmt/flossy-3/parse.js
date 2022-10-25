@@ -516,6 +516,7 @@ function p_command(s) {
 
 
 // Local evaluator modification
+// WANT: make parameter optional
 baseModule.commands.scope =
 function(s) {
   p_spaces(s);
@@ -528,6 +529,13 @@ function(s) {
     const [r, _] = p_enclosed(s, p_toplevel_markup);
     return r;
   });
+}
+
+const p_jsExpr =
+exports.p_jsExpr =
+function p_jsExpr(s) {
+  const [expr, _] = p_enclosed(s, p_toplevel_verbatim);
+  return eval('(' + expr + ')');
 }
 
 
@@ -543,15 +551,22 @@ function(s) {
 }
 
 
+const isStartOfLine =
+exports.isStartOfLine =
+function isStartOfLine(s) {
+  const curIndent = s.indents[s.indents.length - 1] || 0;
+  return (
+    [undefined, '\n'].includes(s.text[s.i - curIndent - 1])
+    && s.text.slice(s.i - curIndent - 1, s.i).trim() === ''
+  );
+}
+
+
 // Lists and indented blocks
 baseModule.parsers.push(p_indent);
 function p_indent(s) {
   const curIndent = s.indents[s.indents.length - 1] || 0;
-  const isStartOfLine = (
-    [undefined, '\n'].includes(s.text[s.i - curIndent - 1])
-    && s.text.slice(s.i - curIndent - 1, s.i).trim() === ''
-  )
-  if (!isStartOfLine) return '';
+  if (!isStartOfLine(s)) return '';
 
   // Calculate line column
   let i = s.i;

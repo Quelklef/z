@@ -86,10 +86,10 @@ function parse({
   /*
 
   type Module ≅
-    { parsers [optional] :: Array (Parser Rep)
-    , commands [optional] :: Map String (Parser Rep)
-    , prelude [optional] :: String
-    , StateT [optiona] :: Array String
+    { parsers           [optional] :: Array (Parser Rep)
+    , commands          [optional] :: Map String (Parser Rep)
+    , prelude           [optional] :: String
+    , nonlocalStateKeys [optional] :: Array String
     }
 
   */
@@ -159,14 +159,8 @@ function p_noteMetadata(s) {
     return null;
 
   p.p_take(s, 'meta');
-  return p_jsExpr(s);
+  return p.p_jsExpr(s);
 }
-
-function p_jsExpr(s) {
-  const [expr, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
-  return eval('(' + expr + ')');
-}
-
 
 
 

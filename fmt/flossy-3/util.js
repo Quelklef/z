@@ -37,6 +37,7 @@ class Trie {
 }
 
 // WANT: rename
+// WANT: move into parse.js
 // indexOf but on fail return str.length instead of -1
 const indexOf =
 exports.indexOf =

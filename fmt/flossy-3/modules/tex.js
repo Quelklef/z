@@ -5,12 +5,42 @@ const repm = squire('../repm.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
 const p = squire('../parse.js');
 
+const basePrelude = String.raw`
+  % shorthands
+  \newcommand{\cl}[1]{ \mathcal{#1} }
+  \newcommand{\sc}[1]{ \mathscr{#1} }
+  \newcommand{\bb}[1]{ \mathbb{#1} }
+  \newcommand{\fk}[1]{ \mathfrak{#1} }
+  \renewcommand{\bf}[1]{ \mathbf{#1} }
+
+  \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
+  \newcommand{\ceil}[1]{ { \lceil {#1} \rceil } }
+  \newcommand{\ol}[1]{ \overline{#1} }
+  \newcommand{\t}[1]{ \text{#1} }
+
+  % magnitude etc
+  \newcommand{\norm}[1]{ { \lvert {#1} \rvert } }
+
+  % cardinality
+  \newcommand{\card}{ \t{cd} }
+
+  % disjoint untion
+  \newcommand{\dcup}{ \sqcup }
+
+  % represents an anonymous parameter
+  % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
+  \newcommand{\apar}{ {-} }
+
+  % tuples
+  \newcommand{\tup}[1]{ \langle {#1} \rangle }
+`;
+
 exports.commands = {};
 exports.parsers = [];
 exports.stateInit = {
   // tex-related state
-  katexPrefix: new Cats(),
-  texPrefix: new Cats(),
+  katexPrefix: new Cats(basePrelude),
+  texPrefix: new Cats(basePrelude),
 };
 
 exports.parsers.push(p_katex);
@@ -58,40 +88,6 @@ exports.commands.katex = function(s) {
     sourceText: s.text,
     sourceRange: [xi0, xif],
   });
-}
-
-exports.commands['katex-prelude'] = function(s) {
-  p.p_spaces(s);
-  p.p_take(s, ';\n');
-  s.katexPrefix.add(String.raw`
-    % shorthands
-    \newcommand{\cl}[1]{ \mathcal{#1} }
-    \newcommand{\sc}[1]{ \mathscr{#1} }
-    \newcommand{\bb}[1]{ \mathbb{#1} }
-    \newcommand{\fk}[1]{ \mathfrak{#1} }
-    \renewcommand{\bf}[1]{ \mathbf{#1} }
-
-    \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
-    \newcommand{\ol}[1]{ \overline{#1} }
-    \newcommand{\t}[1]{ \text{#1} }
-
-    % "magnitude"
-    \newcommand{\mag}[1]{ { \lvert {#1} \rvert } }
-
-    % cardinality
-    \newcommand{\card}{ \t{card} }
-
-    % disjoint untion
-    \newcommand{\dcup}{ \sqcup }
-
-    % represents an anonymous parameter
-    % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
-    \newcommand{\apar}{ {-} }
-
-    % tuples
-    \newcommand{\tup}[1]{ \langle {#1} \rangle }
-  `);
-  return new repm.Seq('');
 }
 
 // TeX, TikZ
@@ -174,7 +170,7 @@ class Katex {
       } catch (e) {
         let text = e.toString();
         text = text.split('\n')[0];
-        throw mkError(this.sourceText, this.sourceRange, text);
+        throw p.mkError(this.sourceText, this.sourceRange, text);
       }
     });
   }
