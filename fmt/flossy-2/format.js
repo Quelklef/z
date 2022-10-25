@@ -810,6 +810,7 @@ commands['katex-prelude'] = function(s) {
     \newcommand{\bb}[1]{ \mathbb{#1} }
     \newcommand{\fk}[1]{ \mathfrak{#1} }
     \renewcommand{\bf}[1]{ \mathbf{#1} }
+    \renewcommand{\tt}[1]{ \texttt{#1} }
 
     \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
     \newcommand{\ol}[1]{ \overline{#1} }
@@ -830,6 +831,8 @@ commands['katex-prelude'] = function(s) {
 
     % tuples
     \newcommand{\tup}[1]{ \langle {#1} \rangle }
+
+    \newcommand{\iffText}{{ \hspace{20pt}\t{iff}\hspace{20pt} }}
   `);
   return new Rep.Seq('');
 }

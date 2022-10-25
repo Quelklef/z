@@ -1,5 +1,8 @@
 const { squire } = require('../../squire.js');
 
+// nb 'repm' stands for 'representation module', ie the javascript
+//    module for AST representation
+
 /*
 
 type Rep =
