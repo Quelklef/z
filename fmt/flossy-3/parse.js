@@ -98,6 +98,15 @@ type Module =
 
 */
 
+
+// Mutatively initialized thru the rest of the js module
+const baseModule = {
+  commands: {},
+  parsers: [],
+  prelude: '',
+};
+
+
 const initState =
 exports.initState =
 function initState({
@@ -105,6 +114,8 @@ function initState({
   modules,  // :: Array Module
   quasi,    // Initial quasi-state
 }) {
+
+  modules = [baseModule, ...modules];
 
   // Initialize parser state
   const s = {};
@@ -135,12 +146,11 @@ function initState({
   // Commands mapping
   s.commands = {};
   for (const module of Object.values(modules))
-    Object.assign(s.commands, module.commands);
+    Object.assign(s.commands, module.commands ?? {});
 
   // Module state initialization
   for (const module of Object.values(modules))
-    if (module.stateInit)
-      Object.assign(s, module.stateInit);
+    Object.assign(s, module.stateInit ?? {});
 
 
   // QUASI STATE //
@@ -150,8 +160,7 @@ function initState({
   // Tracks which keys are part of the mutable state
   s.quasi.nonlocalStateKeys = [ 'i', 'cursyms' ];
   for (const module of Object.values(modules))
-    if (module.nonlocalStateKeys)
-      s.quasi.nonlocalStateKeys.push(...module.nonlocalStateKeys);
+    s.quasi.nonlocalStateKeys.push(...(module.nonlocalStateKeys ?? []));
 
   return s;
 
@@ -159,6 +168,7 @@ function initState({
 
 // Generate a fresh symbol under a given namespace
 // WANT: rename to p_gensym?
+const gensym =
 exports.gensym = function(s, namespace = '') {
   if (!(namespace in s.cursyms)) s.cursyms[namespace] = 0;
   const sym = s.cursyms[namespace]++
@@ -189,10 +199,6 @@ exports.local = function(s, inner) {
   return res;
 };
 
-
-const ParseError =
-exports.ParseError =
-class ParseError extends Error { }
 
 const p_spaces =
 exports.p_spaces =
@@ -490,12 +496,289 @@ function getNextNonemptyLine(text, i0 = 0) {
 }
 
 
+// Execute a backslash command
+baseModule.parsers.push(p_command);
+function p_command(s) {
+  const xi0 = s.i;
+  if (s.text[s.i] !== '\\') return '';
+  s.i++;
+
+  p_spaces(s);
+
+  const name = p_word(s);
+
+  const command = s.commands[name];
+  if (!command)
+    throw mkError(s.text, [xi0, s.i], `No command '${name}'!`);
+
+  return command(s);
+}
+
+
+// Local evaluator modification
+baseModule.commands.scope =
+function(s) {
+  p_spaces(s);
+  const json = p_jsExpr(s);
+  p_spaces(s);
+
+  return local(s, s => {
+    if ('inferReferences' in json)
+      s.doImplicitReferences = !!json['inferReferences'];
+    const [r, _] = p_enclosed(s, p_toplevel_markup);
+    return r;
+  });
+}
+
+
+// Dropdowns
+baseModule.commands.ddn =
+baseModule.commands.dropdown =
+function(s) {
+  p_spaces(s);
+  const [line, _] = p_enclosed(s, p_toplevel_markup);
+  p_spaces(s);
+  const body = p_block(s, p_toplevel_markup);
+  return new Indented({ indent: 2, body: new Expand({ line, body, id: s.gensym('expand') }) });
+}
+
+
+// Lists and indented blocks
+baseModule.parsers.push(p_indent);
+function p_indent(s) {
+  const curIndent = s.indents[s.indents.length - 1] || 0;
+  const isStartOfLine = (
+    [undefined, '\n'].includes(s.text[s.i - curIndent - 1])
+    && s.text.slice(s.i - curIndent - 1, s.i).trim() === ''
+  )
+  if (!isStartOfLine) return '';
+
+  // Calculate line column
+  let i = s.i;
+  while (s.text[i] === ' ') i++;
+  let dIndent = i - s.i;
+
+  s.i += dIndent;
+
+  // Find bullet
+  let style = null;
+  {
+    if (p_backtracking(s, s => p_take(s, '- '))) {
+      style = '-';
+    }
+    else if (p_backtracking(s, s => p_take(s, '> '))) {
+      style = '>';
+    }
+    else if (p_backtracking(s, s => p_take(s, '# '))) {
+      style = '#';
+    }
+  }
+
+  if (style)
+    dIndent += 2;
+
+  // If line not further indented, bail
+  if (dIndent <= 0)
+    return '';
+
+  const newIndent = curIndent + dIndent;
+
+  if (style === '>') {
+
+    const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
+    p_take(s, '\n');
+
+    s.indents.push(newIndent);
+    const body = p_toplevel_markup(s);
+    s.indents.pop();
+
+    return new Indented({
+      indent: dIndent,
+      body: new Expand({ line, body, id: gensym(s, 'expand') }),
+    });
+
+  } else {
+
+    s.indents.push(newIndent);
+    body = p_toplevel_markup(s);
+    s.indents.pop();
+    if (style)
+      body = new Bulleted({
+        body,
+        isNumbered: style === '#',
+      });
+    return new Indented({ indent: dIndent, body });
+
+  }
+}
+
+baseModule.prelude += String.raw`
+
+<style>
+
+.expand > .expand-line {
+  display: list-item;
+  list-style-type: disclosure-closed;
+  cursor: pointer;
+}
+.expand > .expand-line:hover {
+  background-color: rgba(var(--color-dynamic-rgb), .05);
+}
+.expand > .expand-line::marker {
+  color: var(--color-dynamic);
+}
+.expand > .expand-body {
+  border-top: 1px dashed rgba(var(--color-static-rgb), 0.3);
+  margin-top: .5em;
+  padding-top: .5em;
+  margin-bottom: .5em;
+  padding-bottom: .5em;
+  position: relative;
+}
+.expand > .expand-body::before {
+  content: '';
+  display: inline-block;
+  position: absolute;
+  background-color: var(--color-dynamic);
+  width: 1px;
+  left: -1.5ch;  /* TODO: baked */
+  top: 0;
+  height: 100%;
+}
+.expand:not(.open) > .expand-body {
+  display: none;
+}
+.expand.open > .expand-line {
+  list-style-type: disclosure-open;
+}
+
+</style>
+
+<script>
+
+document.addEventListener('DOMContentLoaded', () => {
+
+  const openExpands = new Set(urlSynchronizedState.openExpands || []);
+
+  for (const $exp of document.querySelectorAll('.expand')) {
+    const $line = $exp.querySelector('.expand-line');
+    const $body = $exp.querySelector('.expand-body');
+
+    let isExpanded = openExpands.has($exp.id);;
+
+    function rerender() {
+      if (isExpanded)
+        $exp.classList.add('open');
+      else
+        $exp.classList.remove('open');
+    }
+
+    rerender();
+
+    $line.addEventListener('click', () => {
+      isExpanded = !isExpanded;
+      rerender();
+
+      if (isExpanded)
+        openExpands.add($exp.id);
+      else
+        openExpands.delete($exp.id);
+      urlSynchronizedState.openExpands = [...openExpands];
+      syncToUrl();
+    });
+  }
+
+});
+
+</script>
+
+`;
+
+const Indented =
+exports.Indented =
+class Indented {
+
+  constructor({ indent, body }) {
+    this.indent = indent;
+    this.body = body;
+  }
+
+  toHtml(env) {
+    return new Cats(`<div style="margin-left: ${this.indent}ch">`, this.body.toHtml(env), '</div>');
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+
+const Bulleted =
+exports.Bulleted =
+class Bulleted {
+
+  constructor({ body, isNumbered, id }) {
+    this.body = body;
+    this.isNumbered = isNumbered;
+  }
+
+  toHtml(env) {
+    // TODO: numbers are wrong (make counter inc by parent, I think?)
+    return new Cats(
+      `<div style="display: list-item; list-style-type: ${this.isNumbered ? 'decimal' : 'disc'}">`,
+      this.body.toHtml(env),
+      "</div>",
+    );
+  }
+
+  children() {
+    return [this.body];
+  }
+
+}
+
+const Expand =
+exports.Expand =
+class Expand {
+
+  constructor({ line, body, id }) {
+    this.line = line;
+    this.body = body;
+    this.id = id;
+  }
+
+  toHtml(env) {
+    return new Cats(
+      `<div class="expand" id="${this.id}">`,
+      '<div class="expand-line">',
+      this.line.toHtml(env),
+      '</div>',
+      '<div class="expand-body">',
+      this.body.toHtml(env),
+      '</div>',
+      '</div>',
+    );
+  }
+
+  children() {
+    return [this.body, this.line];
+  }
+
+}
+
+
+
+const ParseError =
+exports.ParseError =
+class ParseError extends Error { }
+
+
 // mkError(text, idx, msg)
 // mkError(text, [i0, iF], msg)    range is inclusive/exclusive
 const mkError =
 exports.mkError =
 function mkError(...args) {
-
   const err = new ParseError();
 
   lazyAss(err, 'message', () => mkErrorMsg(...args))
@@ -503,7 +786,6 @@ function mkError(...args) {
   // observing its message (eg when backtracking)
 
   return err;
-
 }
 
 function mkErrorMsg(text, loc, err) {

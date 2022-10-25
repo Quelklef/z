@@ -6,6 +6,8 @@ const { squire } = require('./squire.js');
 const fss = squire('./fss.js');
 
 
+// WANT: I did a benchmark and it seems that Cats is slower
+//       than native string concat (on FF, at least)
 /* String builder */
 exports.Cats =
 class Cats {

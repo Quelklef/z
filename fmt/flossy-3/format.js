@@ -94,7 +94,6 @@ function parse({
 
   */
   const modules = {
-    indent      : squire('./modules/indent.js'),
     base        : squire('./modules/base.js'),
     tex         : squire('./modules/tex.js'),
     annotations : squire('./modules/annotations.js'),
@@ -114,12 +113,6 @@ function parse({
 
     modules: [
       ...Object.values(modules),
-      {
-        parsers: [p_command],
-        commands: {
-          scope: command_scope
-        },
-      }
     ],
 
   });
@@ -174,37 +167,6 @@ function p_jsExpr(s) {
   return eval('(' + expr + ')');
 }
 
-
-// Execute a backslash command
-function p_command(s) {
-  const xi0 = s.i;
-  if (s.text[s.i] !== '\\') return '';
-  s.i++;
-
-  p.p_spaces(s);
-
-  const name = p.p_word(s);
-
-  const command = s.commands[name];
-  if (!command)
-    throw mkError(s.text, [xi0, s.i], `No command '${name}'!`);
-
-  return command(s);
-}
-
-// Local evaluator modification
-function command_scope(s) {
-  p.p_spaces(s);
-  const json = p_jsExpr(s);
-  p.p_spaces(s);
-
-  return p.local(s, s => {
-    if ('inferReferences' in json)
-      s.doImplicitReferences = !!json['inferReferences'];
-    const [r, _] = p.p_enclosed(s, p.p_toplevel_markup);
-    return r;
-  });
-}
 
 
 

@@ -9,6 +9,8 @@ type Rep =
   { children :: () -> Array Rep
   , toHtml :: Env -> String
   }
+  | Cats
+  | string
 
 */
 
