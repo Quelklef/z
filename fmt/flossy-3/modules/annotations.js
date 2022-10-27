@@ -124,8 +124,8 @@ exports.prelude = String.raw`
   margin: 0;
   padding: 0;
   border: 0;
-  /* nb. doing this over display:none fixes an issue
-         regarding nested annotations */
+  /* nb. doing this instead of display:none fixes an
+         issue regarding nested annotations */
 }
 
 </style>

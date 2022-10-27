@@ -833,6 +833,8 @@ commands['katex-prelude'] = function(s) {
     \newcommand{\tup}[1]{ \langle {#1} \rangle }
 
     \newcommand{\iffText}{{ \hspace{20pt}\t{iff}\hspace{20pt} }}
+
+    \newcommand{\pre}[1]{{ \small ${'`'}{#1} }}
   `);
   return new Rep.Seq('');
 }

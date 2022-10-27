@@ -215,10 +215,23 @@ class Explicit {
 // some simple stuff
 // -------------------------------------------------------------------------- //
 
-const sigilMapping = {
-  '---\n': '<hr />',
-  '***\n': '<hr />',
+// nb. This has to come before p_sigils so that
+//     precedence is right.
+exports.parsers.push(p_hr);
+function p_hr(s) {
+  if (!p.isStartOfLine(s)) return '';
+  const eol = indexOf(s.text, '\n', s.i);
+  if (
+    s.text.startsWith('---', s.i)
+    && s.text.slice(s.i + 3, eol).trim() === ''
+  ) {
+    s.i = eol + 1;
+    return '<hr />';
+  }
+  return '';
+}
 
+const sigilMapping = {
   '<->': '&harr;',
   '->': '&rarr;',
   '<-': '&larr;',
