@@ -58,6 +58,11 @@ function impossible(msg = '') {
 const clone =
 exports.clone =
 function clone(val) {
+
+  // Assumes we're not monkeypatching functions
+  if (typeof val === 'function' || val instanceof Function)
+    return val;
+
   if (val === null || typeof val !== 'object')
     return val;
 
@@ -80,6 +85,7 @@ function clone(val) {
   for (const k in val)
     res[k] = clone(val[k]);
   return res;
+
 }
 
 const htmlEscapes =

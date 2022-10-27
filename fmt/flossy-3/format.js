@@ -111,9 +111,7 @@ function parse({
     // These are very powerful!
     quasi: { env: { graph, note, env } },
 
-    modules: [
-      ...Object.values(modules),
-    ],
+    modules: Object.values(modules),
 
   });
 
@@ -124,17 +122,12 @@ function parse({
   if (s.text[s.i] === '\n') s.i++;
 
   // Parse note body
-  const noteRep = new repm.Seq();
-  const done = s => s.i >= s.text.length;
-  noteRep.add(p.p_toplevel_markup(s, done));
+  const { rep, prelude } = p.p_run(s);
 
   const result = {};
   result.meta = meta;
   lazyAss(result, 'rep', () => {
-    const prelude = new Cats();
-    for (const module of Object.values(modules))
-      prelude.add(module.prelude ?? '');
-    return template(prelude.toString(), noteRep);
+    return template(prelude, rep);
   });
   lazyAss(result, 'references', () => {
     const rep = result.rep;

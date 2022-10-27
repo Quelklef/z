@@ -49,8 +49,10 @@ function p_katex(s) {
 
   const xi0 = s.i;
   s.i++;
-  const done = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
-  const body = p.p_toplevel_verbatim(s, done);
+  const body = p.local(s, s => {
+    s.sentinel = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
+    return p.p_toplevel_verbatim(s);
+  });
   p.p_take(s, '$');
   const xif = s.i;
 

@@ -16,6 +16,8 @@ Parsing intro
 
 Parsing is a little funky. We keep track of three kinds of state:
 
+(WANT -- slight rewrite. just call quasistate 'env' or 'aff' lol)
+
 1 Nonlocal state
   This is state shared between all parts of the parser
   Here we keep track of things like the file pointer
@@ -69,10 +71,12 @@ This is what the module knows:
 type State =
 
   // Base state //
-  { text    :: String          // Source text [local]
-  , i       :: Int             // File pointer [nonlocal]
-  , indents :: Array Int       // Indent stack [nonlocal]
-  , cursyms :: Map String Int  // Gensym state [nonlocal]
+  { text     :: String          // Source text [local]
+  , i        :: Int             // File pointer [nonlocal]
+  , cursyms  :: Map String Int  // Gensym state [nonlocal]
+  , indents  :: Array Int       // Indent stack [nonlocal]
+  , sentinel :: State -> Bool   // Sentinel [local]
+                                // Gives a "stop parsing here" condition
 
   // Extensibility-related state //
   , parsers  :: Array (Parser repm)       // Parser list [local]
@@ -135,6 +139,8 @@ function initState({
   // Indentation stack
   s.indents = [];
 
+  s.sentinel = s => s.i >= s.text.length;
+
   // Source text
   s.text = text;
 
@@ -162,8 +168,23 @@ function initState({
   for (const module of Object.values(modules))
     s.quasi.nonlocalStateKeys.push(...(module.nonlocalStateKeys ?? []));
 
+  s.quasi.modules = modules;
+
   return s;
 
+}
+
+// toplevel run
+const p_run =
+exports.p_run =
+function p_run(s) {
+  const rep = p_toplevel_markup(s);
+
+  let prelude = '';
+  for (const module of s.quasi.modules)
+    prelude += (module.prelude ?? '');
+
+  return { prelude, rep };
 }
 
 // Generate a fresh symbol under a given namespace
@@ -311,8 +332,10 @@ function p_block(s, p_toplevel) {
     // \cmd: <stuff>
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
-      const done = s => ['\n', undefined].includes(s.text[s.i]);
-      const r = p_toplevel(s, done);
+      const r = local(s, s => {
+        s.sentinel = s => ['\n', undefined].includes(s.text[s.i]);
+        return p_toplevel(s);
+      });
       s.i++;  // skip newline
       return r;
 
@@ -337,15 +360,15 @@ function p_block(s, p_toplevel) {
   // Consumes to ==/WORD==
   else if (s.text.startsWith('==', s.i)) {
     p_take(s, '==');
-    const sentinel = p_takeTo(s, '==');
+    const marker = p_takeTo(s, '==');
     p_take(s, '==');
     p_spaces(s);
     p_take(s, '\n');
 
     return local(s, s => {
-      const done = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${sentinel}==\n`, s.i);
-      const result = p_toplevel(s, done);
-      p_take(s, `==/${sentinel}==\n`);
+      s.sentinel = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${marker}==\n`, s.i);
+      const result = p_toplevel(s);
+      p_take(s, `==/${marker}==\n`);
       return result;
     });
   }
@@ -356,8 +379,10 @@ function p_block(s, p_toplevel) {
     p_take(s, ';;');
     p_spaces(s);
     p_take(s, '\n');
-    const done = s => s.i >= s.text.length;
-    return p_toplevel(s, done);
+    return local(s, s => {
+      s.sentinel = s => s.i >= s.text.length;
+      return p_toplevel(s);
+    });
   }
 
   else {
@@ -384,8 +409,10 @@ function p_inline(s, p_toplevel) {
     throw mkError(s.text, s.i, "Expected group: [], (), {}, or <>");
   s.i++;
 
-  const done = s => s.text.startsWith(close, s.i);
-  const r = p_toplevel(s, done)
+  const r = local(s, s => {
+    s.sentinel = s => s.text.startsWith(close, s.i);
+    return p_toplevel(s);
+  });
   p_take(s, close);
 
   return r;
@@ -396,9 +423,9 @@ function p_inline(s, p_toplevel) {
 // Produces string
 const p_toplevel_verbatim =
 exports.p_toplevel_verbatim =
-function p_toplevel_verbatim(s, done = (_ => false)) {
+function p_toplevel_verbatim(s) {
   return (
-    p_toplevel_impl(s, { done, verbatim: true })
+    p_toplevel_impl(s, [])
     .toHtml()  // TODO: naughty
   );
 }
@@ -407,24 +434,18 @@ function p_toplevel_verbatim(s, done = (_ => false)) {
 // Produces a seq rep
 const p_toplevel_markup =
 exports.p_toplevel_markup =
-function p_toplevel_markup(s, done = (_ => false)) {
-  return p_toplevel_impl(s, { done, verbatim: false });
+function p_toplevel_markup(s) {
+  return p_toplevel_impl(s, s.parsers);
 }
 
 // Combination parser for both top-level parsers because
 // they share indentation-related logic
 const p_toplevel_impl =
 exports.p_toplevel_impl =
-function p_toplevel_impl(s, { done, verbatim }) {
-  const parsers = (
-    verbatim
-      ? []
-      : s.parsers
-  );
-
+function p_toplevel_impl(s, parsers) {
   const result = new repm.Seq();
 
-  if (done(s)) return result;
+  if (s.sentinel(s)) return result;
 
   parsing:
   while (true) {
@@ -446,10 +467,10 @@ function p_toplevel_impl(s, { done, verbatim }) {
 
     // All parsers tried
     // Break out to caller
-    if (done(s))
+    if (s.sentinel(s))
       break parsing;
 
-    // Out of text but not yet done()
+    // Out of text but not yet done according to the sentinel
     if (s.i >= s.text.length)
       throw mkError(s.text, s.i, "Unexpected EOF!");
 
@@ -600,12 +621,16 @@ function p_indent(s) {
 
   if (style === '>') {
 
-    const line = p_toplevel_markup(s, s => s.text.startsWith('\n', s.i));
+    const line = local(s, s => {
+      s.sentinel = s => s.text.startsWith('\n', s.i);
+      return p_toplevel_markup(s);
+    });
     p_take(s, '\n');
 
-    s.indents.push(newIndent);
-    const body = p_toplevel_markup(s);
-    s.indents.pop();
+    const body = local(s, s => {
+      s.indents.push(newIndent);
+      return p_toplevel_markup(s);
+    });
 
     return new Indented({
       indent: dIndent,
@@ -614,9 +639,11 @@ function p_indent(s) {
 
   } else {
 
-    s.indents.push(newIndent);
-    body = p_toplevel_markup(s);
-    s.indents.pop();
+    let body = local(s, s => {
+      s.indents.push(newIndent);
+      return p_toplevel_markup(s);
+    });
+
     if (style)
       body = new Bulleted({
         body,
