@@ -29,7 +29,7 @@ exports.commands.table = function(s) {
     switch (key) {
       case 'headers':
         if (!'h v both no'.split(' ').includes(val))
-          throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
+          throw p.mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
         doHorizontalHeaders = 'h both'.split(' ').includes(val);
         doVerticalHeaders   = 'v both'.split(' ').includes(val);
         break;
@@ -37,11 +37,11 @@ exports.commands.table = function(s) {
       case 'center':
         doCentering = { 'yes': true, 'no': false }[val];
         if (doCentering === undefined)
-          throw mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
+          throw p.mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
         break;
 
       default:
-        throw mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
+        throw p.mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
     }
   }
 
@@ -72,7 +72,7 @@ exports.commands.table = function(s) {
   });
 
   if (rows.length === 0)
-    throw mkError(s.text, [xi0, s.i], "Empty table")
+    throw p.mkError(s.text, [xi0, s.i], "Empty table")
 
   let result = new repm.Seq();
   const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);

@@ -98,6 +98,7 @@ function parse({
     given       : squire('./modules/given.js'),
     jargon      : squire('./modules/jargon.js')({ graph, note, doImplicitReferences }),
     table       : squire('./modules/table.js'),
+    columns     : squire('./modules/columns.js'),
   };
 
   const s = p.initState({

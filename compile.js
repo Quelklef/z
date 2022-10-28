@@ -73,7 +73,9 @@ function main({
 
     for (let note of format(floc, source, graph, env)) {
       const cached = env.cache.getOr('notes', [note.hash], null);
-      if (cached) note = cached;
+      if (cached)
+        if (note.id !== 'flossy-3-test')  // FIXME temp hack
+          note = cached;
 
       // initialize transient data
       trans.set(note, {

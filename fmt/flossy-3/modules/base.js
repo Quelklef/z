@@ -59,9 +59,9 @@ exports.commands.c = function(s) {
 }
 
 exports.commands.code = function(s) {
-  p.p_spaces(s);
+  p.p_whitespace(s);
   let language = /\w/.test(s.text[s.i]) ? p.p_word(s).toString() : null;
-  p.p_spaces(s);
+  p.p_whitespace(s);
   let [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return new Code({ language, body, isBlock: kind === 'block' });
 }
@@ -163,7 +163,7 @@ blockquote::before {
 exports.commands.ref = function(s) {
   p.p_spaces(s);
   const toNoteId = p.p_backtracking(s, p.p_word);
-  if (!toNoteId) throw mkError(s.text, s.i, "Missing note ID");
+  if (!toNoteId) throw p.mkError(s.text, s.i, "Missing note ID");
   p.p_spaces(s);
 
   const body = p.local(s, s => {
@@ -349,4 +349,34 @@ exports.commands['unsafe-raw-html'] = function(s) {
   p.p_spaces(s);
   const [html, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return new repm.Seq(html);
+}
+
+exports.commands['unsafe-exec'] =
+function unsafe_exec(s) {
+  s.quasi.env.env.log.warn(`use of \\unsafe-exec`);
+
+  p.p_whitespace(s);
+  const [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
+
+  const code =
+    kind === 'inline'
+      ? body.toString()
+    : kind === 'block'
+      ? `(function(){\n${body}\n})()`
+    : null;
+
+  // Set up eval() environment
+  const parse = str => {
+    return p.local(s, s => {
+      s.text = str;
+      const i0 = s.i;
+      s.i = 0;
+      s.sentinel = s => s.i >= s.text.length;
+      const r = p.p_toplevel_markup(s);
+      s.i = i0;
+      return r;
+    });
+  };
+
+  return eval(code) || '';
 }
