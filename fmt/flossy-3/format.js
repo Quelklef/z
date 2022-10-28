@@ -239,17 +239,3 @@ syncFromUrl();
 `);
 }
 
-
-
-function sample_s(s, linec = 4) {
-  return sample(s.text, s.i, linec);
-
-  function sample(str, from = 0, linec = 5) {
-    return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
-  }
-
-  function ruled(str, pref='>|') {
-    const bar = '------';
-    return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
-  }
-}

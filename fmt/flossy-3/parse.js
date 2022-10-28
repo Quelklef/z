@@ -75,6 +75,7 @@ type State =
   , i        :: Int             // File pointer [nonlocal]
   , cursyms  :: Map String Int  // Gensym state [nonlocal]
   , indents  :: Array Int       // Indent stack [nonlocal]
+  , keepNewline :: Bool  // [local]
   , sentinel :: State -> Bool   // Sentinel [local]
                                 // Gives a "stop parsing here" condition
 
@@ -136,8 +137,9 @@ function initState({
 
   // LOCAL STATE //
 
-  // Indentation stack
+  // Indentation stuff
   s.indents = [];
+  s.keepNewline = false;
 
   s.sentinel = s => s.i >= s.text.length;
 
@@ -333,10 +335,18 @@ function p_block(s, p_toplevel) {
     if (s.text.slice(s.i + 1, eol).trim() !== '') {
       if (s.text[s.i] === ' ') s.i++;
       const r = local(s, s => {
+        s.keepNewline = true;  // Prevent inner '\cmd: <stuff>' syntax from consuming
+                               // the newline; within several such nested forms like
+                               //   \a: \b: \c: def
+                               // we want only the outermost to consume the newline.
+                               // This feels hacky, but whatever.
         s.sentinel = s => ['\n', undefined].includes(s.text[s.i]);
         return p_toplevel(s);
       });
-      s.i++;  // skip newline
+
+      if (!s.keepNewline)
+        s.i++;  // skip newline
+
       return r;
 
     // \cmd:\n <stuff>
@@ -349,10 +359,10 @@ function p_block(s, p_toplevel) {
       if (nnelIndent <= currentIndent)
         throw mkError(s.text, s.i, "Expected indent after colon");
 
-      s.indents.push(nnelIndent);
-      const result = p_toplevel(s);
-      s.indents.pop();
-      return result;
+      return local(s, s => {
+        s.indents.push(nnelIndent);
+        return p_toplevel(s);
+      });
     }
   }
 
@@ -482,6 +492,7 @@ function p_toplevel_impl(s, parsers) {
   return result;
 }
 
+// Returns [blockOver, advanceBy]
 function checkIndent(s) {
   const isLeftmost = [undefined, '\n'].includes(s.text[s.i - 1]);
   if (!isLeftmost) return [false, 0];
@@ -919,4 +930,20 @@ function mkErrorMsg(text, loc, err) {
     return result;
   }
 
+}
+
+
+
+
+function sample_s(s, linec = 4) {
+  return sample(s.text, s.i, linec);
+
+  function sample(str, from = 0, linec = 5) {
+    return ruled(str.toString().slice(from).split('\n').slice(0, linec).join('\n'));
+  }
+
+  function ruled(str, pref='>|') {
+    const bar = '------';
+    return [bar, ...str.toString().split('\n').map(l => pref + l.replace(/ /g, '⋅')), bar].join('\n');
+  }
 }
