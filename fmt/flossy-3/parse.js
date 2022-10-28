@@ -170,14 +170,16 @@ function initState({
 
   // LOCAL STATE //
 
+  // Source text
+  s.text = text;
+
+  s.sentinel = s => s.i >= s.text.length;
+
   // Indentation stuff
   s.indents = [];
   s.keepNewline = false;
 
-  s.sentinel = s => s.i >= s.text.length;
-
-  // Source text
-  s.text = text;
+  s.counterCoord = { depth: 0, index: 0 };
 
   // Parsers
   s.parsers = [];
@@ -612,7 +614,7 @@ function(s) {
   const [line, _] = p_enclosed(s, p_toplevel_markup);
   p_spaces(s);
   const body = p_block(s, p_toplevel_markup);
-  return new Indented({ indent: 2, body: new Expand({ line, body, id: s.gensym('expand') }) });
+  return new Indented({ indent: 2, body: new Dropdown({ line, body, id: gensym(s, 'dropdown') }) });
 }
 
 
@@ -637,21 +639,19 @@ function p_indent(s) {
   let i = s.i;
   while (s.text[i] === ' ') i++;
   let dIndent = i - s.i;
+    // "dIndent" is "delta indent" ie "change in indent"
 
   s.i += dIndent;
 
   // Find bullet
   let style = null;
   {
-    if (p_backtracking(s, s => p_take(s, '- '))) {
+    if (p_backtracking(s, s => p_take(s, '- ')))
       style = '-';
-    }
-    else if (p_backtracking(s, s => p_take(s, '> '))) {
+    else if (p_backtracking(s, s => p_take(s, '> ')))
       style = '>';
-    }
-    else if (p_backtracking(s, s => p_take(s, '# '))) {
+    else if (p_backtracking(s, s => p_take(s, '# ')))
       style = '#';
-    }
   }
 
   if (style)
@@ -663,38 +663,54 @@ function p_indent(s) {
 
   const newIndent = curIndent + dIndent;
 
-  if (style === '>') {
+  if (style === '-') {
+    let body = local(s, s => {
+      s.indents.push(newIndent);
+      s.counterCoord = { depth: 0, index: 0 };
+      return p_toplevel_markup(s);
+    });
 
+    body = new Bulleted({ body, counterCoord: null });
+    return new Indented({ indent: dIndent, body });
+  }
+
+  else if (style === '>') {
     const line = local(s, s => {
       s.sentinel = s => s.text.startsWith('\n', s.i);
       return p_toplevel_markup(s);
     });
     p_take(s, '\n');
 
-    const body = local(s, s => {
-      s.indents.push(newIndent);
-      return p_toplevel_markup(s);
-    });
-
-    return new Indented({
-      indent: dIndent,
-      body: new Expand({ line, body, id: gensym(s, 'expand') }),
-    });
-
-  } else {
-
     let body = local(s, s => {
       s.indents.push(newIndent);
+      s.counterCoord = { depth: 0, index: 0 };
       return p_toplevel_markup(s);
     });
 
-    if (style)
-      body = new Bulleted({
-        body,
-        isNumbered: style === '#',
-      });
+    body = new Dropdown({ line, body, id: gensym(s, 'dropdown') });
     return new Indented({ indent: dIndent, body });
+  }
 
+  else if (style === '#') {
+    s.counterCoord.index++;   // hmmm.. first nontrivial use of local mutation
+    let body = local(s, s => {
+      s.counterCoord.depth++;
+      s.counterCoord.index = 0;
+      s.indents.push(newIndent);
+      return p_toplevel_markup(s);
+    });
+
+    body = new Bulleted({ body, counterCoord: s.counterCoord });
+    return new Indented({ indent: dIndent, body });
+  }
+
+  else {
+    let body = local(s, s => {
+      s.indents.push(newIndent);
+      s.counterCoord = { depth: 0, index: 0 };
+      return p_toplevel_markup(s);
+    });
+    return new Indented({ indent: dIndent, body });
   }
 }
 
@@ -702,18 +718,18 @@ baseModule.prelude += String.raw`
 
 <style>
 
-.expand > .expand-line {
+.dropdown > .dropdown-line {
   display: list-item;
   list-style-type: disclosure-closed;
   cursor: pointer;
 }
-.expand > .expand-line:hover {
+.dropdown > .dropdown-line:hover {
   background-color: rgba(var(--color-dynamic-rgb), .05);
 }
-.expand > .expand-line::marker {
+.dropdown > .dropdown-line::marker {
   color: var(--color-dynamic);
 }
-.expand > .expand-body {
+.dropdown > .dropdown-body {
   border-top: 1px dashed rgba(var(--color-static-rgb), 0.3);
   margin-top: .5em;
   padding-top: .5em;
@@ -721,7 +737,7 @@ baseModule.prelude += String.raw`
   padding-bottom: .5em;
   position: relative;
 }
-.expand > .expand-body::before {
+.dropdown > .dropdown-body::before {
   content: '';
   display: inline-block;
   position: absolute;
@@ -731,10 +747,10 @@ baseModule.prelude += String.raw`
   top: 0;
   height: 100%;
 }
-.expand:not(.open) > .expand-body {
+.dropdown:not(.open) > .dropdown-body {
   display: none;
 }
-.expand.open > .expand-line {
+.dropdown.open > .dropdown-line {
   list-style-type: disclosure-open;
 }
 
@@ -744,16 +760,16 @@ baseModule.prelude += String.raw`
 
 document.addEventListener('DOMContentLoaded', () => {
 
-  const openExpands = new Set(urlSynchronizedState.openExpands || []);
+  const openDropdowns = new Set(urlSynchronizedState.openDropdowns || []);
 
-  for (const $exp of document.querySelectorAll('.expand')) {
-    const $line = $exp.querySelector('.expand-line');
-    const $body = $exp.querySelector('.expand-body');
+  for (const $exp of document.querySelectorAll('.dropdown')) {
+    const $line = $exp.querySelector('.dropdown-line');
+    const $body = $exp.querySelector('.dropdown-body');
 
-    let isExpanded = openExpands.has($exp.id);;
+    let isDropdowned = openDropdowns.has($exp.id);;
 
     function rerender() {
-      if (isExpanded)
+      if (isDropdowned)
         $exp.classList.add('open');
       else
         $exp.classList.remove('open');
@@ -762,14 +778,14 @@ document.addEventListener('DOMContentLoaded', () => {
     rerender();
 
     $line.addEventListener('click', () => {
-      isExpanded = !isExpanded;
+      isDropdowned = !isDropdowned;
       rerender();
 
-      if (isExpanded)
-        openExpands.add($exp.id);
+      if (isDropdowned)
+        openDropdowns.add($exp.id);
       else
-        openExpands.delete($exp.id);
-      urlSynchronizedState.openExpands = [...openExpands];
+        openDropdowns.delete($exp.id);
+      urlSynchronizedState.openDropdowns = [...openDropdowns];
       syncToUrl();
     });
   }
@@ -804,15 +820,28 @@ const Bulleted =
 exports.Bulleted =
 class Bulleted {
 
-  constructor({ body, isNumbered, id }) {
+  constructor({ body, counterCoord }) {
     this.body = body;
-    this.isNumbered = isNumbered;
+    this.counterCoord = counterCoord;
   }
 
   toHtml(env) {
     // TODO: numbers are wrong (make counter inc by parent, I think?)
+
+    const styles = [ 'decimal', 'lower-roman', 'lower-latin', ];
+    const listStyle = (
+      this.counterCoord
+        ? styles[this.counterCoord.depth % styles.length]
+        : 'disc'
+    );
     return new Cats(
-      `<div style="display: list-item; list-style-type: ${this.isNumbered ? 'decimal' : 'disc'}">`,
+      `<div style="
+          display: list-item;
+          list-style-type: ${listStyle};
+          counter-set: list-item ${this.counterCoord?.index ?? 0};
+        "
+        data-debug-counterCoord="${JSON.stringify(this.counterCoord).replace(/"/g,"'")}"
+       >`,
       this.body.toHtml(env),
       "</div>",
     );
@@ -824,9 +853,9 @@ class Bulleted {
 
 }
 
-const Expand =
-exports.Expand =
-class Expand {
+const Dropdown =
+exports.Dropdown =
+class Dropdown {
 
   constructor({ line, body, id }) {
     this.line = line;
@@ -836,11 +865,11 @@ class Expand {
 
   toHtml(env) {
     return new Cats(
-      `<div class="expand" id="${this.id}">`,
-      '<div class="expand-line">',
+      `<div class="dropdown" id="${this.id}">`,
+      '<div class="dropdown-line">',
       this.line.toHtml(env),
       '</div>',
-      '<div class="expand-body">',
+      '<div class="dropdown-body">',
       this.body.toHtml(env),
       '</div>',
       '</div>',
