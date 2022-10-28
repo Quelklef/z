@@ -104,6 +104,39 @@ type Module =
 */
 
 
+/*
+
+nb. The indentation-aware parsing is tricky to get right. Have to balance at least all of the following
+    use-cases:
+
+* Line
+  \f: x
+
+* Block
+  \f:
+    x
+
+* Block within block
+  \f:
+    \g:
+      x
+
+* Block within line
+  \f: \g: \h:
+    x
+
+* Newline-within-inline
+
+  \something-json [{
+    "i": "am",
+    "multiline": "json"
+  }]
+
+  (this means we can't just disallow \n in inline)
+
+*/
+
+
 // Mutatively initialized thru the rest of the js module
 const baseModule = {
   commands: {},

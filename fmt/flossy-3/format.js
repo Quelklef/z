@@ -1,6 +1,6 @@
 const plib = require('path');
 
-const { squire } = require('../../squire.js');
+const { squire, closureStr } = require('../../squire.js');
 const { lazyAss, Cats, hash } = squire('../../util.js');
 const { indexOf } = squire('./util.js');
 const fss = squire('../../fss.js');
@@ -11,8 +11,6 @@ exports.default =
 function * (floc, source, graph, env) {
   yield mkNote(floc, source, graph, env);
 }
-
-const scriptSrc = fss.read(__filename).toString();
 
 
 function mkNote(floc, source, graph, env) {
@@ -27,8 +25,7 @@ function mkNote(floc, source, graph, env) {
   note.source = source;
   note.source += '\n';  // allows parsers to assume lines end with \n
 
-  // WANT: some way to include entire script closure instead of just scriptSrc?
-  note.hash = hash(floc, source, scriptSrc);
+  note.hash = hash(floc, source, closureStr(__filename));
 
   note.id = noteId;
 

@@ -41,6 +41,8 @@ function squire(path) {
     }
   }
 
+  invalidate ||= true;  // giant hammer
+
   if (invalidate)
     delete require.cache[path];
 
@@ -53,4 +55,21 @@ function * closure(path) {
   yield mod;
   for (const dep of mod.children)
     yield* closure(dep.path);
+}
+
+/*
+
+Append all sources from a module and its closure
+
+Uhh... use this *after* all squire() imports.
+(to ensure require.cache populated so closure() works as intended)
+
+*/
+exports.closureStr =
+function closureStr(path) {
+  let result = '';
+  for (const mod of closure(path)) {
+    result += fs.readFileSync(mod.filename);
+  }
+  return result;
 }
