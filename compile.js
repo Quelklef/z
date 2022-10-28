@@ -485,6 +485,7 @@ function renderIndex(graph) {
   return withTemplate(html);
 }
 
+// WANT: using ejs might be nice
 function withTemplate(mainHtml, postHtml = '', websocketPort = null) {
   const result = new Cats();
   result.add(String.raw`
@@ -505,12 +506,18 @@ function withTemplate(mainHtml, postHtml = '', websocketPort = null) {
 body {
   padding: 4vh 50px;
   padding-bottom: 25vh;
-  max-width: 800px;
   margin: 0 auto;
 
   font-size: 18px;
   font-family: sans serif;
   line-height: 1.5em;
+}
+
+body {
+  max-width: 1300px;
+}
+iframe, nav {
+  padding: 0 100px;
 }
 
 nav {
@@ -560,6 +567,7 @@ iframe {
   width: 100%;
   min-height: 80vh;
 }
+
 
 </style>
 

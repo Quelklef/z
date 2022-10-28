@@ -139,8 +139,9 @@ exports.commands['tikz-gen'] = function(s) {
 
 exports.prelude = String.raw`
 
+<style>
 .katex-display {
-  margin: 0;
+  margin: 0 !important;
 }
 
 .tikz {
@@ -148,9 +149,11 @@ exports.prelude = String.raw`
   display: block;
   max-width: 100%;
 }
+
 .tikz > svg {
   max-width: 100%;
 }
+</style>
 
 `;
 
