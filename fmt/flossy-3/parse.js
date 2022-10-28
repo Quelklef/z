@@ -658,8 +658,11 @@ function p_indent(s) {
     dIndent += 2;
 
   // If line not further indented, bail
-  if (dIndent <= 0)
+  if (dIndent <= 0) {
+    s.counterCoord = { depth: s.counterCoord.depth, index: 0 };
+        // ^ hmmm.. nontrivial use of local mutation
     return '';
+  }
 
   const newIndent = curIndent + dIndent;
 
@@ -692,14 +695,14 @@ function p_indent(s) {
   }
 
   else if (style === '#') {
-    s.counterCoord.index++;   // hmmm.. first nontrivial use of local mutation
     let body = local(s, s => {
-      s.counterCoord.depth++;
-      s.counterCoord.index = 0;
+      s.counterCoord = { depth: s.counterCoord.depth + 1, index: 0 };
       s.indents.push(newIndent);
       return p_toplevel_markup(s);
     });
 
+    s.counterCoord = { depth: s.counterCoord.depth, index: s.counterCoord.index + 1 };
+        // ^ hmmm.. nontrivial use of local mutation
     body = new Bulleted({ body, counterCoord: s.counterCoord });
     return new Indented({ indent: dIndent, body });
   }

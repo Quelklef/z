@@ -1,8 +1,11 @@
 const libKatex = require('katex');
+const child_process = require('child_process');
+const plib = require('path');
 
 const { squire } = require('../../../squire.js');
 const repm = squire('../repm.js');
 const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
+const fss = squire('../../../fss.js');
 const p = squire('../parse.js');
 
 const basePrelude = String.raw`
@@ -93,24 +96,13 @@ exports.commands.katex = function(s) {
 }
 
 // TeX, TikZ
+// TeX and TikZ do not use the KaTeX prefix!
 exports.commands.tikz = function(s) {
   p.p_spaces(s);
-
-  let append = s.text.startsWith('pre', s.i);
-  if (append) {
-    p.p_take(s, 'pre');
-    p.p_spaces(s);
-  }
 
   let tex, kind;
   [tex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
-  if (append) {
-    s.texPrefix.add(tex);
-    return '';
-  }
-
-  tex = s.texPrefix + tex;
   return new Tex({ tex, isTikz: true, isBlock: kind === 'block' });
 }
 
@@ -131,7 +123,6 @@ exports.commands['tikz-gen'] = function(s) {
     })();
   `);
   console.log(tex);
-  tex = s.texPrefix + tex;
 
   return new Tex({ tex, isTikz: true, isBlock: true });
 }
@@ -265,5 +256,7 @@ ${tex}
 }
 
 exports.prelude += String.raw`
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
+
 `;
