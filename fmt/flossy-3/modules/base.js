@@ -172,6 +172,7 @@ exports.commands.ref = function(s) {
   });
 
   const toNote = s.quasi.env.graph.notesById[toNoteId];
+  console.log(toNoteId);
   return new Explicit({ toNoteId, toNote, body });
 }
 
@@ -192,6 +193,7 @@ exports.Explicit =
 class Explicit {
 
   constructor({ toNoteId, toNote, body }) {
+    this.toNoteId = toNoteId;
     this.toNote = toNote;
     this.body = body;
   }

@@ -113,11 +113,12 @@ function parse({
 
   });
 
-  // Parse format header, metadata, and optional following newline
+  // Skip format header
   s.i = indexOf(s.text, '\n', s.i) + 1;
+
+  // Parse metadata
   const meta = p_noteMetadata(s);
   if (meta) s.quasi.env.env.log.info('metadata is', meta);
-  if (s.text[s.i] === '\n') s.i++;
 
   // Parse note body
   const { rep, prelude } = p.p_run(s);

@@ -602,6 +602,7 @@ const p_jsExpr =
 exports.p_jsExpr =
 function p_jsExpr(s) {
   const [expr, _] = p_enclosed(s, p_toplevel_verbatim);
+  s.quasi.env.env.log.info('JS Expr:', expr);
   return eval('(' + expr + ')');
 }
 
@@ -657,12 +658,15 @@ function p_indent(s) {
   if (style)
     dIndent += 2;
 
-  // If line not further indented, bail
-  if (dIndent <= 0) {
+  const eol = indexOf(s.text, '\n', s.i);
+  const lineEmpty = s.text.slice(s.i, eol).trim() === '';
+  if (dIndent <= 0 && !lineEmpty)
     s.counterCoord = { depth: s.counterCoord.depth, index: 0 };
         // ^ hmmm.. nontrivial use of local mutation
+
+  // If line not further indented, bail
+  if (dIndent <= 0)
     return '';
-  }
 
   const newIndent = curIndent + dIndent;
 

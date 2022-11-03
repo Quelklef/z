@@ -8,13 +8,15 @@ const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
 const fss = squire('../../../fss.js');
 const p = squire('../parse.js');
 
-const basePrelude = String.raw`
+const backtick = '`';
+const baseKatexPrelude = String.raw`
   % shorthands
   \newcommand{\cl}[1]{ \mathcal{#1} }
   \newcommand{\sc}[1]{ \mathscr{#1} }
   \newcommand{\bb}[1]{ \mathbb{#1} }
   \newcommand{\fk}[1]{ \mathfrak{#1} }
   \renewcommand{\bf}[1]{ \mathbf{#1} }
+  \renewcommand{\sf}[1]{ \mathsf{#1} }
 
   \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
   \newcommand{\ceil}[1]{ { \lceil {#1} \rceil } }
@@ -36,14 +38,23 @@ const basePrelude = String.raw`
 
   % tuples
   \newcommand{\tup}[1]{ \langle {#1} \rangle }
+
+  % reverse-order composition
+  %\newcommand{\then}{ \operatorname{\ ;\ }  }
+  \newcommand{\then}{ {\scriptsize\ \rhd\ }  }
+
+  \newcommand{\pre}[1]{{ \small ${backtick}{#1} }}
+
+  \newcommand{\injects}{ \hookrightarrow }
+  \newcommand{\surjects}{ \twoheadrightarrow }
 `;
 
 exports.commands = {};
 exports.parsers = [];
 exports.stateInit = {
   // tex-related state
-  katexPrefix: new Cats(basePrelude),
-  texPrefix: new Cats(basePrelude),
+  katexPrefix: new Cats(baseKatexPrelude),
+  texPrefix: new Cats(),
 };
 
 exports.parsers.push(p_katex);
@@ -77,18 +88,28 @@ exports.commands.katex = function(s) {
     p.p_spaces(s);
   }
 
+  const align = !!p.p_backtracking(s, s => {
+    p.p_take(s, 'align');
+    p.p_spaces(s);
+    return true;
+  });
+
   const xi0 = s.i;
-  const [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
+  let [katex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   const xif = s.i;
 
   if (append) {
-    s.katexPrefix.add(body);
+    s.katexPrefix.add(katex);
     return '';
   }
 
+  if (align)
+    katex = `\\begin{align*} ${katex} \\end{align*}`;
+  katex = s.katexPrefix + '' + katex;
+
   const displayMode = { block: true, inline: false }[kind];
   return new Katex({
-    katex: s.katexPrefix + '' + body,
+    katex,
     displayMode,
     sourceText: s.text,
     sourceRange: [xi0, xif],
@@ -96,14 +117,29 @@ exports.commands.katex = function(s) {
 }
 
 // TeX, TikZ
-// TeX and TikZ do not use the KaTeX prefix!
 exports.commands.tikz = function(s) {
   p.p_spaces(s);
+
+  const append = s.text.startsWith('pre', s.i);
+  if (append) {
+    p.p_take(s, 'pre');
+    p.p_spaces(s);
+  }
 
   let tex, kind;
   [tex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
-  return new Tex({ tex, isTikz: true, isBlock: kind === 'block' });
+  if (append) {
+    s.texPrefix.add(tex);
+    return '';
+  }
+
+  return new Tex({
+    tex,
+    isTikz: true,
+    prefix: s.texPrefix,
+    isBlock: kind === 'block'
+  });
 }
 
 exports.commands['tikz-gen'] = function(s) {
@@ -134,6 +170,11 @@ exports.prelude = String.raw`
 .katex-display {
   margin: 0 !important;
 }
+
+/* Distinguish inline math from text
+   Helps in cases where $\text{word}$ is used */
+.katex { background: rgba(0, 0, 0, 0.035);  /* effective, but ugly */ }
+.katex-display > .katex { background: none; }
 
 .tikz {
   text-align: center;
@@ -182,7 +223,8 @@ const Tex =
 exports.Tex =
 class Tex {
 
-  constructor({ tex, isTikz, isBlock }) {
+  constructor({ prefix, tex, isTikz, isBlock }) {
+    this.prefix = prefix;
     this.tex = tex;
     this.isTikz = isTikz;
     this.isBlock = isBlock;
@@ -209,6 +251,8 @@ ${tex}
 \usepackage[T1]{fontenc}
 
 \begin{document}
+
+${this.prefix}
 
 ${tex}
 
