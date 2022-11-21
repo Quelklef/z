@@ -1,6 +1,6 @@
 const clc = require('cli-color');
 
-const { squire } = require('../../squire.js');
+const { squire, closureStr } = require('../../squire.js');
 const { Cats, lazyAss } = squire('../../util.js');
 const util = require('./util.js');
 const { indexOf } = util;
@@ -411,9 +411,17 @@ function p_block(s, p_toplevel) {
     p_take(s, '\n');
 
     return local(s, s => {
-      s.sentinel = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${marker}==\n`, s.i);
+      s.sentinel = s => isStartOfLine(s) && s.text.startsWith(`==/${marker}==`, s.i);
+      // s.sentinel = s => s.text[s.i - 1] === '\n' && s.text.startsWith(`==/${marker}==\n`, s.i);
       const result = p_toplevel(s);
-      p_take(s, `==/${marker}==\n`);
+      p_take(s, `==/${marker}==`);
+
+      // Consume optional spaces+newline
+      p_backtracking(s, s => {
+        p_spaces(s);
+        p_take(s, '\n');
+      });
+
       return result;
     });
   }
@@ -560,6 +568,16 @@ function getNextNonemptyLine(text, i0 = 0) {
     }
   }
   return null;
+}
+
+// Escape
+baseModule.parsers.push(p_escape);
+function p_escape(s) {
+  if (s.text[s.i] !== '~') return '';
+  s.i++;
+  const c = s.text[s.i] ?? '<easter egg discovered>';
+  s.i++;
+  return c;
 }
 
 

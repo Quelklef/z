@@ -347,7 +347,7 @@ exports.commands.href = function(s) {
 }
 
 exports.commands['unsafe-raw-html'] = function(s) {
-  s.env.log.warn(`use of \\unsafe-raw-html`);
+  s.quasi.env.env.log.warn(`use of \\unsafe-raw-html`);
   p.p_spaces(s);
   const [html, _] = p.p_enclosed(s, p.p_toplevel_verbatim);
   return new repm.Seq(html);

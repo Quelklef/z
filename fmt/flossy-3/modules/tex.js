@@ -47,6 +47,9 @@ const baseKatexPrelude = String.raw`
 
   \newcommand{\injects}{ \hookrightarrow }
   \newcommand{\surjects}{ \twoheadrightarrow }
+
+  % category names
+  \newcommand{\cat}[1]{{ \bf{#1} }}
 `;
 
 exports.commands = {};
@@ -94,6 +97,12 @@ exports.commands.katex = function(s) {
     return true;
   });
 
+  const gather = !!p.p_backtracking(s, s => {
+    p.p_take(s, 'gather');
+    p.p_spaces(s);
+    return true;
+  });
+
   const xi0 = s.i;
   let [katex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   const xif = s.i;
@@ -105,6 +114,8 @@ exports.commands.katex = function(s) {
 
   if (align)
     katex = `\\begin{align*} ${katex} \\end{align*}`;
+  if (gather)
+    katex = `\\begin{gather*} ${katex} \\end{gather*}`;
   katex = s.katexPrefix + '' + katex;
 
   const displayMode = { block: true, inline: false }[kind];

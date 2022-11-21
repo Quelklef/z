@@ -13,6 +13,7 @@ exports.commands.columns = function(s) {
 
   const cols = [];
   for (let _ = 0; _ < arity; _++) {
+    p.p_spaces(s);
     const [inner, _] = p.p_enclosed(s, p.p_toplevel_markup);
     cols.push(inner);
   }

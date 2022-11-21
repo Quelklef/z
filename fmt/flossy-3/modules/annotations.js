@@ -172,7 +172,10 @@ document.addEventListener('DOMContentLoaded', () => {
   stateToDom();
 
   for (const $ref of document.querySelectorAll('.annotation-reference')) {
-    $ref.addEventListener('click', () => {
+    $ref.addEventListener('click', ev => {
+      ev.preventDefault();
+      ev.stopPropagation();
+
       const isExpanded = expanded.has($ref.dataset.name);
       if (isExpanded) expanded.delete($ref.dataset.name);
       else expanded.add($ref.dataset.name);

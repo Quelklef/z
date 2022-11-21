@@ -94,6 +94,7 @@ function parse({
     base        : squire('./modules/base.js'),
     tex         : squire('./modules/tex.js'),
     annotations : squire('./modules/annotations.js'),
+    mark        : squire('./modules/mark.js'),
     mermaid     : squire('./modules/mermaid.js'),
     given       : squire('./modules/given.js'),
     jargon      : squire('./modules/jargon.js')({ graph, note, doImplicitReferences }),
