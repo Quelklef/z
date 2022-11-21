@@ -17,7 +17,12 @@ function main({
   websocketPort,
   symlinksOk,
   emitSensitiveInfo,
+
+  reducePaths,
+  ignoreCache,
 }) {
+
+  reducePaths ??= (x => x);
 
   const callTime = Date.now();
 
@@ -45,7 +50,8 @@ function main({
   const graph = {};
   graph.notes = [];
 
-  const files = fss.list(sourcePath, { type: 'f', recursive: true });
+  let files = Array.from(fss.list(sourcePath, { type: 'f', recursive: true }));
+  files = reducePaths(files);
 
   for (const floc of files) {
     if (plib.extname(floc) !== '.z') continue;
@@ -73,9 +79,8 @@ function main({
 
     for (let note of format(floc, source, graph, env)) {
       const cached = env.cache.getOr('notes', [note.hash], null);
-      if (cached)
-        //if (note.id !== 'flossy-3-test')  // FIXME temp hack
-          note = cached;
+      if (cached && !ignoreCache)
+        note = cached;
 
       // initialize transient data
       trans.set(note, {

@@ -69,7 +69,7 @@ function main({
   }
 
 
-
+  let focusMode = true;
   async function recompile() {
 
     // Clear screen...
@@ -79,9 +79,26 @@ function main({
     for (const k in require.cache) delete require.cache[k];
     const { main } = require('./compile.js');
 
+    let modifiedMainArgs;
+    if (!focusMode) {
+      modifiedMainArgs = mainArgs;
+    } else {
+      modifiedMainArgs = {
+        ...mainArgs,
+        ignoreCache: true,
+        reducePaths: function(paths) {
+          // consider only most recently modified path
+          const thePath = Array.from(paths).sort((p1, p2) =>
+                       (+new Date(fss.fs.statSync(p2).mtime))
+                     - (+new Date(fss.fs.statSync(p1).mtime)) )[0];
+          return [thePath];
+        }
+      }
+    }
+
     let compileSuccess = false;
     try {
-      main(mainArgs);
+      main(modifiedMainArgs);
       compileSuccess = true;
     } catch (e) {
       console.error(e);
@@ -102,12 +119,18 @@ function main({
       'Watching for file changes or keypress...',
       '',
       'quit: [q]; recompile: [r]',
+      '[f]ocus mode (recompile only most recently-edited note): ' + (focusMode ? 'ON' : 'OFF'),
       'caches: clear [a] all' + Object.entries(nss).map(([i, ns]) => `; [${i}] ${ns}`).join(''),
     ].join('\n'));
 
     withUserInput(ch => {
       if (ch === 'q') {
         process.exit(0)
+      }
+      else if (ch === 'f') {
+        focusMode = !focusMode;
+        recompile();
+        return true;
       }
       else if (ch === 'r') {
         recompile();
