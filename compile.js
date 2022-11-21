@@ -509,7 +509,7 @@ function withTemplate(mainHtml, postHtml = '', websocketPort = null) {
 }
 
 body {
-  padding: 4vh 50px;
+  padding: 4vh 0;
   padding-bottom: 25vh;
   margin: 0 auto;
 
@@ -519,10 +519,10 @@ body {
 }
 
 body {
-  max-width: 1300px;
+  max-width: 800px;
 }
 iframe, nav {
-  padding: 0 100px;
+  padding: 0 0;
 }
 
 nav {
