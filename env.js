@@ -3,8 +3,8 @@ const plib = require('path');
 const clc = require('cli-color');
 
 const { squire } = require('./squire.js');
-const { hash, writeFile } = squire('./util.js');
-const fss = squire('./fss.js');
+const { hash, writeFile } = require('./util.js');
+const fss = require('./fss.js');
 
 
 exports.mkEnv =

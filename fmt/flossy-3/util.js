@@ -1,5 +1,5 @@
 const { squire } = require('../../squire.js');
-const { Cats } = squire('../../util.js');
+const { Cats } = require('../../util.js');
 
 const Trie =
 exports.Trie =

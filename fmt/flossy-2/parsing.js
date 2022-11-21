@@ -1,7 +1,7 @@
 const clc = require('cli-color');
 
 const { squire } = require('../../squire.js');
-const { Cats, lazyAss } = squire('../../util.js');
+const { Cats, lazyAss } = require('../../util.js');
 const { indexOf } = require('./util.js');
 
 /*

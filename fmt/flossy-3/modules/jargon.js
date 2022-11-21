@@ -1,5 +1,5 @@
 const { squire } = require('../../../squire.js');
-const { Cats } = squire('../../../util.js');
+const { Cats } = require('../../../util.js');
 const { escapeHtml } = require('../util.js');
 const repm = require('../repm.js');
 const p = require('../parse.js');

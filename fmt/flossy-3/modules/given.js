@@ -1,6 +1,6 @@
 const { squire } = require('../../../squire.js');
-const repm = squire('../repm.js');
-const p = squire('../parse.js');
+const repm = require('../repm.js');
+const p = require('../parse.js');
 
 exports.commands = {};
 

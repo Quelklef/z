@@ -5,10 +5,10 @@ const hljs = require('highlight.js');
 const libKatex = require('katex');
 
 const { squire } = require('../../squire.js');
-const { Cats, withTempDir } = squire('../../util.js');
-const fss = squire('../../fss.js');
+const { Cats, withTempDir } = require('../../util.js');
+const fss = require('../../fss.js');
 
-const { mkError } = squire('./parsing.js');
+const { mkError } = require('./parsing.js');
 
 const Rep =
 exports.Rep =

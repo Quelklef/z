@@ -2,12 +2,12 @@ const plib = require('path');
 const child_process = require('child_process');
 
 const { squire } = require('../../squire.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../../util.js');
-const fss = squire('../../fss.js');
+const { lazyAss, Cats, withTempDir, hash } = require('../../util.js');
+const fss = require('../../fss.js');
 
-const Rep = squire('./rep.js');
-const { Trie, indexOf, impossible, cloneIterator } = squire('./util.js');
-const { p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = squire('./parsing.js');
+const Rep = require('./rep.js');
+const { Trie, indexOf, impossible, cloneIterator } = require('./util.js');
+const { p_take, p_takeTo, p_backtracking, p_spaces, p_whitespace, p_word, p_integer, ParseError, mkError } = require('./parsing.js');
 
 exports.default =
 function * (floc, source, graph, env) {

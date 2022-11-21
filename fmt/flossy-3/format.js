@@ -1,11 +1,11 @@
 const plib = require('path');
 
 const { squire, closureStr } = require('../../squire.js');
-const { lazyAss, Cats, hash } = squire('../../util.js');
-const { indexOf } = squire('./util.js');
-const fss = squire('../../fss.js');
-const repm = squire('./repm.js');
-const p = squire('./parse.js');
+const { lazyAss, Cats, hash } = require('../../util.js');
+const { indexOf } = require('./util.js');
+const fss = require('../../fss.js');
+const repm = require('./repm.js');
+const p = require('./parse.js');
 
 exports.default =
 function * (floc, source, graph, env) {
@@ -91,15 +91,15 @@ function parse({
 
   */
   const modules = {
-    base        : squire('./modules/base.js'),
-    tex         : squire('./modules/tex.js'),
-    annotations : squire('./modules/annotations.js'),
-    mark        : squire('./modules/mark.js'),
-    mermaid     : squire('./modules/mermaid.js'),
-    given       : squire('./modules/given.js'),
-    jargon      : squire('./modules/jargon.js')({ graph, note, doImplicitReferences }),
-    table       : squire('./modules/table.js'),
-    columns     : squire('./modules/columns.js'),
+    base        : require('./modules/base.js'),
+    tex         : require('./modules/tex.js'),
+    annotations : require('./modules/annotations.js'),
+    mark        : require('./modules/mark.js'),
+    mermaid     : require('./modules/mermaid.js'),
+    given       : require('./modules/given.js'),
+    jargon      : require('./modules/jargon.js')({ graph, note, doImplicitReferences }),
+    table       : require('./modules/table.js'),
+    columns     : require('./modules/columns.js'),
   };
 
   const s = p.initState({

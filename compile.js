@@ -2,9 +2,9 @@ const { katex } = require('katex');
 const plib = require('path');
 
 const { squire } = require('./squire.js');
-const { lazyAss, Cats, iife } = squire('./util.js');
-const { mkEnv } = squire('./env.js');
-const fss = squire('./fss.js');
+const { lazyAss, Cats, iife } = require('./util.js');
+const { mkEnv } = require('./env.js');
+const fss = require('./fss.js');
 
 const fileSrc = fss.read(__filename).toString();
 
@@ -35,7 +35,7 @@ function main({
   for (const dname of fss.list(formatsHome, { type: 'd' })) {
     const floc = plib.resolve(formatsHome, dname, 'format.js');
 
-    const format = squire(floc).default;
+    const format = require(floc).default;
     const name = plib.parse(floc).dir.split(plib.sep).reverse()[0];
     Object.defineProperty(format, 'name', { value: name });
 

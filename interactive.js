@@ -7,8 +7,8 @@ const WebSocket = require('ws');
 const child_process = require('child_process');
 
 const { squire } = require('./squire.js');
-const { mkEnv } = squire('./env.js');
-const fss = squire('./fss.js');
+const { mkEnv } = require('./env.js');
+const fss = require('./fss.js');
 
 exports.main =
 function main({
@@ -75,7 +75,9 @@ function main({
     // Clear screen...
     for (let i = 0; i < 100; i++) process.stdout.write('\n');
 
-    const { main } = squire('./compile.js');
+    // Invalidate require cache
+    for (const k in require.cache) delete require.cache[k];
+    const { main } = require('./compile.js');
 
     let compileSuccess = false;
     try {

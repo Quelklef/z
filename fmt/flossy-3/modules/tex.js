@@ -3,10 +3,10 @@ const child_process = require('child_process');
 const plib = require('path');
 
 const { squire } = require('../../../squire.js');
-const repm = squire('../repm.js');
-const { lazyAss, Cats, withTempDir, hash } = squire('../../../util.js');
-const fss = squire('../../../fss.js');
-const p = squire('../parse.js');
+const repm = require('../repm.js');
+const { lazyAss, Cats, withTempDir, hash } = require('../../../util.js');
+const fss = require('../../../fss.js');
+const p = require('../parse.js');
 
 const backtick = '`';
 const baseKatexPrelude = String.raw`
@@ -108,7 +108,7 @@ exports.commands.katex = function(s) {
   const xif = s.i;
 
   if (append) {
-    s.katexPrefix.add(katex);
+    s.katexPrefix = s.katexPrefix.toString() + katex;
     return '';
   }
 
@@ -141,7 +141,7 @@ exports.commands.tikz = function(s) {
   [tex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
   if (append) {
-    s.texPrefix.add(tex);
+    s.texPrefix = s.texPrefix.toString() + tex;
     return '';
   }
 

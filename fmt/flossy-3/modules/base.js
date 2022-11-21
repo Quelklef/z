@@ -1,10 +1,10 @@
 const hljs = require('highlight.js');
 
 const { squire } = require('../../../squire.js');
-const repm = squire('../repm.js');
-const p = squire('../parse.js');
-const { Cats } = squire('../../../util.js');
-const { Trie, indexOf, htmlEscapes, escapeHtml } = squire('../util.js');
+const repm = require('../repm.js');
+const p = require('../parse.js');
+const { Cats } = require('../../../util.js');
+const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 
 exports.commands = {};
 exports.parsers = [];

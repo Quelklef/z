@@ -3,7 +3,7 @@ const child_process = require('child_process');
 const crypto = require('crypto');
 
 const { squire } = require('./squire.js');
-const fss = squire('./fss.js');
+const fss = require('./fss.js');
 
 
 // WANT: I did a benchmark and it seems that Cats is slower
