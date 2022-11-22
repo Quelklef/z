@@ -20,7 +20,7 @@ exports.commands.mdef = function(s) {
   p.p_backtracking(s, s => p.p_take(s, ';'));
   const index = (s.markCounter++);
   s.markMap[name] = index;
-  return new repm.Seq(
+  return repm.mkSeq(
     `<span class="mark-def" id="mark-${index}">`,
     '(✸' + index + ')',
     `</span>`,
@@ -32,7 +32,7 @@ exports.commands.mref = function(s) {
   const name = p_angleString(s);
   p.p_backtracking(s, s => p.p_take(s, ';'));
   const index = s.markMap[name];
-  return new repm.Seq(
+  return repm.mkSeq(
     `<a href="#mark-${index}">`,
     '(✸' + index + ')',
     `</span>`,

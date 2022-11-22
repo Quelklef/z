@@ -15,7 +15,7 @@ exports.commands.mermaid = function(s) {
   // So instead we have to defer rendering to the client.
 
   const divId = p.gensym(s, 'mermaid');
-  return new repm.Seq(String.raw`
+  return repm.mkSeq(String.raw`
     <div id="${divId}">${escapeHtml(body)}</div>
     <script> window.renderMermaid('${divId}'); </script>
   `);

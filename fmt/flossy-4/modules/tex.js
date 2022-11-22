@@ -223,7 +223,7 @@ class Katex {
     });
   }
 
-  children() {
+  get children() {
     return [];
   }
 
@@ -304,7 +304,7 @@ ${tex}
     return html;
   }
 
-  children() {
+  get children() {
     return [];
   }
 

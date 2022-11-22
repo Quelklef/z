@@ -165,7 +165,7 @@ function p_noteMetadata(s) {
 
 
 function template(prelude, html) {
-  return new repm.Seq(String.raw`
+  return repm.mkSeq(String.raw`
 <!DOCTYPE HTML>
 <html>
 <head>

@@ -74,22 +74,22 @@ exports.commands.table = function(s) {
   if (rows.length === 0)
     throw p.mkError(s.text, [xi0, s.i], "Empty table")
 
-  let result = new repm.Seq();
+  let result = repm.mkSeq();
   const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
-  result.add(`<table class="${classes.join(' ')}">`);
+  result = result.and(`<table class="${classes.join(' ')}">`);
   rows.forEach((row, rowI) => {
-    result.add('<tr>');
+    result = result.and('<tr>');
     row.forEach((cell, cellI) => {
       const isHeader = doHorizontalHeaders && rowI === 0 || doVerticalHeaders && cellI === 0;
       const tag = isHeader ? 'th' : 'td';
-      result.add(`<${tag}>`, cell, `</${tag}>`);
+      result = result.and(`<${tag}>`, cell, `</${tag}>`);
     });
-    result.add('</tr>');
+    result = result.and('</tr>');
   });
-  result.add('</table>');
+  result = result.and('</table>');
 
   if (doCentering)
-    result = new repm.Seq('<center>', result, '</center>');
+    result = repm.mkSeq('<center>', result, '</center>');
 
   return result;
 

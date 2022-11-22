@@ -10,7 +10,7 @@ exports.prelude = '';
 // Italic, bold, underline, strikethrough
 for (const tag of 'ibus') {
   exports.commands[tag] = function(s) {
-    return new repm.Seq(`<${tag}>`, p.p_inline(s, p.p_toplevel_markup), `</${tag}>`);
+    return repm.mkSeq(`<${tag}>`, p.p_inline(s, p.p_toplevel_markup), `</${tag}>`);
   }
 }
 
@@ -35,5 +35,5 @@ exports.commands.href = function(s) {
     return p.p_inline(s, p.p_toplevel_markup);
   });
 
-  return new repm.Seq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+  return repm.mkSeq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
 }

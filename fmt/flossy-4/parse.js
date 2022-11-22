@@ -496,7 +496,7 @@ function p_toplevel_markup(s) {
 const p_toplevel_impl =
 exports.p_toplevel_impl =
 function p_toplevel_impl(s, parsers) {
-  const result = new repm.Seq();
+  let result = repm.mkSeq();
 
   if (s.sentinel(s)) return result;
 
@@ -513,7 +513,7 @@ function p_toplevel_impl(s, parsers) {
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
-      result.add(parser(s));
+      result = result.and(parser(s));
       if (s.i !== i0)
         continue parsing;
     }
@@ -528,7 +528,7 @@ function p_toplevel_impl(s, parsers) {
       throw mkError(s.text, s.i, "Unexpected EOF!");
 
     // Default case: advance by one character
-    result.add(s.text[s.i]);
+    result = result.and(s.text[s.i]);
     s.i++;
   }
 
@@ -834,7 +834,7 @@ class Indented {
     return `<div style="margin-left: ${this.indent}ch">` + this.body.toHtml(env) + '</div>';
   }
 
-  children() {
+  get children() {
     return [this.body];
   }
 
@@ -872,7 +872,7 @@ class Bulleted {
     );
   }
 
-  children() {
+  get children() {
     return [this.body];
   }
 
@@ -901,7 +901,7 @@ class Dropdown {
     );
   }
 
-  children() {
+  get children() {
     return [this.body, this.line];
   }
 

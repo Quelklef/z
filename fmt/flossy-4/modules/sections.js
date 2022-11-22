@@ -15,12 +15,12 @@ exports.prelude = '';
 
 // Title
 exports.commands.title = function(s) {
-  return new repm.Seq('<div class="title">', p.p_block(s, p.p_toplevel_markup), '</div>');
+  return repm.mkSeq('<div class="title">', p.p_block(s, p.p_toplevel_markup), '</div>');
 }
 
 // Section header
 exports.commands.sec = function(s) {
-  return new repm.Seq('<div class="section-header">', p.p_block(s, p.p_toplevel_markup), '</div>');
+  return repm.mkSeq('<div class="section-header">', p.p_block(s, p.p_toplevel_markup), '</div>');
 }
 
 exports.prelude += String.raw`

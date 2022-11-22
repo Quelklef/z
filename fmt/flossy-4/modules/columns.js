@@ -19,7 +19,7 @@ exports.commands.columns = function(s) {
   }
 
 
-  return new repm.Seq(
+  return repm.mkSeq(
     `<div class="columns-columns">`,
     ...cols.flatMap(col => [
       `<div class="columns-column">`,

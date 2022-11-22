@@ -50,7 +50,7 @@ exports.commands.Given = function(s) {
             const ident = p.p_word(s);
             toNum = s.Given_lineIdentToNumber[ident];
           }
-          return new repm.Seq(
+          return repm.mkSeq(
             `<span class="given-by-ref" data-to="${toNum}">`,
             toNum + '',
             `</span>`,
@@ -75,7 +75,7 @@ exports.commands.Given = function(s) {
   const then = parseLines(s, ';');
 
   const renderLine = ([number, name, body, by, isNb, isBlock]) => (
-    new repm.Seq(
+    repm.mkSeq(
       `<span class="given-line" data-name="${number}">`,
         ...(!isBlock ? [
           `<span class="given-line-number ${isNb ? 'nb' : ''}">`,
@@ -92,7 +92,7 @@ exports.commands.Given = function(s) {
     )
   );
 
-  return new repm.Seq(
+  return repm.mkSeq(
     '<div class="given">',
     ...given.map(renderLine),
     '<span class="given-rule"></span>',

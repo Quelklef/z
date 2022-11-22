@@ -11,7 +11,7 @@ exports.prelude = '';
 exports.commands.quote = function(s) {
   p.p_spaces(s);
   const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
-  return new repm.Seq('<blockquote>', body, '</blockquote>');
+  return repm.mkSeq('<blockquote>', body, '</blockquote>');
 }
 
 exports.prelude += String.raw`

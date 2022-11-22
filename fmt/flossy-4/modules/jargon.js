@@ -299,7 +299,7 @@ module.exports = ({ graph, note, doImplicitReferences }) => {
       return `<span class="jargon" data-forms="${[...this.forms].join(';')}">` + this.body.toHtml(env) + '</span>';
     }
 
-    children() {
+    get children() {
       return [this.body];
     }
 
@@ -323,7 +323,7 @@ module.exports = ({ graph, note, doImplicitReferences }) => {
       return `<a href="${href}" class="reference implicit ${!!this.toNote ? '' : 'invalid'}">` + this.body + '</a>';
     }
 
-    children() {
+    get children() {
       return [this.body];
     }
 

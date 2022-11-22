@@ -51,7 +51,7 @@ class Code {
     return `<code class="${this.isBlock ? 'block' : 'inline'}">` + highlighted.value + '</code>';
   }
 
-  children() {
+  get children() {
     return [];
   }
 

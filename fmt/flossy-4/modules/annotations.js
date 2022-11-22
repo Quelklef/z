@@ -24,7 +24,7 @@ exports.commands.aref = function(s) {
 
   let body;
   if (s.text[s.i] === ';') {
-    const value = (s.adefNameIndex++);
+    const value = '' + (s.adefNameIndex++);
     s.i++;
     body = value;
   } else {
@@ -32,7 +32,7 @@ exports.commands.aref = function(s) {
   }
 
   const arefName = p.gensym(s, 'aref');
-  return new repm.Seq(
+  return repm.mkSeq(
     `<span class="annotation-reference" data-name="${arefName}" data-refers-to="${adefName}">`,
     body,
     '</span>'
@@ -51,7 +51,7 @@ exports.commands.adef = function(s) {
     s.adefNameQueue.splice(0, 1);
   }
 
-  return new repm.Seq(
+  return repm.mkSeq(
     `<div class="annotation-definition" data-name="${name}">`,
     p.p_block(s, p.p_toplevel_markup),
     '</div>',

@@ -58,7 +58,7 @@ class Explicit {
       return `<a class="reference explicit invalid">` + this.body.toHtml(env) + '</a>';
   }
 
-  children() {
+  get children() {
     return [this.body];
   }
 }
