@@ -2,6 +2,7 @@ const clc = require('cli-color');
 
 const { lazyAss } = require('../../util.js');
 const util = require('./util.js');
+const plain = require('../../plain.js');
 const { indexOf } = util;
 const repm = require('./repm.js');
 
@@ -240,7 +241,7 @@ const clone =
 exports.clone = function(s) {
   const sm = s.quasi;
   s.quasi = null;
-  const r = util.clone(s);
+  const r = plain.clone(s);
   r.quasi = s.quasi = sm;
   return r;
 };

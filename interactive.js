@@ -6,8 +6,7 @@ const StaticServer = require('static-server');
 const WebSocket = require('ws');
 const child_process = require('child_process');
 
-const { squire } = require('./squire.js');
-const { mkAff } = require('./aff.js');
+const { Cache } = require('./cache.js');
 const fss = require('./fss.js');
 
 exports.main =
@@ -19,9 +18,7 @@ function main({
   mainArgs,
 }) {
 
-  const aff = mkAff({
-    cacheRoot: plib.resolve(destPath, '.cache'),
-  });
+  const cache = new Cache(plib.resolve(destPath, '.cache'));
 
 
   const server = new StaticServer({
@@ -109,7 +106,7 @@ function main({
     }
 
     const nss = {};
-    aff.cache.getNamespaces()
+    cache.getNamespaces()
       .sort((a, b) => a.localeCompare(b))
       .forEach((ns, i) => nss[i + 1] = ns);
 
@@ -137,12 +134,12 @@ function main({
         return true;
       }
       else if (ch === 'a') {
-        aff.cache.clear();
+        cache.clear();
         recompile();
         return true;
       }
       else if (ch in nss) {
-        aff.cache.clearNamespace(nss[ch]);
+        cache.clearNamespace(nss[ch]);
         recompile();
         return true;
       }

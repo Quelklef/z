@@ -2,7 +2,8 @@ const { katex } = require('katex');
 const plib = require('path');
 
 const { lazyAss, Cats, iife } = require('./util.js');
-const { mkAff } = require('./aff.js');
+const { Cache } = require('./cache.js');
+const logging = require('./log.js');
 const fss = require('./fss.js');
 
 const fileSrc = fss.read(__filename).toString();
@@ -26,10 +27,23 @@ function main({
   const callTime = Date.now();
 
   fss.mkdir(destPath);
-  const aff = mkAff({
-    cacheRoot: plib.resolve(destPath, '.cache'),
+  const issuesLogged = [];  // persists warnings and errors
+  const aff = {
     opts: { emitSensitiveInfo },
-  });
+
+    cache: new Cache(plib.resolve(destPath, '.cache')),
+
+    issuesLogged,
+    logHandler: (
+      logging.addHandlers(
+        logging.stdoutHandler,
+        logging.writerHandler(issuesLogged, ['warn', 'error']),
+      )
+    ),
+    get log() {
+      return new logging.Logger(this.logHandler);
+    },
+  };
 
   // Holds transient (ie, not cached) information
   const trans = new WeakMap();
@@ -76,10 +90,8 @@ function main({
       continue;
     }
 
-    const subAff = {
-      ...aff,
-      log: aff.log.withPrefix( plib.relative(sourcePath, floc) )
-    };
+    const subAff = Object.create(aff);
+    subAff.logHandler = logging.withPrefix(aff.logHandler, plib.relative(sourcePath, floc));
     subAff.parent = subAff;  // legacy compat; remove when possible
 
     for (let note of format(floc, source, graph, subAff)) {
@@ -240,6 +252,12 @@ function main({
   const doneTime = Date.now();
   const tookSecs = ((doneTime - callTime) / 1000).toFixed(1);
   aff.log.success(`Done! (${tookSecs}s)`);
+
+  // Replay warnings and errors
+  if (aff.issuesLogged.length > 0) {
+    console.log('\nIssues:\n');
+    logging.replayWith(aff.issuesLogged, logging.stdoutHandler);
+  }
 
 }
 

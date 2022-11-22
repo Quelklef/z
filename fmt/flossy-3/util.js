@@ -53,40 +53,6 @@ function impossible(msg = '') {
   throw Error('uh oh... [' + msg.toString() + ']');
 }
 
-// Knows how to clone a blessed set of types
-// Assumes that functions are pure and not monkeypatched!
-const clone =
-exports.clone =
-function clone(val) {
-
-  // Assumes we're not monkeypatching functions
-  if (typeof val === 'function' || val instanceof Function)
-    return val;
-
-  if (val === null || typeof val !== 'object')
-    return val;
-
-  if (val instanceof Array)
-    return [...val].map(clone);
-
-  if (val instanceof Set)
-    return new Set([...val].map(clone));
-
-  // idk why "val instanceof Cats" doesnt work
-  if (val.constructor.name === 'Cats')
-    return val.clone();
-
-  const proto = Object.getPrototypeOf(val);
-  if (proto !== Object.prototype) {
-    throw Error(`Refusing to clone non-plain value of type '${proto.constructor.name}'!`);
-  }
-
-  const res = {};
-  for (const k in val)
-    res[k] = clone(val[k]);
-  return res;
-
-}
 
 const htmlEscapes =
 exports.htmlEscapes =
