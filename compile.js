@@ -203,8 +203,11 @@ function main({
     fss.write(
       plib.resolve(destPath, 'raw', note.relativeLoc),
 
+      // avoid quirksmode :)
+      '<!DOCTYPE html>'
+
       // make clicking on <a> break out of <iframe>
-      '<base target="_parent">\n'
+      + '<base target="_parent">\n'
 
       // for <iframe> resizing
       + '<script type="text/javascript" src="https://rawcdn.githack.com/davidjbradshaw/iframe-resizer/036511095578f6166b2e780c9fec5d53bb501e21/js/iframeResizer.contentWindow.min.js"></script>\n'
