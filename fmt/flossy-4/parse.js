@@ -1,6 +1,5 @@
 const clc = require('cli-color');
 
-const { squire, closureStr } = require('../../squire.js');
 const { lazyAss } = require('../../util.js');
 const util = require('./util.js');
 const { indexOf } = util;

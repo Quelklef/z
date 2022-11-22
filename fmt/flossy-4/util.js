@@ -3,6 +3,7 @@ const { squire } = require('../../squire.js');
 const Trie =
 exports.Trie =
 class Trie {
+
   constructor(strings) {
     this.isElement = Symbol("isElement");
 
@@ -33,6 +34,7 @@ class Trie {
 
     return result;
   }
+
 }
 
 // WANT: rename

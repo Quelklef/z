@@ -1,63 +1,43 @@
 const hljs = require('highlight.js');
 
-const { squire } = require('../../../squire.js');
 const repm = require('../repm.js');
 const p = require('../parse.js');
-const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 
 exports.commands = {};
 exports.parsers = [];
 exports.prelude = '';
 
 
+const code =
+exports.commands.c =
+exports.commands.code =
+function code(s) {
 
-
-// -------------------------------------------------------------------------- //
-// \code
-// -------------------------------------------------------------------------- //
-
-exports.commands.c = function(s) {
-  return exports.commands.code(s);
-}
-
-exports.commands.code = function(s) {
   p.p_whitespace(s);
   let language = /\w/.test(s.text[s.i]) ? p.p_word(s).toString() : null;
   p.p_whitespace(s);
+
   let [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
-  return new Code({ language, body, isBlock: kind === 'block' });
-}
+  const codeIsBlock = kind === 'block';
 
-const Code =
-exports.Code =
-class Code {
+  const highlighted =
+    language !== null
+        ? hljs.highlight(body, { language })
+    : language === null && !codeIsBlock
+        ? hljs.highlight(body, { language: 'plaintext' })
+    : language === null && codeIsBlock
+        ? hljs.highlightAuto(body)
+    : impossible();
 
-  constructor({ language, body, isBlock }) {
-    this.language = language;
-    this.body = body;
-    this.isBlock = isBlock;
-  }
-
-  toHtml() {
-    const highlighted =
-      this.language !== null
-          ? hljs.highlight(this.body, { language: this.language })
-      : this.language === null && !this.isBlock
-          ? hljs.highlight(this.body, { language: 'plaintext' })
-      : this.language === null && this.isBlock
-          ? hljs.highlightAuto(this.body)
-      : impossible();
-
-    return `<code class="${this.isBlock ? 'block' : 'inline'}">` + highlighted.value + '</code>';
-  }
-
-  get children() {
-    return [];
-  }
-
+  return (
+    repm.h('code')
+      .a('class', codeIsBlock ? 'block' : 'inline')
+      .c(highlighted.value, { rawHtml: true })
+  );
 }
 
 exports.prelude += String.raw`
+
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.4.0/styles/github.min.css">
 
 <style>
@@ -68,14 +48,17 @@ code {
   border-radius: 3px;
   white-space: pre-wrap;
 }
+
 code.inline {
   display: inline;
   padding: 0px 3px;
 }
+
 code.block {
   display: block;
   padding: .35em .5em;
 }
 
 </style>
+
 `;

@@ -9,7 +9,6 @@ exports.stateInit = {
   adefNameIndex: 1,
 };
 
-// Annotation reference
 exports.commands.aref = function(s) {
   p.p_spaces(s);
 
@@ -23,25 +22,28 @@ exports.commands.aref = function(s) {
   p.p_spaces(s);
 
   let body;
-  if (s.text[s.i] === ';') {
-    const value = '' + (s.adefNameIndex++);
-    s.i++;
-    body = value;
+  if (p.p_backtracking(s, s => p.p_take(s, ';'))) {
+    body = (s.adefNameIndex++) + '';
   } else {
     body = p.p_inline(s, p.p_toplevel_markup)
   }
 
   const arefName = p.gensym(s, 'aref');
-  return repm.mkSeq(
-    `<span class="annotation-reference" data-name="${arefName}" data-refers-to="${adefName}">`,
-    body,
-    '</span>'
+
+  return (
+    repm.h('span')
+      .a('data-name', arefName)
+      .a('data-refers-to', adefName)
+      .a('class', 'annotation-reference')
+      .c(body)
   );
 }
 
 // Annotation definition
 exports.commands.adef = function(s) {
+
   p.p_spaces(s);
+
   let name;
   name = p.p_backtracking(s, p.p_word);
   if (!name) {
@@ -51,10 +53,13 @@ exports.commands.adef = function(s) {
     s.adefNameQueue.splice(0, 1);
   }
 
-  return repm.mkSeq(
-    `<div class="annotation-definition" data-name="${name}">`,
-    p.p_block(s, p.p_toplevel_markup),
-    '</div>',
+  const body = p.p_block(s, p.p_toplevel_markup);
+
+  return (
+    repm.h('div')
+      .a('class', 'annotation-definition')
+      .a('data-name', name)
+      .c(body)
   );
 }
 
@@ -95,8 +100,6 @@ exports.prelude = String.raw`
 }
 
 .annotation-definition {
-  /* background: rgba(250, 250, 250); */
-  /* box-shadow: 0 0 8px -2px rgba(0, 0, 0, 0.15); */
   border: 1px solid rgba(var(--color-static-rgb), .5);
   border-radius: 3px;
   padding: .5em 1em;

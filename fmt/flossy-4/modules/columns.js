@@ -1,4 +1,3 @@
-const { squire } = require('../../../squire.js');
 const repm = require('../repm.js');
 const p = require('../parse.js');
 
@@ -19,14 +18,12 @@ exports.commands.columns = function(s) {
   }
 
 
-  return repm.mkSeq(
-    `<div class="columns-columns">`,
-    ...cols.flatMap(col => [
-      `<div class="columns-column">`,
-      col,
-      `</div>`,
-    ]),
-    `</div>`,
+  return (
+    repm.h('div')
+      .a('class', 'columns-columns')
+      .cs(...cols.flatMap(col =>
+              repm.h('div').a('class', 'columns-column').c(col)
+      ))
   );
 
 }
@@ -34,6 +31,7 @@ exports.commands.columns = function(s) {
 exports.prelude += String.raw`
 
 <style>
+
 .columns-columns {
   display: flex;
   gap: 1em;
@@ -42,6 +40,7 @@ exports.prelude += String.raw`
 .columns-column {
   flex: 1;
 }
+
 </stlye>
 
 `;
