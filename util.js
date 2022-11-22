@@ -2,7 +2,6 @@ const plib = require('path');
 const child_process = require('child_process');
 const crypto = require('crypto');
 
-const { squire } = require('./squire.js');
 const fss = require('./fss.js');
 
 

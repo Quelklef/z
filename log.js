@@ -2,7 +2,7 @@ const plib = require('path');
 
 const clc = require('cli-color');
 
-const { squire } = require('./squire.js');
+
 const { hash, writeFile } = require('./util.js');
 const fss = require('./fss.js');
 

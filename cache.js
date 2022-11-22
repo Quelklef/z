@@ -1,6 +1,6 @@
 const plib = require('path');
 
-const { squire } = require('./squire.js');
+
 const { hash, writeFile } = require('./util.js');
 const fss = require('./fss.js');
 

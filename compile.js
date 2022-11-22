@@ -49,7 +49,7 @@ function main({
   const trans = new WeakMap();
 
   const formats = {};
-  const formatsHome = plib.resolve(__dirname, 'fmt');
+  const formatsHome = plib.resolve(__dirname, 'formats');
   for (const dname of fss.list(formatsHome, { type: 'd' })) {
     const floc = plib.resolve(formatsHome, dname, 'format.js');
 

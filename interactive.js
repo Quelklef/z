@@ -37,7 +37,7 @@ function main({
       [
         plib.resolve(sourcePath),
         plib.resolve(__dirname, '*.js'),
-        plib.resolve(__dirname, 'fmt/**/*.*'),
+        plib.resolve(__dirname, 'formats/**/*.*'),
       ],
       { cwd: '.' },
     )
