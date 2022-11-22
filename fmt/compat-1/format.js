@@ -45,9 +45,6 @@ function mkNote(floc, source, graph, env) {
 
   note.id = plib.basename(note.floc, '.z');
 
-  env = env.descend();
-  env.log.prefixes.push(note.id.toString());
-
   note.hash = hash(floc, source, scriptSrc);
 
   // lazy attrs:

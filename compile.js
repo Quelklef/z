@@ -1,9 +1,8 @@
 const { katex } = require('katex');
 const plib = require('path');
 
-const { squire } = require('./squire.js');
 const { lazyAss, Cats, iife } = require('./util.js');
-const { mkEnv } = require('./env.js');
+const { mkAff } = require('./aff.js');
 const fss = require('./fss.js');
 
 const fileSrc = fss.read(__filename).toString();
@@ -27,7 +26,7 @@ function main({
   const callTime = Date.now();
 
   fss.mkdir(destPath);
-  const env = mkEnv({
+  const aff = mkAff({
     cacheRoot: plib.resolve(destPath, '.cache'),
     opts: { emitSensitiveInfo },
   });
@@ -67,18 +66,24 @@ function main({
         formatName = line0.slice('format='.length);
     }
     if (!formatName) {
-      env.log.warn(`File at ${floc} has no format; skipping!`);
+      aff.log.warn(`File at ${floc} has no format; skipping!`);
       continue;
     }
 
     const format = formats[formatName];
     if (!format) {
-      env.log.warn(`File at ${floc} specifies unknown format '${formatName}'; skipping!`);
+      aff.log.warn(`File at ${floc} specifies unknown format '${formatName}'; skipping!`);
       continue;
     }
 
-    for (let note of format(floc, source, graph, env)) {
-      const cached = env.cache.getOr('notes', [note.hash], null);
+    const subAff = {
+      ...aff,
+      log: aff.log.withPrefix( plib.relative(sourcePath, floc) )
+    };
+    subAff.parent = subAff;  // legacy compat; remove when possible
+
+    for (let note of format(floc, source, graph, subAff)) {
+      const cached = aff.cache.getOr('notes', [note.hash], null);
       if (cached && !ignoreCache)
         note = cached;
 
@@ -94,7 +99,7 @@ function main({
   }
 
 
-  env.log.info(`Found ${graph.notes.length} notes`);
+  aff.log.info(`Found ${graph.notes.length} notes`);
 
   // Log format counts
   {
@@ -102,7 +107,7 @@ function main({
     for (const note of graph.notes)
       counts[trans.get(note).format.name] = (counts[trans.get(note).format.name] || 0) + 1;
     const sorted = Object.keys(counts).sort((a, b) => counts[b] - counts[a])
-    env.log.info(
+    aff.log.info(
       `Found ${Object.keys(formats).length} formats: `
        + sorted.map(k => `${k} (×${counts[k]})`).join(', ')
     );
@@ -167,12 +172,12 @@ function main({
 
   // Empty out dir except for cache and .git (used for something)
   for (const loc of fss.list(destPath)) {
-    const isCache = plib.resolve(loc) === plib.resolve(env.cache.root);
+    const isCache = plib.resolve(loc) === plib.resolve(aff.cache.root);
     const isGit = loc.endsWith('.git');
     if (!isCache && !isGit) fss.remove(loc);
   }
 
-  env.log.info(`Writing...`);
+  aff.log.info(`Writing...`);
 
   // Write notes
   for (const note of graph.notes) {
@@ -213,7 +218,7 @@ function main({
   fss.write(plib.resolve(destPath, 'index.html'), renderIndex(graph));
 
   // Write search index
-  fss.write(plib.resolve(destPath, 'search.json'), renderSearchIndex(graph, env));
+  fss.write(plib.resolve(destPath, 'search.json'), renderSearchIndex(graph, aff));
 
   // Write assets
   fss.mkdir(plib.resolve(destPath, 'assets'));
@@ -226,22 +231,22 @@ function main({
     }
   }
 
-  env.log.info(`Caching...`);
+  aff.log.info(`Caching...`);
   for (const note of graph.notes) {
     if (trans.get(note).isFromcache) continue;
-    env.cache.put('notes', [note.hash], note);
+    aff.cache.put('notes', [note.hash], note);
   }
 
   const doneTime = Date.now();
   const tookSecs = ((doneTime - callTime) / 1000).toFixed(1);
-  env.log.success(`Done! (${tookSecs}s)`);
+  aff.log.success(`Done! (${tookSecs}s)`);
 
 }
 
 
-function renderSearchIndex(graph, env) {
-  return env.cache.at('metadata', ['search-index', renderSearchIndex.toString()], () => {
-    env.log.info('Building search index');
+function renderSearchIndex(graph, aff) {
+  return aff.cache.at('metadata', ['search-index', renderSearchIndex.toString()], () => {
+    aff.log.info('Building search index');
 
     const index = {};
 

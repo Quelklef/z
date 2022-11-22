@@ -17,9 +17,6 @@ function mkNote(floc, source, graph, env) {
 
   const noteId = plib.basename(floc, '.z');
 
-  env = env.descend();
-  env.log.prefixes.push('note=' + noteId.toString());
-
   const note = {};
 
   note.source = source;

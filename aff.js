@@ -7,31 +7,21 @@ const { hash, writeFile } = require('./util.js');
 const fss = require('./fss.js');
 
 
-exports.mkEnv =
-function mkEnv(args) {
+exports.mkAff =
+function mkAff(args) {
 
   args.cacheRoot;
   args.logPrefixes ||= [];
 
-  const env = {};
-  env.parent = null;
+  const aff = {};
 
   // reader monad
-  env.opts = args.opts;
+  aff.opts = args.opts;
 
-  env.cache = new Cache(args.cacheRoot);
-  env.log = new Logger(args.logPrefixes);
+  aff.cache = new Cache(args.cacheRoot);
+  aff.log = new Logger(args.logPrefixes);
 
-  env.descend = function() {
-    const child = mkEnv({
-      cacheRoot: args.cacheRoot,
-      logPrefixes: [...args.logPrefixes],
-    });
-    child.parent = this;
-    return child;
-  }
-
-  return env;
+  return aff;
 
 }
 
@@ -107,6 +97,10 @@ class Logger {
 
   constructor(prefixes) {
     this.prefixes = prefixes;
+  }
+
+  withPrefix(prefix) {
+    return new Logger([...this.prefixes, prefix]);
   }
 
   generic(color, fst, ...args) {

@@ -7,7 +7,7 @@ const WebSocket = require('ws');
 const child_process = require('child_process');
 
 const { squire } = require('./squire.js');
-const { mkEnv } = require('./env.js');
+const { mkAff } = require('./aff.js');
 const fss = require('./fss.js');
 
 exports.main =
@@ -19,7 +19,7 @@ function main({
   mainArgs,
 }) {
 
-  const env = mkEnv({
+  const aff = mkAff({
     cacheRoot: plib.resolve(destPath, '.cache'),
   });
 
@@ -109,7 +109,7 @@ function main({
     }
 
     const nss = {};
-    env.cache.getNamespaces()
+    aff.cache.getNamespaces()
       .sort((a, b) => a.localeCompare(b))
       .forEach((ns, i) => nss[i + 1] = ns);
 
@@ -137,12 +137,12 @@ function main({
         return true;
       }
       else if (ch === 'a') {
-        env.cache.clear();
+        aff.cache.clear();
         recompile();
         return true;
       }
       else if (ch in nss) {
-        env.cache.clearNamespace(nss[ch]);
+        aff.cache.clearNamespace(nss[ch]);
         recompile();
         return true;
       }
