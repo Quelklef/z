@@ -90,17 +90,24 @@ function parse({
     }
 
   */
-  const modules = {
-    base        : require('./modules/base.js'),
-    tex         : require('./modules/tex.js'),
-    annotations : require('./modules/annotations.js'),
-    mark        : require('./modules/mark.js'),
-    mermaid     : require('./modules/mermaid.js'),
-    given       : require('./modules/given.js'),
-    jargon      : require('./modules/jargon.js')({ graph, note, doImplicitReferences }),
-    table       : require('./modules/table.js'),
-    columns     : require('./modules/columns.js'),
-  };
+  let referenceMod, jargonMod;
+  const modules = [
+                    require('./modules/simple.js'),
+                    require('./modules/unsafe.js'),
+                    require('./modules/simple-commands.js'),
+    (jargonMod    = require('./modules/jargon.js')({ graph, note, doImplicitReferences })),
+    (referenceMod = require('./modules/reference.js')),
+                    require('./modules/sections.js'),
+                    require('./modules/annotations.js'),
+                    require('./modules/quote-command.js'),
+                    require('./modules/code.js'),
+                    require('./modules/marks.js'),
+                    require('./modules/tables.js'),
+                    require('./modules/columns.js'),
+                    require('./modules/given.js'),
+                    require('./modules/tex.js'),
+                    require('./modules/mermaid.js'),
+  ];
 
   const s = p.initState({
 
@@ -110,7 +117,7 @@ function parse({
     // These are very powerful!
     quasi: { env: { graph, note, env } },
 
-    modules: Object.values(modules),
+    modules: modules,
 
   });
 
@@ -132,14 +139,14 @@ function parse({
   lazyAss(result, 'references', () => {
     const rep = result.rep;
     const references = new Set([
-      ...modules.base.getExplicitReferences(rep),
-      ...modules.jargon.getImplicitReferences(rep),
+      ...referenceMod.getExplicitReferences(rep),
+      ...jargonMod.getImplicitReferences(rep),
     ]);
     return references;
   })
   lazyAss(result, 'defines', () => {
     const rep = result.rep;
-    const defines = modules.jargon.getDefines(rep)
+    const defines = jargonMod.getDefines(rep)
     return defines;
   });
   return result;
