@@ -264,6 +264,22 @@ function p_spaces(s) {
   while (s.text[s.i] === ' ') s.i++;
 }
 
+const p_chompRestOfLine =
+exports.p_chompRestOfLine =
+function p_chompRestOfLine(s) {
+  const i0 = s.i;
+  while (
+    s.i < s.text.length &&
+    /[^\S\r\n]/.test(s.text[s.i])
+  ) {
+    s.i++;
+  }
+  if (s.i < s.text.length && s.text[s.i] !== '\n')
+    throw mkError(s.text, [i0, s.i], 'Expected line to end with only whitespace');
+  s.i++;
+  return '';
+}
+
 const p_whitespace =
 exports.p_whitespace =
 function p_whitespace(s) {

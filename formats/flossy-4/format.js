@@ -86,14 +86,14 @@ function parse({
     }
 
   */
-  let referenceMod, jargonMod;
+  let referenceMod, jargonMod, sectionsMod;
   const modules = [
                     require('./modules/simple.js'),
                     require('./modules/unsafe.js'),
                     require('./modules/simple-commands.js'),
     (jargonMod    = require('./modules/jargon.js')({ graph, note, doImplicitReferences })),
     (referenceMod = require('./modules/reference.js')),
-                    require('./modules/sections.js'),
+    (sectionsMod  = require('./modules/sections.js')),
                     require('./modules/annotations.js'),
                     require('./modules/quote-command.js'),
                     require('./modules/code.js'),
@@ -124,6 +124,8 @@ function parse({
 
   // Parse note body
   const { rep, prelude } = p.p_run(s);
+
+  sectionsMod.renderToc(rep);
 
   const result = {};
   result.meta = meta;

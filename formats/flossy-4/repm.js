@@ -53,7 +53,7 @@ function mkSeq(...parts) {
 
 class Seq {
   constructor(parts) {
-    this.parts = parts;
+    this.parts = parts.filter(p => p !== '');
   }
 
   // --
