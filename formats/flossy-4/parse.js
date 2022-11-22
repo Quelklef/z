@@ -447,11 +447,9 @@ function p_block(s, p_toplevel) {
       const result = p_toplevel(s);
       p_take(s, `==/${marker}==`);
 
-      // Consume optional spaces+newline
-      p_backtracking(s, s => {
-        p_spaces(s);
-        p_take(s, '\n');
-      });
+      // Consume spaces + optional newline
+      p_spaces(s);
+      p_backtracking(s, s => p_take(s, '\n'));
 
       return result;
     });
@@ -606,7 +604,7 @@ baseModule.parsers.push(p_escape);
 function p_escape(s) {
   if (s.text[s.i] !== '~') return '';
   s.i++;
-  const c = s.text[s.i] ?? '<easter egg discovered>';
+  const c = s.text[s.i] ?? '[easter egg discovered]';
   s.i++;
   return c;
 }
@@ -651,7 +649,7 @@ const p_jsExpr =
 exports.p_jsExpr =
 function p_jsExpr(s) {
   const [expr, _] = p_enclosed(s, p_toplevel_verbatim);
-  s.quasi.env.env.log.info('JS Expr:', expr);
+  s.quasi.env.env.log.info(`JS expr: '${expr}'`);
   return eval('(' + expr + ')');
 }
 

@@ -49,7 +49,6 @@ function mkSec({ title, body, className }) {
 
     children: [title, body],
     toHtml(aff) {
-      console.log(this._secId);
       return repm.mkSeq(
         repm.h('div')
           .a('class', className)

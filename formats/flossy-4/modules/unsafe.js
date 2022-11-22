@@ -30,7 +30,7 @@ function unsafe_exec(s) {
     : null;
 
   // Set up eval() environment
-  const parse = str => {
+  const parse = (s, str) => {
     return p.local(s, s => {
       s.text = str;
       const i0 = s.i;
@@ -43,4 +43,14 @@ function unsafe_exec(s) {
   };
 
   return eval(code) || '';
+}
+
+exports.commands['unsafe-eval'] =
+function unsafe_eval(s) {
+  s.quasi.env.env.log.warn(`use of \\unsafe-eval`);
+
+  p.p_whitespace(s);
+  const code = p.p_inline(s, p.p_toplevel_verbatim);
+
+  return repm.mkSeq(eval(code) + '', '\n');
 }
