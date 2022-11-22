@@ -199,10 +199,6 @@ module.exports = ({ graph, note, doImplicitReferences }) => {
     margin: .75em 0;
   }
 
-  .jargon:hover {
-    font-weight: bold;
-  }
-
   .jargon:hover .jargon-tooltip {
     font-weight: normal;
     display: block;

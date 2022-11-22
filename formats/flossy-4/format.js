@@ -101,9 +101,7 @@ function parse({
                     require('./modules/marks.js'),
                     require('./modules/tables.js'),
                     require('./modules/columns.js'),
-                    require('./modules/given.js'),
                     require('./modules/tex.js'),
-                    require('./modules/mermaid.js'),
   ];
 
   const s = p.initState({
