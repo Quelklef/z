@@ -755,10 +755,17 @@ function p_indent(s) {
 }
 
 
+baseModule.commands.bull =
+function(s) {
+  p_whitespace(s);
+  const bullet = p_inline(s, p_toplevel_markup);
+  p_whitespace(s);
+  const [body, _] = p_enclosed(s, p_toplevel_markup);
+  return mkCustomBulleted({ bullet, body });
+}
 
-const mkIndented =
-exports.mkIndented =
-function({ indent, body }) {
+
+function mkIndented({ indent, body }) {
   return (
     repm.h('div')
       .s('margin-left', indent + 'ch')
@@ -766,10 +773,7 @@ function({ indent, body }) {
   );
 }
 
-
-const mkBulleted =
-exports.mkBulleted =
-function({ body, counterCoord }) {
+function mkBulleted({ body, counterCoord }) {
 
   const styles = [ 'decimal', 'lower-roman', 'lower-latin', ];
   const listStyle = (
@@ -788,9 +792,22 @@ function({ body, counterCoord }) {
 
 }
 
-const mkDropdown =
-exports.mkDropdown =
-function({ line, body, id }) {
+function mkCustomBulleted({ body, bullet }) {
+  return (
+    repm.h('div')
+      .a('class', 'custom-bulleted')
+      .c(
+        repm.h('span')
+          .a('class', 'custom-bulleted-bullet')
+          .c(bullet))
+      .c(
+        repm.h('div')
+          .a('class', 'custom-bulleted-body')
+            .c(body))
+  );
+}
+
+function mkDropdown({ line, body, id }) {
   return (
     repm.h('div')
       .a('class', 'dropdown')
@@ -809,6 +826,15 @@ function({ line, body, id }) {
 baseModule.prelude += String.raw`
 
 <style>
+
+.custom-bulleted {
+  display: flex;
+  width: 100%;
+  gap: .5em;
+}
+.custom-bulleted-body {
+  flex: 1;
+}
 
 .dropdown > .dropdown-line {
   display: list-item;
