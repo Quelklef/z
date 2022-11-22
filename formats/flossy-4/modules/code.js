@@ -2,6 +2,7 @@ const hljs = require('highlight.js');
 
 const repm = require('../repm.js');
 const p = require('../parse.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -13,19 +14,20 @@ exports.commands.c =
 exports.commands.code =
 function code(s) {
 
-  p.p_whitespace(s);
-  let language = /\w/.test(s.text[s.i]) ? p.p_word(s).toString() : null;
-  p.p_whitespace(s);
+  const params = ppar.p_kvParams(s, {
+    lang: ppar.p_arg_optionally(ppar.p_arg_string, { default: 'auto' }),
+  });
+  const language = params.lang;
 
   let [body, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   const codeIsBlock = kind === 'block';
 
   const highlighted =
-    language !== null
+    language !== 'auto'
         ? hljs.highlight(body, { language })
-    : language === null && !codeIsBlock
+    : language === 'auto' && !codeIsBlock
         ? hljs.highlight(body, { language: 'plaintext' })
-    : language === null && codeIsBlock
+    : language === 'auto' && codeIsBlock
         ? hljs.highlightAuto(body)
     : impossible();
 

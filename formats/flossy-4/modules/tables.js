@@ -1,6 +1,7 @@
 
 const repm = require('../repm.js');
 const p = require('../parse.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.prelude = '';
@@ -8,42 +9,11 @@ exports.prelude = '';
 // tables
 exports.commands.table = function(s) {
 
-  const xi0 = s.i;
-
-  p.p_whitespace(s);
-  const opts = {};
-  while (true) {
-    p.p_whitespace(s);
-    if (!/[\w-]/.test(s.text[s.i])) break;
-
-    const key = p.p_word(s);
-    p.p_take(s, '=');
-    const val = p.p_word(s);
-    opts[key] = val;
-  }
-
-  let doHorizontalHeaders = false;
-  let doVerticalHeaders = false;
-  let doCentering = false;
-  for (const [key, val] of Object.entries(opts)) {
-    switch (key) {
-      case 'headers':
-        if (!'h v both no'.split(' ').includes(val))
-          throw p.mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'headers'`);
-        doHorizontalHeaders = 'h both'.split(' ').includes(val);
-        doVerticalHeaders   = 'v both'.split(' ').includes(val);
-        break;
-
-      case 'center':
-        doCentering = { 'yes': true, 'no': false }[val];
-        if (doCentering === undefined)
-          throw p.mkError(s.text, [xi0, s.i], `Invalid value '${val}' for option 'center'`);
-        break;
-
-      default:
-        throw p.mkError(s.text, [xi0, s.i], `Unknown table option '${key}'`);
-    }
-  }
+  const params = ppar.p_kvParams(s, {
+    vheaders: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+    hheaders: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+    centering: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+  });
 
   const rows = [];
   while (true) {
@@ -72,15 +42,15 @@ exports.commands.table = function(s) {
   });
 
   if (rows.length === 0)
-    throw p.mkError(s.text, [xi0, s.i], "Empty table")
+    throw p.mkError(s.text, s.i, "Empty table")
 
   let result = repm.mkSeq();
-  const classes = [].concat(doHorizontalHeaders ? ['headers-horiz'] : [], doVerticalHeaders ? ['headers-vert'] : []);
+  const classes = [].concat(params.hheaders ? ['headers-horiz'] : [], params.vheaders ? ['headers-vert'] : []);
   result = result.and(`<table class="${classes.join(' ')}">`);
   rows.forEach((row, rowI) => {
     result = result.and('<tr>');
     row.forEach((cell, cellI) => {
-      const isHeader = doHorizontalHeaders && rowI === 0 || doVerticalHeaders && cellI === 0;
+      const isHeader = params.hheaders && rowI === 0 || params.vheaders && cellI === 0;
       const tag = isHeader ? 'th' : 'td';
       result = result.and(`<${tag}>`, cell, `</${tag}>`);
     });
@@ -88,7 +58,7 @@ exports.commands.table = function(s) {
   });
   result = result.and('</table>');
 
-  if (doCentering)
+  if (params.centering)
     result = repm.mkSeq('<center>', result, '</center>');
 
   return result;

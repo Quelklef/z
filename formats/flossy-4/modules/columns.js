@@ -1,17 +1,18 @@
 const repm = require('../repm.js');
 const p = require('../parse.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.prelude = '';
 
 exports.commands.columns = function(s) {
 
-  p.p_whitespace(s);
-  const arity = p.p_integer(s);
-  p.p_whitespace(s);
+  const params = ppar.p_kvParams(s, {
+    count: ppar.p_arg_integer,
+  });
 
   const cols = [];
-  for (let _ = 0; _ < arity; _++) {
+  for (let _ = 0; _ < params.count; _++) {
     p.p_spaces(s);
     const [inner, _] = p.p_enclosed(s, p.p_toplevel_markup);
     cols.push(inner);

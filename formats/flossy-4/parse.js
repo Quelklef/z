@@ -290,6 +290,21 @@ function p_takeTo(s, str) {
   return r;
 }
 
+const p_takeWhileRegexNonempty =
+exports.p_takeWhileRegexNonempty =
+function p_twrn(s, regex, errMsg) {
+  const i0 = s.i;
+  while (
+    s.i < s.text.length &&
+    regex.test(s.text[s.i])
+  )
+    s.i++;
+  if (s.i === i0)
+    throw mkError(s.text, i0, errMsg);
+  return s.text.slice(i0, s.i);
+}
+
+// WANT: replace with a call to takeWhileRegexNonempty
 const p_word =
 exports.p_word =
 function p_word(s) {
@@ -1022,6 +1037,8 @@ function mkErrorMsg(text, loc, err) {
 
 
 
+const sample_s =
+exports.sample_s =
 function sample_s(s, linec = 4) {
   return sample(s.text, s.i, linec);
 

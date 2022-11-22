@@ -149,6 +149,7 @@ class H {
   get isSelfClosing() {
     return (
       'area base br col embed hr img input link meta param source track wbt command keygen menuitem'
+      .split(' ')
       .includes(this.tag)
     );
   }

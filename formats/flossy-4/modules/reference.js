@@ -1,7 +1,7 @@
 
 const repm = require('../repm.js');
 const p = require('../parse.js');
-const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -13,10 +13,11 @@ exports.prelude = '';
 // -------------------------------------------------------------------------- //
 
 exports.commands.ref = function(s) {
-  p.p_spaces(s);
-  const toNoteId = p.p_backtracking(s, p.p_word);
-  if (!toNoteId) throw p.mkError(s.text, s.i, "Missing note ID");
-  p.p_spaces(s);
+  const params = ppar.p_kvParams(s, {
+    to: ppar.p_arg_string,
+  });
+
+  const toNoteId = params.to;
 
   const body = p.local(s, s => {
     s.doImplicitReferences = false;

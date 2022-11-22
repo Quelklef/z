@@ -44,6 +44,7 @@ const sigilMapping = {
 
   '--': '&mdash;',
 
+  // WANT: change these
   '{sec}': '§',
   '{para}': '¶',
 };

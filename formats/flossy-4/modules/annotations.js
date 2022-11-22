@@ -1,6 +1,7 @@
 
 const repm = require('../repm.js');
 const p = require('../parse.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.nonlocalStateKeys = [ 'adefNameQueue', 'adefNameIndex' ];
@@ -9,11 +10,57 @@ exports.stateInit = {
   adefNameIndex: 1,
 };
 
+
+/*
+
+Annotation definition
+
+\adef name=adef-name [text]
+\adef [text]
+
+*/
+exports.commands.adef = function(s) {
+
+  const params = ppar.p_kvParams(s, {
+    name: ppar.p_arg_optionally(ppar.p_arg_string),
+  });
+
+  let name = params.name;
+  if (!name) {
+    if (s.adefNameQueue.length === 0)
+      throw p.mkError(s.text, s.i, "Unpaired \\adef");
+    name = s.adefNameQueue[0];
+    s.adefNameQueue.splice(0, 1);
+  }
+
+  const body = p.p_block(s, p.p_toplevel_markup);
+
+  return (
+    repm.h('div')
+      .a('class', 'annotation-definition')
+      .a('data-name', name)
+      .c(body)
+  );
+}
+
+/*
+
+Annotation reference
+
+\aref to=adef-name [text]
+\aref [text]
+\aref to=adef-name ;
+\aref ;
+
+*/
 exports.commands.aref = function(s) {
   p.p_spaces(s);
 
-  let adefName;
-  adefName = p.p_backtracking(s, p.p_word);
+  const params = ppar.p_kvParams(s, {
+    to: ppar.p_arg_optionally(ppar.p_arg_string),
+  });
+
+  let adefName = params.to;
   if (!adefName) {
     adefName = p.gensym(s, 'adef');
     s.adefNameQueue.push(adefName);
@@ -35,30 +82,6 @@ exports.commands.aref = function(s) {
       .a('data-name', arefName)
       .a('data-refers-to', adefName)
       .a('class', 'annotation-reference')
-      .c(body)
-  );
-}
-
-// Annotation definition
-exports.commands.adef = function(s) {
-
-  p.p_spaces(s);
-
-  let name;
-  name = p.p_backtracking(s, p.p_word);
-  if (!name) {
-    if (s.adefNameQueue.length === 0)
-      throw p.mkError(s.text, s.i, "Unpaired \\adef");
-    name = s.adefNameQueue[0];
-    s.adefNameQueue.splice(0, 1);
-  }
-
-  const body = p.p_block(s, p.p_toplevel_markup);
-
-  return (
-    repm.h('div')
-      .a('class', 'annotation-definition')
-      .a('data-name', name)
       .c(body)
   );
 }

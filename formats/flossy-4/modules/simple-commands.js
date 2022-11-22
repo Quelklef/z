@@ -1,7 +1,7 @@
 
 const repm = require('../repm.js');
 const p = require('../parse.js');
-const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
+const ppar = require('../parse-params.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -23,11 +23,9 @@ exports.commands.rem = function(s) {
 
 // External (hyper-)reference
 exports.commands.href = function(s) {
-  p.p_spaces(s)
-  p.p_take(s, '<');
-  const href = p.p_takeTo(s, '>');
-  p.p_take(s, '>');
-  p.p_spaces(s)
+  const params = ppar.p_kvParams(s, {
+    uri: ppar.p_arg_string,
+  });
 
   const body = p.local(s, s => {
     // Nested <a> tags are forbidden in HTML
@@ -35,5 +33,11 @@ exports.commands.href = function(s) {
     return p.p_inline(s, p.p_toplevel_markup);
   });
 
-  return repm.mkSeq(`<a href="${href}" class="ext-reference" target="_blank">`, body, "</a>");
+  return (
+    repm.h('a')
+      .a('href', params.uri)
+      .a('target', '_blank')
+      .a('class', 'ext-reference')
+      .c(body)
+  );
 }

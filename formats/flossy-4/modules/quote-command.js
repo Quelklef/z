@@ -1,7 +1,7 @@
 
 const repm = require('../repm.js');
+const ppar = require('../parse-params.js');
 const p = require('../parse.js');
-const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 
 exports.commands = {};
 exports.parsers = [];
@@ -9,9 +9,28 @@ exports.prelude = '';
 
 
 exports.commands.quote = function(s) {
-  p.p_spaces(s);
+  const params = ppar.p_kvParams(s, {
+    attrib: ppar.p_arg_optionally(s => p.p_inline(s, p.p_toplevel_markup)),
+  });
+
   const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
-  return repm.mkSeq('<blockquote>', body, '</blockquote>');
+  return (
+    repm.h('blockquote')
+      .c(body)
+      .c(
+        params.attrib
+        ? repm.h('span')
+            .c('&ndash; ')
+            .c(
+              repm.h('span')
+                .s('display', 'inline-block')
+                .s('font-size', '.8em')
+                .s('margin-top', '1em')
+                .c(params.attrib)
+            )
+        : ''
+      )
+  );
 }
 
 exports.prelude += String.raw`

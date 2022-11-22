@@ -2,11 +2,11 @@ const libKatex = require('katex');
 const child_process = require('child_process');
 const plib = require('path');
 
-
 const repm = require('../repm.js');
-const { lazyAss, withTempDir, hash } = require('../../../util.js');
+const { withTempDir } = require('../../../util.js');
 const fss = require('../../../fss.js');
 const p = require('../parse.js');
+const ppar = require('../parse-params.js');
 
 const backtick = '`';
 const baseKatexPrelude = String.raw`
@@ -83,39 +83,30 @@ function p_katex(s) {
 
 // KaTeX
 exports.commands.katex = function(s) {
-  p.p_spaces(s);
 
-  const append = s.text.startsWith('pre', s.i);
-  if (append) {
-    p.p_take(s, 'pre');
-    p.p_spaces(s);
-  }
-
-  const align = !!p.p_backtracking(s, s => {
-    p.p_take(s, 'align');
-    p.p_spaces(s);
-    return true;
-  });
-
-  const gather = !!p.p_backtracking(s, s => {
-    p.p_take(s, 'gather');
-    p.p_spaces(s);
-    return true;
+  const params = ppar.p_kvParams(s, {
+    pre: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+    align: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+    gather: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
   });
 
   const xi0 = s.i;
   let [katex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
   const xif = s.i;
 
-  if (append) {
-    s.katexPrefix = s.katexPrefix.toString() + katex;
+  if (params.pre) {
+    s.katexPrefix = s.katexPrefix + katex;
     return '';
   }
 
-  if (align)
+  if (params.align) {
     katex = `\\begin{align*} ${katex} \\end{align*}`;
-  if (gather)
+  }
+
+  if (params.gather) {
     katex = `\\begin{gather*} ${katex} \\end{gather*}`;
+  }
+
   katex = s.katexPrefix + '' + katex;
 
   const displayMode = { block: true, inline: false }[kind];
@@ -129,18 +120,15 @@ exports.commands.katex = function(s) {
 
 // TeX, TikZ
 exports.commands.tikz = function(s) {
-  p.p_spaces(s);
 
-  const append = s.text.startsWith('pre', s.i);
-  if (append) {
-    p.p_take(s, 'pre');
-    p.p_spaces(s);
-  }
+  const params = ppar.p_kvParams(s, {
+    pre: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
+  });
 
   let tex, kind;
   [tex, kind] = p.p_enclosed(s, p.p_toplevel_verbatim);
 
-  if (append) {
+  if (params.pre) {
     s.texPrefix = s.texPrefix.toString() + tex;
     return '';
   }
@@ -244,30 +232,30 @@ class Tex {
     let tex = this.tex;
     if (this.isTikz) {
       tex = String.raw`
-\begin{tikzpicture}
-${tex}
-\end{tikzpicture}
-`;
+        \begin{tikzpicture}
+        ${tex}
+        \end{tikzpicture}
+      `;
     }
 
     tex = String.raw`
-\documentclass{standalone}
+      \documentclass{standalone}
 
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{tikz}
-\usepackage{lmodern}
+      \usepackage{amsmath}
+      \usepackage{amssymb}
+      \usepackage{tikz}
+      \usepackage{lmodern}
 
-\usepackage[T1]{fontenc}
+      \usepackage[T1]{fontenc}
 
-\begin{document}
+      \begin{document}
 
-${this.prefix}
+      ${this.prefix}
 
-${tex}
+      ${tex}
 
-\end{document}
-`;
+      \end{document}
+    `;
 
     let html = env.cache.at('note-parts', ['tex', tex], () => {
       return fss.withTempDir(tmp => {
