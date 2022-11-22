@@ -648,7 +648,7 @@ function(s) {
   const [line, _] = p_enclosed(s, p_toplevel_markup);
   p_spaces(s);
   const body = p_block(s, p_toplevel_markup);
-  return new Indented({ indent: 2, body: new Dropdown({ line, body, id: gensym(s, 'dropdown') }) });
+  return mkIndented({ indent: 2, body: mkDropdown({ line, body, id: gensym(s, 'dropdown') }) });
 }
 
 
@@ -710,8 +710,8 @@ function p_indent(s) {
       return p_toplevel_markup(s);
     });
 
-    body = new Bulleted({ body, counterCoord: null });
-    return new Indented({ indent: dIndent, body });
+    body = mkBulleted({ body, counterCoord: null });
+    return mkIndented({ indent: dIndent, body });
   }
 
   else if (style === '>') {
@@ -727,8 +727,8 @@ function p_indent(s) {
       return p_toplevel_markup(s);
     });
 
-    body = new Dropdown({ line, body, id: gensym(s, 'dropdown') });
-    return new Indented({ indent: dIndent, body });
+    body = mkDropdown({ line, body, id: gensym(s, 'dropdown') });
+    return mkIndented({ indent: dIndent, body });
   }
 
   else if (style === '#') {
@@ -740,8 +740,8 @@ function p_indent(s) {
 
     s.counterCoord = { depth: s.counterCoord.depth, index: s.counterCoord.index + 1 };
         // ^ hmmm.. nontrivial use of local mutation
-    body = new Bulleted({ body, counterCoord: s.counterCoord });
-    return new Indented({ indent: dIndent, body });
+    body = mkBulleted({ body, counterCoord: s.counterCoord });
+    return mkIndented({ indent: dIndent, body });
   }
 
   else {
@@ -750,8 +750,60 @@ function p_indent(s) {
       s.counterCoord = { depth: 0, index: 0 };
       return p_toplevel_markup(s);
     });
-    return new Indented({ indent: dIndent, body });
+    return mkIndented({ indent: dIndent, body });
   }
+}
+
+
+
+const mkIndented =
+exports.mkIndented =
+function({ indent, body }) {
+  return (
+    repm.h('div')
+      .s('margin-left', indent + 'ch')
+      .c(body)
+  );
+}
+
+
+const mkBulleted =
+exports.mkBulleted =
+function({ body, counterCoord }) {
+
+  const styles = [ 'decimal', 'lower-roman', 'lower-latin', ];
+  const listStyle = (
+    counterCoord
+      ? styles[counterCoord.depth % styles.length]
+      : 'disc'
+  );
+
+  return (
+    repm.h('div')
+      .s('display', 'list-item')
+      .s('list-style-type', listStyle)
+      .s('counter-set', 'list-item ' + (counterCoord?.index ?? 0))
+      .c(body)
+  );
+
+}
+
+const mkDropdown =
+exports.mkDropdown =
+function({ line, body, id }) {
+  return (
+    repm.h('div')
+      .a('class', 'dropdown')
+      .a('id', id)
+      .c(
+        repm.h('div')
+          .a('class', 'dropdown-line')
+          .c(line))
+      .c(
+        repm.h('div')
+          .a('class', 'dropdown-body')
+            .c(body))
+  );
 }
 
 baseModule.prelude += String.raw`
@@ -836,91 +888,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
 `;
 
-const Indented =
-exports.Indented =
-class Indented {
-
-  constructor({ indent, body }) {
-    this.indent = indent;
-    this.body = body;
-  }
-
-  toHtml(env) {
-    return `<div style="margin-left: ${this.indent}ch">` + this.body.toHtml(env) + '</div>';
-  }
-
-  get children() {
-    return [this.body];
-  }
-
-}
-
-
-const Bulleted =
-exports.Bulleted =
-class Bulleted {
-
-  constructor({ body, counterCoord }) {
-    this.body = body;
-    this.counterCoord = counterCoord;
-  }
-
-  toHtml(env) {
-    // TODO: numbers are wrong (make counter inc by parent, I think?)
-
-    const styles = [ 'decimal', 'lower-roman', 'lower-latin', ];
-    const listStyle = (
-      this.counterCoord
-        ? styles[this.counterCoord.depth % styles.length]
-        : 'disc'
-    );
-    return (
-      `<div style="
-          display: list-item;
-          list-style-type: ${listStyle};
-          counter-set: list-item ${this.counterCoord?.index ?? 0};
-        "
-        data-debug-counterCoord="${JSON.stringify(this.counterCoord).replace(/"/g,"'")}"
-       >`
-      + this.body.toHtml(env)
-      + "</div>"
-    );
-  }
-
-  get children() {
-    return [this.body];
-  }
-
-}
-
-const Dropdown =
-exports.Dropdown =
-class Dropdown {
-
-  constructor({ line, body, id }) {
-    this.line = line;
-    this.body = body;
-    this.id = id;
-  }
-
-  toHtml(env) {
-    return (
-      `<div class="dropdown" id="${this.id}">`
-      + '<div class="dropdown-line">'
-      + this.line.toHtml(env)
-      + '</div>'
-      + '<div class="dropdown-body">'
-      + this.body.toHtml(env)
-      + '</div>'
-      + '</div>'
-    );
-  }
-
-  get children() {
-    return [this.body, this.line];
-  }
-
-}
 
 
 
