@@ -3,7 +3,6 @@ const plib = require('path');
 const { closureStr } = require('../../squire.js');
 const { lazyAss, hash } = require('../../util.js');
 const { indexOf } = require('./util.js');
-const fss = require('../../fss.js');
 const repm = require('./repm.js');
 const p = require('./parse.js');
 

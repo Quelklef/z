@@ -1,23 +1,18 @@
 const plib = require('path');
 const child_process = require('child_process');
 
-
-const { lazyAss, Cats, withTempDir, hash } = require('../../util.js');
-const fss = require('../../fss.js');
-const rand = require('../../rand.js');
+const { lazyAss, Cats, hash } = require('../../util.js');
 
 exports.default =
 function * (floc, source, graph, env) {
   yield * parseTranscription(floc, source, graph, env);
 }
 
-const scriptSrc = fss.read(__filename).toString();
+const scriptSrc = require('fs').readFileSync(__filename).toString();
 
 function * parseTranscription(floc, source, graph, env) {
 
   const { emitSensitiveInfo } = env.opts;
-
-  rand.seed(0);  // make deterministic to prevent misleading diffs
 
   const fname = plib.basename(floc, plib.extname(floc));
   const journalNumber = parseInt(fname.split('-')[1], 10);
@@ -369,7 +364,7 @@ function parseBody(body, env) {
         result.add('\n');
         i++;
       } else {
-        const length = rand.random() < .3 ? 0 : (rand.random() < .5 ? 1 : 2);
+        const length = env.random() < .3 ? 0 : (env.random() < .5 ? 1 : 2);
         for (let _ = 0; _ < length; _++) {
           result.add('&#8203;<span style="background: black; color: black">X</span>&#8203;');
         }

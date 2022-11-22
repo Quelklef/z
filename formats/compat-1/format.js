@@ -11,7 +11,7 @@ const katex = require('katex');
 
 
 const { lazyAss, Cats, hash } = require('../../util.js');
-const fss = require('../../fss.js');
+const fss = require('../../aff/fss.js');  // FIXME: affordance import (bad!)
 
 exports.default =
 function * (floc, source, graph, env) {

@@ -2,8 +2,6 @@ const plib = require('path');
 const child_process = require('child_process');
 const crypto = require('crypto');
 
-const fss = require('./fss.js');
-
 
 // WANT: I did a benchmark and it seems that Cats is slower
 //       than native string concat (on FF, at least)

@@ -2,9 +2,10 @@ const { katex } = require('katex');
 const plib = require('path');
 
 const { lazyAss, Cats, iife } = require('./util.js');
-const { Cache } = require('./cache.js');
-const logging = require('./log.js');
-const fss = require('./fss.js');
+const fss = require('./aff/fss.js');
+const randm = require('./aff/rand.js');
+const { mkCache } = require('./aff/cache.js');
+const logging = require('./aff/log.js');
 
 const fileSrc = fss.read(__filename).toString();
 
@@ -29,9 +30,14 @@ function main({
   fss.mkdir(destPath);
   const issuesLogged = [];  // persists warnings and errors
   const aff = {
+
     opts: { emitSensitiveInfo },
 
-    cache: new Cache(plib.resolve(destPath, '.cache')),
+    fss,
+
+    random: randm.mkRand(),
+
+    cache: mkCache({ fss }, plib.resolve(destPath, '.cache')),
 
     issuesLogged,
     logHandler: (
@@ -43,6 +49,7 @@ function main({
     get log() {
       return new logging.Logger(this.logHandler);
     },
+
   };
 
   // Holds transient (ie, not cached) information

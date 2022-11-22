@@ -3,8 +3,6 @@ const child_process = require('child_process');
 const plib = require('path');
 
 const repm = require('../repm.js');
-const { withTempDir } = require('../../../util.js');
-const fss = require('../../../fss.js');
 const p = require('../parse.js');
 const ppar = require('../parse-params.js');
 
@@ -258,11 +256,11 @@ class Tex {
     `;
 
     let html = env.cache.at('note-parts', ['tex', tex], () => {
-      return fss.withTempDir(tmp => {
+      return env.fss.withTempDir(tmp => {
 
         env.log.info(`Rendering LaTeX [${tex.length}]`);
 
-        fss.write(plib.resolve(tmp, 'it.tex'), tex);
+        env.fss.write(plib.resolve(tmp, 'it.tex'), tex);
 
         const cmd = String.raw`
           cd ${tmp} \

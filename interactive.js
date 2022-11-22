@@ -6,8 +6,8 @@ const StaticServer = require('static-server');
 const WebSocket = require('ws');
 const child_process = require('child_process');
 
-const { Cache } = require('./cache.js');
-const fss = require('./fss.js');
+const { mkCache } = require('./aff/cache.js');
+const fss = require('./aff/fss.js');
 
 exports.main =
 function main({
@@ -18,7 +18,7 @@ function main({
   mainArgs,
 }) {
 
-  const cache = new Cache(plib.resolve(destPath, '.cache'));
+  const cache = mkCache({ fss }, plib.resolve(destPath, '.cache'));
 
 
   const server = new StaticServer({

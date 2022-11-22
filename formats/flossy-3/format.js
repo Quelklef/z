@@ -3,7 +3,7 @@ const plib = require('path');
 const { squire, closureStr } = require('../../squire.js');
 const { lazyAss, Cats, hash } = require('../../util.js');
 const { indexOf } = require('./util.js');
-const fss = require('../../fss.js');
+const fss = require('../../aff/fss.js');  // FIXME: direct affordance import (bad!)
 const repm = require('./repm.js');
 const p = require('./parse.js');
 

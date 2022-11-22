@@ -3,7 +3,7 @@ const child_process = require('child_process');
 
 
 const { lazyAss, Cats, withTempDir, hash } = require('../../util.js');
-const fss = require('../../fss.js');
+const fss = require('../../aff/fss.js');  // FIXME: direct aff import (bad!)
 
 const Rep = require('./rep.js');
 const { Trie, indexOf, impossible, cloneIterator } = require('./util.js');

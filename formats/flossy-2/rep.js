@@ -6,7 +6,7 @@ const libKatex = require('katex');
 
 
 const { Cats, withTempDir } = require('../../util.js');
-const fss = require('../../fss.js');
+const fss = require('../../aff/fss.js');  // FIXME: direct aff import (bad!)
 
 const { mkError } = require('./parsing.js');
 

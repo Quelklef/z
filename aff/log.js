@@ -1,10 +1,7 @@
 const plib = require('path');
-
 const clc = require('cli-color');
 
-
-const { hash, writeFile } = require('./util.js');
-const fss = require('./fss.js');
+const { hash, writeFile } = require('../util.js');
 
 
 // data Severity = Info | Success | Warn | Error | Debug
