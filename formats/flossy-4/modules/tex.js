@@ -52,6 +52,7 @@ const baseKatexPrelude = String.raw`
 
 exports.commands = {};
 exports.parsers = [];
+exports.prelude = '';
 exports.stateInit = {
   // tex-related state
   katexPrefix: baseKatexPrelude,
@@ -71,7 +72,7 @@ function p_katex(s) {
   p.p_take(s, '$');
   const xif = s.i;
 
-  return new Katex({
+  return mkKatex({
     katex: s.katexPrefix + '' + body,
     displayMode: false,
     sourceText: s.text,
@@ -108,7 +109,7 @@ exports.commands.katex = function(s) {
   katex = s.katexPrefix + '' + katex;
 
   const displayMode = { block: true, inline: false }[kind];
-  return new Katex({
+  return mkKatex({
     katex,
     displayMode,
     sourceText: s.text,
@@ -116,7 +117,7 @@ exports.commands.katex = function(s) {
   });
 }
 
-// TeX, TikZ
+// TikZ
 exports.commands.tikz = function(s) {
 
   const params = ppar.p_kvParams(s, {
@@ -131,9 +132,8 @@ exports.commands.tikz = function(s) {
     return '';
   }
 
-  return new Tex({
+  return mkTikZ({
     tex,
-    isTikz: true,
     prefix: s.texPrefix,
     isBlock: kind === 'block'
   });
@@ -156,13 +156,16 @@ exports.commands['tikz-gen'] = function(s) {
     })();
   `);
 
-  return new Tex({ tex, isTikz: true, isBlock: true });
+  return mkTikZ({ tex, isBlock: true });
 }
 
 
-exports.prelude = String.raw`
+exports.prelude += String.raw`
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css" />
 
 <style>
+
 .katex-display {
   margin: 0 !important;
 }
@@ -171,6 +174,98 @@ exports.prelude = String.raw`
    Helps in cases where $\text{word}$ is used */
 .katex { background: rgba(0, 0, 0, 0.035);  /* effective, but ugly */ }
 .katex-display > .katex { background: none; }
+
+</style>
+
+`;
+
+function mkKatex({ katex, displayMode, sourceText, sourceRange }) {
+
+  return { children: [], toHtml } ;
+
+  function toHtml(aff) {
+    try {
+      return libKatex.renderToString(katex, { displayMode });
+    } catch (exc) {
+      let errMsg = exc.toString().split('\n')[0];
+      throw p.mkError(sourceText, sourceRange, errMsg);
+    }
+  }
+
+}
+
+
+function mkTikZ({ prefix, tex, isBlock }) {
+
+  return { children: [], toHtml };
+
+  function toHtml(aff) {
+
+    tex = String.raw`
+      \documentclass[dvisvgm]{standalone}
+
+      \usepackage{amsmath}
+      \usepackage{amssymb}
+      \usepackage{tikz}
+      \usepackage{lmodern}
+
+      \def\pgfsysdriver{pgfsys-tex4ht.def}
+
+      \usepackage[T1]{fontenc}
+
+      \begin{document}
+
+      ${prefix}
+
+      \begin{tikzpicture}
+      ${tex}
+      \end{tikzpicture}
+
+      \end{document}
+    `;
+
+    let html = aff.cache.at('note-parts', ['tex', tex], () =>
+      aff.fss.withTempDir(tmp => {
+
+        aff.log.info(`Rendering LaTeX`);
+
+        aff.fss.write(plib.resolve(tmp, 'it.tex'), tex);
+
+        // NOTE: the --no-merge option to dvisvgm prevents Firefox from
+        // choking on the resultant SVG.  (2022-11-21)
+        const cmd = String.raw`
+          cd ${tmp} \
+          && latex it.tex 1>&2 \
+          && dvisvgm it.dvi --no-merge \
+          && { cat *.svg | tail -n+3; }
+        `;
+
+        let result;
+        try {
+          result = child_process.execSync(cmd).toString();
+        } catch (exc) {
+          const errMsg = exc.toString();
+          aff.log.error(errMsg.toString());  // meh
+          throw 'LaTeX render failed; see above!';  // TODO
+        }
+
+        return result;
+
+      })
+    );
+
+    if (isBlock)
+      html = '<div class="tikz">' + html + '</div>';
+
+    return html;
+
+  }
+
+}
+
+exports.prelude += String.raw`
+
+<style>
 
 .tikz {
   text-align: center;
@@ -181,122 +276,7 @@ exports.prelude = String.raw`
 .tikz > svg {
   max-width: 100%;
 }
+
 </style>
-
-`;
-
-const Katex =
-exports.Katex =
-class Katex {
-
-  constructor({ katex, displayMode, sourceText, sourceRange }) {
-    this.katex = katex;
-    this.displayMode = displayMode;
-    this.sourceText = sourceText;
-    this.sourceRange = sourceRange;
-  }
-
-  toHtml(env) {
-    return env.cache.at('note-parts', ['katex', this.katex, this.displayMode], () => {
-      try {
-        return libKatex.renderToString(this.katex, { displayMode: this.displayMode });
-      } catch (e) {
-        let text = e.toString();
-        text = text.split('\n')[0];
-        throw p.mkError(this.sourceText, this.sourceRange, text);
-      }
-    });
-  }
-
-  get children() {
-    return [];
-  }
-
-}
-
-
-const Tex =
-exports.Tex =
-class Tex {
-
-  constructor({ prefix, tex, isTikz, isBlock }) {
-    this.prefix = prefix;
-    this.tex = tex;
-    this.isTikz = isTikz;
-    this.isBlock = isBlock;
-  }
-
-  toHtml(env) {
-    let tex = this.tex;
-    if (this.isTikz) {
-      tex = String.raw`
-        \begin{tikzpicture}
-        ${tex}
-        \end{tikzpicture}
-      `;
-    }
-
-    tex = String.raw`
-      \documentclass{standalone}
-
-      \usepackage{amsmath}
-      \usepackage{amssymb}
-      \usepackage{tikz}
-      \usepackage{lmodern}
-
-      \usepackage[T1]{fontenc}
-
-      \begin{document}
-
-      ${this.prefix}
-
-      ${tex}
-
-      \end{document}
-    `;
-
-    let html = env.cache.at('note-parts', ['tex', tex], () => {
-      return env.fss.withTempDir(tmp => {
-
-        env.log.info(`Rendering LaTeX [${tex.length}]`);
-
-        env.fss.write(plib.resolve(tmp, 'it.tex'), tex);
-
-        const cmd = String.raw`
-          cd ${tmp} \
-          && latex it.tex 1>&2 \
-          && dvisvgm it.dvi \
-          && { cat it-1.svg | tail -n+3; }
-        `;
-
-        let result;
-        try {
-          result = child_process.execSync(cmd).toString();
-        } catch (err) {
-          env.log.error(err.stderr.toString());  // meh
-          throw 'LaTeX render failed; see above!';  // TODO
-        }
-
-        env.log.info(`Rendering LaTeX [done] [${tex.length}]`);
-        return result;
-
-      });
-    });
-
-    if (this.isBlock)
-      html = '<div class="tikz">' + html + '</div>';
-
-    return html;
-  }
-
-  get children() {
-    return [];
-  }
-
-}
-
-exports.prelude += String.raw`
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.15.1/dist/katex.min.css">
 
 `;

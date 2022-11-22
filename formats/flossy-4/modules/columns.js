@@ -42,6 +42,6 @@ exports.prelude += String.raw`
   flex: 1;
 }
 
-</stlye>
+</style>
 
 `;
