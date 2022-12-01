@@ -13,21 +13,27 @@ exports.prelude = '';
 // \title
 exports.commands.title =
 function(s) {
-  p.p_whitespace(s);
-  const title = p.p_inline(s, p.p_toplevel_markup);
-  p.p_whitespace(s);
-  const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
-  return mkSec({ title, body, className: 'title' });
+  return titleOrSection(s, 'title');
 }
 
 // \sec
 exports.commands.sec =
 function(s) {
+  return titleOrSection(s, 'section-header');
+}
+
+function titleOrSection(s, className) {
   p.p_whitespace(s);
-  const title = p.p_inline(s, p.p_toplevel_markup);
-  p.p_whitespace(s);
-  const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
-  return mkSec({ title, body, className: 'section-header' });
+
+  let title;
+  if (title = p.p_block(s, p.p_toplevel_markup)) {
+    return mkSec({ title, body: '', className });
+  } else {
+    title = p.p_inline(s, p.p_toplevel_markup);
+    p.p_whitespace(s);
+    const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
+    return mkSec({ title, body, className });
+  }
 }
 
 // \table-of-contents

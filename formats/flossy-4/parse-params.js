@@ -97,6 +97,7 @@ function(parser, opts) {
 exports.p_arg_bool =
 function(s) {
 
+  const i0 = s.i;
   const word = p.p_takeWhileRegexNonempty(s, /[\w-]/, 'Expected boolean parameter');
 
   const names = {
