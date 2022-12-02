@@ -542,7 +542,7 @@ function p_toplevel_impl(s, parsers) {
     // Try each parser
     for (const parser of parsers) {
       const i0 = s.i;
-      result = result.and(parser(s));
+      result.unsafeInplaceAppend(parser(s));
       if (s.i !== i0)
         continue parsing;
     }
@@ -557,7 +557,7 @@ function p_toplevel_impl(s, parsers) {
       throw mkError(s.text, s.i, "Unexpected EOF!");
 
     // Default case: advance by one character
-    result = result.and(s.text[s.i]);
+    result.unsafeInplaceAppend(s.text[s.i]);
     s.i++;
   }
 

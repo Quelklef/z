@@ -77,6 +77,11 @@ class Seq {
   and(...newParts) {
     return new Seq([].concat(this.parts, newParts))
   }
+
+  // unsafe because in-place
+  unsafeInplaceAppend(part) {
+    this.parts.push(part);
+  }
 }
 
 
