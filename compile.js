@@ -630,7 +630,7 @@ iframe {
 <script>
 document.addEventListener('DOMContentLoaded', () => {
   const $iframe = document.getElementsByTagName('iframe')[0];
-  iFrameResize({ log: false }, $iframe);
+  iFrameResize({ log: false, inPageLinks: true }, $iframe);
 `);
 
   if (websocketPort !== null) {

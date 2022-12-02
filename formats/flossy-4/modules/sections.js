@@ -1,6 +1,5 @@
 const hljs = require('highlight.js');
 
-
 const repm = require('../repm.js');
 const p = require('../parse.js');
 const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
@@ -8,6 +7,11 @@ const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 exports.commands = {};
 exports.parsers = [];
 exports.prelude = '';
+exports.stateInit = {
+  sectionPath: [1],
+  showSectionLabels: false,
+};
+exports.nonlocalStateKeys = [ 'sectionPath' ];
 
 
 // \title
@@ -25,15 +29,34 @@ function(s) {
 function titleOrSection(s, className) {
   p.p_whitespace(s);
 
+  const path = s.sectionPath;
+
   let title;
-  if (title = p.p_block(s, p.p_toplevel_markup)) {
-    return mkSec({ title, body: '', className });
+  let result;
+  if (title = p.p_backtracking(s, s => p.p_block(s, p.p_toplevel_markup))) {
+    result = mkSec({ path, title, body: '', className, showLabels: s.showSectionLabels });
   } else {
     title = p.p_inline(s, p.p_toplevel_markup);
     p.p_whitespace(s);
-    const [body, _] = p.p_enclosed(s, p.p_toplevel_markup);
-    return mkSec({ title, body, className });
+
+    // Descend in path
+    s.sectionPath = [...s.sectionPath, 1];
+
+    const [body, _] =  p.p_enclosed(s, p.p_toplevel_markup);
+
+    // Ascend in path
+    s.sectionPath = s.sectionPath.slice(0, -1);
+
+    result = mkSec({ path, title, body, className, showLabels: s.showSectionLabels });
   }
+
+  // Increment last index
+  s.sectionPath = [
+    ...s.sectionPath.slice(0, -1),
+    s.sectionPath[s.sectionPath.length - 1] + 1
+  ];
+
+  return result;
 }
 
 // \table-of-contents
@@ -45,21 +68,29 @@ function(s) {
 
 
 const isSec = Symbol('isSec');
-function mkSec({ title, body, className }) {
+function mkSec({ path, title, body, className, showLabels }) {
   return {
 
     [isSec]: true,
+    _path: path,
     _title: title,
-    _body: body,
-    _secId: null,
+    _secId: 'sec-' + path.join('-'),
 
     children: [title, body],
     toHtml(aff) {
       return repm.mkSeq(
         repm.h('div')
           .a('class', className)
-          .a('id', 'sec-' + this._secId)
-          .c(title),
+          .a('id', this._secId)
+          .c(
+            repm.h('span')
+            .c(title)
+            .c(
+              showLabels
+                ? repm.h('span').a('class', 'section-path').c(path.join('.'))
+                : ''
+            )
+          ),
         body,
       ).toHtml(aff);
     },
@@ -88,66 +119,64 @@ function mkToc() {
 exports.renderToc =
 function(rep) {
 
-  const secsTree = mkTree(rep);
+  // Build tree
+  let tree = {};
+  repm.traverse(rep, node => {
+    if (node[isSec]) {
+      let root = tree;
+      for (const idx of node._path) {
+        if (!(idx in root)) root[idx] = {};
+        root = root[idx];
+      }
+      root.sec = node;
+    }
+  });
 
+  // Render tree
+  const rendered = renderTree(tree);
+  function renderTree(tree) {
+    const children = [];
+    for (const k in tree) {
+      if (!Number.isFinite(+k)) continue;
+      const subtree = tree[k];
+      children.push(
+        repm.h('div')
+          .s('margin-left', '2.5ch')
+          .c(renderTree(subtree))
+      );
+    }
+
+    return (
+      repm.h('div')
+        .a('class', 'toc')
+        .c('↳&nbsp;')
+        .c(
+            tree.sec
+            ?
+              repm.h('a')
+                .s('display', 'inline-block')
+                .a('class', 'toc-link')
+                .a('href', '#' + tree.sec._secId)
+                .c(`(§${tree.sec._path.join('.')}) `)
+                .c(tree.sec._title)
+            : '<em>This page</em>'
+        )
+        .cs(...children)
+    );
+  }
+
+  // Replace toc nodes with tree
   repm.traverse(rep, node => {
     if (node[isToc]) {
       node._rendered = (
         repm.h('div')
-          .c(repm.h('h4').c('Table of Contents (WIP)'))
-          .c(renderTree(secsTree))
+          .c(repm.h('h4').a('class', 'toc-title').c('Table of Contents'))
+          .c(rendered)
       );
     }
   });
 
   return rep;
-
-  function mkTree(rep) {
-    let counter = 0;
-    const tree = {};
-    go(rep, tree);
-    return tree;
-
-    function go(node, tree) {
-      if (typeof node === 'string') {
-        return;
-      }
-      else if (node[isSec]) {
-        const secId = (counter++) + '';
-        rep._secId = secId;
-        const subTree = {};
-        subTree._rose = node._title;
-        tree[secId] = subTree;
-        go(node._body, subTree);
-      }
-      else {
-        for (const ch of node.children) {
-          go(ch, tree);
-        }
-      }
-    }
-  }
-
-  function renderTree(tree) {
-    const el = (
-      repm.h('div')
-        .a('class', 'toc')
-        .c('↳&nbsp;')
-        .c(tree._rose ?? '<em>This page</em>')
-    );
-
-    for (const [k, v] of Object.entries(tree)) {
-      if (k !== '_rose') {
-        el.c(
-          repm.h('div')
-            .s('margin-left', '2.5ch')
-            .c(renderTree(v))
-        );
-      }
-    }
-
-    return el;
-  }
 
 }
 
@@ -161,10 +190,25 @@ exports.prelude += String.raw`
   margin-bottom: 1em;
 }
 
+.toc-link:not(:hover) {
+  color: inherit;
+}
+
+.toc-title {
+  margin: 0;
+}
+
 .section-header {
   font-weight: bold;
   color: var(--color-static);
   border-bottom: 1px dotted var(--color-static);
+}
+
+.section-path::before { content: '(§'; }
+.section-path::after { content: ')'; }
+.section-path {
+  margin-left: 1em;
+  opacity: 0.5;
 }
 
 hr {

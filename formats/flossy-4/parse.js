@@ -638,8 +638,13 @@ function(s) {
   p_spaces(s);
 
   return local(s, s => {
+
+    // WANT: having this logic here is poor locality
     if ('inferReferences' in json)
       s.doImplicitReferences = !!json['inferReferences'];
+    if ('showSectionLabels' in json)
+      s.showSectionLabels = !!json.showSectionLabels;
+
     const [r, _] = p_enclosed(s, p_toplevel_markup);
     return r;
   });

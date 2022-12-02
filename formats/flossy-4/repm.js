@@ -125,7 +125,7 @@ class H {
 
   // parentH.c(childH, ...)
   // parentH.c(childRep, ...)
-  // parentH.c(childHtml, ..., { rawHtml: true })
+  // parentH.c(childHtml, { rawHtml: true })
   c(ch, opts) {
     if (this.isSelfClosing)
       throw new Error(`<${this.tag}> element cannot have children`);
