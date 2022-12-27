@@ -29,6 +29,16 @@ function mkNote(floc, source, graph, env) {
   const t = Symbol('flossy-3.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
+  // Parsing proceeds in two phases. In phase (1) we parse for
+  // metadata only, such as what jargon is defined in each note.
+  // In phase (2) we parse "for real" and render to HTML.
+  //
+  // This two-step process is necessary because all notes are
+  // given all jargon information about all notes; there is no
+  // dependency DAG for jargon. This means that first all jargon
+  // information for all notes must be obtained *at the same
+  // time* before any "real" parsing can happen.
+
   lazyAss(note[t], 'phase1', () => {
     env.log.info('parsing', note.id);
     return parse({

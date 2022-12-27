@@ -103,6 +103,9 @@ function main({
 
     for (let note of format(floc, source, graph, subAff)) {
       const cached = aff.cache.getOr('notes', [note.hash], null);
+      // FIXME: This caching implementation means a file needs to be read (twice!) before
+      //        we know if it's in the cache. The first read is to detect file format, and
+      //        the second read is to include the file contents in its hash.
       if (cached && !ignoreCache)
         note = cached;
 
