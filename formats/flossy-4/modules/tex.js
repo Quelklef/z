@@ -176,6 +176,13 @@ exports.prelude += String.raw`
 .katex { background: rgba(0, 0, 0, 0.035);  /* effective, but ugly */ }
 .katex-display > .katex { background: none; }
 
+.katex {
+  font-size: 1em;
+}
+.katex-display .katex {
+  font-size: 1.21em;
+}
+
 </style>
 
 `;

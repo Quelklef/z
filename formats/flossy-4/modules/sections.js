@@ -6,9 +6,7 @@ const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 
 exports.commands = {};
 exports.parsers = [];
-exports.prelude = `
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
-`;
+exports.prelude = ''
 exports.stateInit = {
   sectionPath: [1],
   showSectionLabels: false,
@@ -183,6 +181,8 @@ function(rep) {
 }
 
 exports.prelude += String.raw`
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+
 <style>
 
 .title {
