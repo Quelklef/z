@@ -57,6 +57,7 @@ exports.stateInit = {
   // tex-related state
   katexPrefix: baseKatexPrelude,
   texPrefix: '',
+  defaultCodeLanguage: 'text',
 };
 
 exports.parsers.push(p_katex);

@@ -643,7 +643,9 @@ function(s) {
     if ('inferReferences' in json)
       s.doImplicitReferences = !!json['inferReferences'];
     if ('showSectionLabels' in json)
-      s.showSectionLabels = !!json.showSectionLabels;
+      s.showSectionLabels = !!json['showSectionLabels'];
+    if ('defaultCodeLanguage' in json)
+      s.defaultCodeLanguage = json['defaultCodeLanguage'];
 
     const [r, _] = p_enclosed(s, p_toplevel_markup);
     return r;

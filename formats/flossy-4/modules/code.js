@@ -7,6 +7,9 @@ const ppar = require('../parse-params.js');
 exports.commands = {};
 exports.parsers = [];
 exports.prelude = '';
+exports.stateInit = {
+  defaultCodeLanguage: 'auto',
+};
 
 
 const code =
@@ -15,7 +18,7 @@ exports.commands.code =
 function code(s) {
 
   const params = ppar.p_kvParams(s, {
-    lang: ppar.p_arg_optionally(ppar.p_arg_string, { default: 'auto' }),
+    lang: ppar.p_arg_optionally(ppar.p_arg_string, { default: s.defaultCodeLanguage }),
   });
   const language = params.lang;
 
