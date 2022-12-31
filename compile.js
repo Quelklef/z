@@ -561,6 +561,15 @@ iframe, nav {
   padding: 0 0;
 }
 
+/* One-stop shop for padding on mobile!
+   Definitely no issues with this. */
+@media (max-width: calc(800px + 1em)) {
+  body {
+    margin-left: 1em;
+    margin-right: 1em;
+  }
+}
+
 nav {
   margin-bottom: 3em;
   display: flex;
