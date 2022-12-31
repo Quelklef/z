@@ -178,7 +178,7 @@ function template(prelude, html) {
 
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Serif&display=swap">
 `, prelude, `
 <style>
 
@@ -201,9 +201,15 @@ body {
 
 main {
   white-space: pre-wrap;
-  font-size: 14px;
-  font-family: 'Merriweather', serif;
-  line-height: 1.5em;
+  font-size: 14.5px;
+  font-family: 'Noto Serif', serif;
+  line-height: 1.4em;
+}
+
+main code {
+  font-family: monospace;
+  font-size: .9em;
+  letter-spacing: -0.01em;
 }
 
 a {

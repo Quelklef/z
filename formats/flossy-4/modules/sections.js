@@ -6,7 +6,9 @@ const { Trie, indexOf, htmlEscapes, escapeHtml } = require('../util.js');
 
 exports.commands = {};
 exports.parsers = [];
-exports.prelude = '';
+exports.prelude = `
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Merriweather&display=swap">
+`;
 exports.stateInit = {
   sectionPath: [1],
   showSectionLabels: false,
@@ -186,7 +188,6 @@ exports.prelude += String.raw`
 .title {
   font-weight: bold;
   color: var(--color-static);
-  font-size: 18px;
   margin-bottom: 1em;
 }
 
@@ -202,6 +203,16 @@ exports.prelude += String.raw`
   font-weight: bold;
   color: var(--color-static);
   border-bottom: 1px dotted var(--color-static);
+}
+
+.title, .section-header {
+  font-family: 'Merriweather', serif;
+}
+.title {
+  font-size: 18px;
+}
+.section-header {
+  font-size: 0.9em;
 }
 
 .section-path::before { content: '(§'; }
