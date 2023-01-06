@@ -134,34 +134,31 @@ function(rep) {
 
   // Render tree
   const rendered = renderTree(tree);
-  function renderTree(tree) {
+  function renderTree(tree, depth = 0) {
     const children = [];
     for (const k in tree) {
       if (!Number.isFinite(+k)) continue;
       const subtree = tree[k];
       children.push(
         repm.h('div')
-          .s('margin-left', '2.5ch')
-          .c(renderTree(subtree))
+          .s('margin-left', depth > 0 ? '2.5ch' : '0')
+          .c(renderTree(subtree, depth + 1))
       );
     }
 
     return (
-      repm.h('div')
-        .a('class', 'toc')
+      tree.sec
+      ? repm.h('div')
         .c('↳&nbsp;')
-        .c(
-            tree.sec
-            ?
-              repm.h('a')
-                .s('display', 'inline-block')
-                .a('class', 'toc-link')
-                .a('href', '#' + tree.sec._secId)
-                .c(`(§${tree.sec._path.join('.')}) `)
-                .c(tree.sec._title)
-            : '<em>This page</em>'
+        .c(repm.h('a')
+            .s('display', 'inline-block')
+            .a('class', 'toc-link')
+            .a('href', '#' + tree.sec._secId)
+            .c(`(§${tree.sec._path.join('.')}) `)
+            .c(tree.sec._title)
         )
         .cs(...children)
+      : repm.h('div').cs(...children)
     );
   }
 
