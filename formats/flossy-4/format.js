@@ -55,6 +55,8 @@ function mkNote(floc, source, graph, env) {
     note[t].phase1.defines);
 
   lazyAss(note[t], 'phase2', () => {
+    // FIXME: I think we can avoid doing a second parse by performing
+    //        jargon matching on the text nodes of the IR
     env.log.info('parsing (again)', note.id);
     return parse({
       text: source,
