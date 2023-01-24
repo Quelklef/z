@@ -3,6 +3,36 @@ const { escapeHtml } = require('../util.js');
 const repm = require('../repm.js');
 const p = require('../parse.js');
 
+/*
+
+FIXME: I've been thinking that maybe jargon matching
+  should be performed as a final step on plain-text nodes
+  of the semrep, after everything else. Doing this would
+  have essentially two benefits and two drawbacks:
+
+    benefit #1)
+      We don't have to parse twice like we currently
+      are; we can do compilation in one pass
+
+    benefit #2)
+      All other syntax would take precedence over jargon
+      matching, which currently is not true (and this fact
+      has caused isues)
+
+    drawback #1)
+      Jargon matching would not work cross-node. But this
+      is already true. Doing jargon matching after-the-fact
+      would make this more difficult to change (fix?) tho.
+
+    drawback #2)
+      Makes the parser conceptually more complex, since we
+      can no longer treat it as "a bunch of stuff running in
+      a parser monad". Now there's some post-processing
+      work that needs to be done as well. (Altho this is
+      already true due to the table-of-contents API)
+
+*/
+
 module.exports = ({ graph, note, doImplicitReferences }) => {
 
   const module = {};
