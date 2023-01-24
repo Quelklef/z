@@ -62,24 +62,56 @@ exports.stateInit = {
 
 exports.parsers.push(p_katex);
 function p_katex(s) {
-  if (s.text[s.i] !== '$') return '';
+  // Parses a KaTeX expression surrounded in either @@ or $$
+  // If surrounded by $$, interprets the text as plain KaTeX
+  // If surrounded by @@, first surrounds by \text{} all contiguous
+  // sequence of characters which are both not preceded by a backslash
+  // and of length greater than one.
+  // For instance, maps
+  //   '$\frac{Gr}{A(b)}$' to renderKaTeX('\frac{Gr}{A(b)}')
+  //   '@\frac{Gr}{A(b)}@' to renderKaTeX('\frac{\text{Gr}}{A(b)}')
+
+  // FIXME: I think it would be good to allow text in @at-signs@ to
+  //  be {braced} without a preceding \command in order to prevent
+  //  it from being wrapped by \text{}. So eg we'd have that the
+  //  operator @⋅@ maps:
+  //    \mathbf{Set} ↦ \mathbf{\text{Set}}
+  //    \mathbf{{Set}} ↦ \mathbf{Set}
+  //  If not that syntax, then some other way to have plain text.
+  //  Also, @⋅@-style preprocessing should be added somehow to
+  //  the \katex command.
+
+  if (!'$@'.includes(s.text[s.i])) return '';
+  const sigil = s.text[s.i];
 
   const xi0 = s.i;
   s.i++;
   const body = p.local(s, s => {
-    s.sentinel = s => (s.text.startsWith('$', s.i) || s.i >= s.text.length);
+    s.sentinel = s => (s.text.startsWith(sigil, s.i) || s.i >= s.text.length);
     return p.p_toplevel_verbatim(s);
   });
-  p.p_take(s, '$');
+  p.p_take(s, sigil);
   const xif = s.i;
 
+  const katex = (
+    sigil === '@'
+      ? body.replace(/(?<!\\\s*[a-zA-Z]*)([a-zA-Z]{2,})/g, '\\text{$1}')
+      : body
+  );
+
   return mkKatex({
-    katex: s.katexPrefix + '' + body,
+    katex: s.katexPrefix + '' + katex,
     displayMode: false,
     sourceText: s.text,
     sourceRange: [xi0, xif],
   });
 }
+
+
+function atSigilProcessing(s) {
+  return s.replace(/(?<!\\\s*)(\w*)/g, '\\text{$1}');
+}
+
 
 // KaTeX
 exports.commands.katex = function(s) {

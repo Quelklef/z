@@ -360,7 +360,7 @@ module.exports = ({ graph, note, doImplicitReferences }) => {
 
     const signifChars = new Set('ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789');
     self.isSignif = c => signifChars.has(c);
-    self.normalize = s => [...s.toLowerCase()].filter(c => self.isSignif(c) || '$])>'.includes(c)).join('');
+    self.normalize = s => [...s.toLowerCase()].filter(c => self.isSignif(c) || '@$])>'.includes(c)).join('');
       // ^ n.b. we assume that length(norm(s)) <= length(s)
 
     self.jargs = (
