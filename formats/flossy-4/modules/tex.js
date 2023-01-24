@@ -209,7 +209,7 @@ exports.prelude += String.raw`
 .katex-display > .katex { background: none; }
 
 .katex {
-  font-size: 1em;
+  font-size: 1.15em;
 }
 .katex-display .katex {
   font-size: 1.21em;
