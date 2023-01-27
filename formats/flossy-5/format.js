@@ -26,7 +26,7 @@ function mkNote(floc, source, graph, env) {
   note.id = noteId;
 
   // note[t] holds transient (non-cached) data
-  const t = Symbol('flossy-4.t');
+  const t = Symbol('flossy-5.t');
   Object.defineProperty(note, t, { enumerable: false, value: {} });
 
   // Parsing proceeds in two phases. In phase (1) we parse for

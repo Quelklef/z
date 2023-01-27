@@ -1,0 +1,5 @@
+
+Breaking changes from flossy-4:
+
+- KaTeX shorthand (ie, @\KaTeX@) has changed, eg. allowing 'f^-1' for 'f^{-1}'
+- \tikz now has some default prelude, eg. defaulting the style of arrowheads to 'latex'
