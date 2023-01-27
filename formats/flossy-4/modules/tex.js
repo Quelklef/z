@@ -8,6 +8,7 @@ const ppar = require('../parse-params.js');
 
 const backtick = '`';
 const baseKatexPrelude = String.raw`
+
   % shorthands
   \newcommand{\cl}[1]{ \mathcal{#1} }
   \newcommand{\sc}[1]{ \mathscr{#1} }
@@ -16,38 +17,37 @@ const baseKatexPrelude = String.raw`
   \renewcommand{\bf}[1]{ \mathbf{#1} }
   \renewcommand{\sf}[1]{ \mathsf{#1} }
 
+  % category names
+  \newcommand{\cat}[1]{{ \sf{#1} }}
+
+  % more shorthands
   \newcommand{\floor}[1]{ { \lfloor {#1} \rfloor } }
   \newcommand{\ceil}[1]{ { \lceil {#1} \rceil } }
   \newcommand{\ol}[1]{ \overline{#1} }
   \newcommand{\t}[1]{ \text{#1} }
-
-  % magnitude etc
-  \newcommand{\norm}[1]{ { \lvert {#1} \rvert } }
-
-  % cardinality
-  \newcommand{\card}{ \t{cd} }
-
-  % disjoint untion
-  \newcommand{\dcup}{ \sqcup }
+  \newcommand{\norm}[1]{ { \lvert {#1} \rvert } }  % norm/magnitude
+  \newcommand{\card}{ \t{cd} }  % cardinality
+  \newcommand{\dcup}{ \sqcup }  % disjoint untion
+  \newcommand{\tup}[1]{ \langle {#1} \rangle }  % tuples
 
   % represents an anonymous parameter
   % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
   \newcommand{\apar}{ {-} }
 
-  % tuples
-  \newcommand{\tup}[1]{ \langle {#1} \rangle }
-
   % reverse-order composition
   %\newcommand{\then}{ \operatorname{\ ;\ }  }
   \newcommand{\then}{ {\scriptsize\ \rhd\ }  }
 
+  % Like f' represents "f after modification", \pre{f}
+  % represents "f before modification"
   \newcommand{\pre}[1]{{ \small ${backtick}{#1} }}
 
+  % hook arrows
   \newcommand{\injects}{ \hookrightarrow }
+  \newcommand{\embeds}{ \hookrightarrow }
   \newcommand{\surjects}{ \twoheadrightarrow }
+  \newcommand{\projects}{ \twoheadrightarrow }
 
-  % category names
-  \newcommand{\cat}[1]{{ \bf{#1} }}
 `;
 
 exports.commands = {};
@@ -62,6 +62,7 @@ exports.stateInit = {
 
 exports.parsers.push(p_katex);
 function p_katex(s) {
+
   // Parses a KaTeX expression surrounded in either @@ or $$
   // If surrounded by $$, interprets the text as plain KaTeX
   // If surrounded by @@, first surrounds by \text{} all contiguous
@@ -105,6 +106,7 @@ function p_katex(s) {
     sourceText: s.text,
     sourceRange: [xi0, xif],
   });
+
 }
 
 
