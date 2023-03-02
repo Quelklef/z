@@ -77,6 +77,10 @@ function p_katex(s) {
   //   '$\frac{Gr}{A(b)}$' to renderKaTeX('\frac{Gr}{A(b)}')
   //   '@\frac{Gr}{A(b)}@' to renderKaTeX('\frac{\text{Gr}}{A(b)}')
 
+  // FIXME
+  //   edge-case: words with a space should be \text{}-ified
+  //   edge-case: '\\ word' should not be \text{}-ified
+
   if (!'$@'.includes(s.text[s.i])) return '';
   const sigil = s.text[s.i];
 
@@ -171,6 +175,11 @@ function katexImpl(shorthandOptDefault) {
 
 // TikZ
 exports.commands.tikz = function(s) {
+
+    // FIXME: '\tikz pre=y' should probably become its
+    //   own \tex-pre command, because the prefix is shared b/w a
+    //   number of different commands.
+    //   And '\katex pre=y' should be \katex-pre for consistency.
 
   const params = ppar.p_kvParams(s, {
     pre: ppar.p_arg_optionally(ppar.p_arg_bool, { default: false }),
