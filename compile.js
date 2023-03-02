@@ -507,15 +507,20 @@ function renderIndex(graph) {
   for (
     const note of
       [...graph.notes]
-        .sort((na, nb) =>
-          !!nb.starred === !!na.starred
-          ? nb.referencedBy.size - na.referencedBy.size
-          : +!!nb.starred - +!!na.starred
-        )
+        .sort((na, nb) => {
+          return (
+            (nb.stars ?? 0) === (na.stars ?? 0)
+            ? (  nb.referencedBy.size === na.referencedBy.size
+                 ? nb.id.localeCompare(na.id)
+                 : nb.referencedBy.size - na.referencedBy.size
+              )
+            : (nb.stars ?? 0) - (na.stars ?? 0)
+          );
+        })
   ) {
     html.add('<tr>\n');
     html.add(`<td style="width: 100%"><a href="${note.href}">${note.id}</a></td>\n`);
-    html.add(`<td><center>${note.starred ? '⭐' : ''}</center></td>\n`);
+    html.add(`<td><center>${strRep('⭐', note.stars ?? 0)}</center></td>\n`);
     html.add(`<td><center>${note.references.size}</center></td>\n`);
     html.add(`<td><center>${note.referencedBy.size}</center></td>\n`);
     html.add('</tr>\n');
@@ -524,6 +529,11 @@ function renderIndex(graph) {
   html.add('</table>\n');
 
   return withTemplate(html);
+}
+
+function strRep(s, n) {
+  if (!Number.isFinite(n)) throw Error(`Invalid n: ${n + ''}`);
+  return n <= 0 ? '' : s + strRep(s, n - 1);
 }
 
 // WANT: using ejs might be nice

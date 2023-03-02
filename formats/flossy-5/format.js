@@ -48,8 +48,8 @@ function mkNote(floc, source, graph, env) {
     });
   });
 
-  lazyAss(note, 'starred', () =>
-    note[t].phase1.meta?.starred === true);
+  lazyAss(note, 'stars', () =>
+    note[t].phase1.meta?.stars ?? 0);
 
   lazyAss(note, 'defines', () =>
     note[t].phase1.defines);
