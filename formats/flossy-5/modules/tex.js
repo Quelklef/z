@@ -30,6 +30,10 @@ const baseKatexPrelude = String.raw`
   \newcommand{\dcup}{ \sqcup }  % disjoint untion
   \newcommand{\tup}[1]{ \langle {#1} \rangle }  % tuples
 
+  % turing machines
+  \newcommand{\halts}{ {\downarrow} }
+  \newcommand{\loops}{ {\uparrow} }
+
   % represents an anonymous parameter
   % eg. $f(\apar)$ usually denotes the function $x \mapsto f(x)$
   \newcommand{\apar}{ {-} }
