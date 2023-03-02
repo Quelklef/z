@@ -265,27 +265,12 @@ function mkKatex({ katex, displayMode, sourceText, sourceRange }) {
 
 
 function mkTikZ({ prefix, tex, isBlock }) {
-
-  return { children: [], toHtml };
-
-  function toHtml(aff) {
-
-    tex = String.raw`
-      \documentclass[dvisvgm]{standalone}
-
-      \usepackage{amsmath}
-      \usepackage{amssymb}
+  return mkTeX({
+    prefix, isBlock,
+    packages: String.raw`
       \usepackage{tikz}
-      \usepackage{lmodern}
-
-      \def\pgfsysdriver{pgfsys-tex4ht.def}
-
-      \usepackage[T1]{fontenc}
-
-      \begin{document}
-
-      ${prefix}
-
+    `,
+    tex: String.raw`
       \begin{tikzpicture}
 
       % Default stylings
@@ -298,6 +283,34 @@ function mkTikZ({ prefix, tex, isBlock }) {
       \end{scope}
 
       \end{tikzpicture}
+    `,
+  });
+}
+
+function mkTeX({ packages, prefix, tex, isBlock }) {
+
+  return { children: [], toHtml };
+
+  function toHtml(aff) {
+
+    tex = String.raw`
+      \documentclass[dvisvgm]{standalone}
+
+      \usepackage{amsmath}
+      \usepackage{amssymb}
+      \usepackage{lmodern}
+
+      ${packages}
+
+      \def\pgfsysdriver{pgfsys-tex4ht.def}
+
+      \usepackage[T1]{fontenc}
+
+      \begin{document}
+
+      ${prefix}
+
+      ${tex}
 
       \end{document}
     `;
@@ -358,3 +371,70 @@ exports.prelude += String.raw`
 </style>
 
 `;
+
+
+// Embed q.uiver <iframe> export
+exports.commands['quiver-embed'] =
+function (s) {
+
+  const params = ppar.p_kvParams(s, {
+    downscale_percent: ppar.p_arg_optionally(ppar.p_arg_integer, { default: 1 }),
+  });
+
+  const body = p.p_block(s, p.p_toplevel_verbatim);
+
+  let code = body;  // raw html
+  code = code.replace('\n', '');
+  const height = +code.match(/height="(\d+)"/)[1];
+  const newHeight = (100 - params.downscale_percent) * height / 100;
+  code = code.replace(`height="${height}"`, `height="${newHeight}"`);
+
+  return code;
+
+}
+
+
+exports.prelude += String.raw`
+
+<style>
+.quiver-embed {
+  width: 100%;
+  border: 1px dotted lightgrey !important;
+  border-radius: 0 !important;
+  align-self: center
+}
+
+.quiver-embed:not(:hover) .logo {
+  display: none;
+}
+</style>
+
+`;
+
+
+// Embed q.uiver tikzcd export
+exports.commands['quiver-tikz'] =
+function(s) {
+
+  const idx0 = s.i;
+  const body = p.p_block(s, p.p_toplevel_verbatim);
+  const idxF = s.i;
+
+  const tikz = body;  // tikzcd code
+
+  s.quasi.env.env.log.warn(`Use of \\quiver-tikz, which is kinda broken cuz result diagrams are weirdly-padded and not centered`);
+
+  return mkTeX({
+    isBlock: true,
+    prefix: s.texPrefix,
+    packages: String.raw`
+      \usepackage{tikz}
+      \usepackage{quiver}
+      \usetikzlibrary{cd}
+    `,
+    tex: tikz,
+  });
+
+}
+
+
