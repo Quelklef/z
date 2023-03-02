@@ -108,9 +108,9 @@ function p_katex(s) {
 function shorthandProcessing(s) {
   return (
     s
-    .replace(/(?<!\\\s*[a-zA-Z]*)([a-zA-Z]{2,})/g, '\\text{$1}')
+    .replace(/(?<!\\\s*[a-zA-Z]*)([a-zA-Z]{2,})/g, '\\text{$1}')  // FIXME: \operatorname would be better but as of right now breaks
     .replace(/(?<!\\\s*[a-zA-Z]+\s*)\{\\text\{([a-zA-Z]{2,})\}\}/g, '$1')
-    .replace(/([-0-9]+)/g, '{$1}')
+    .replace(/([-0-9]{2,})/g, '{$1}')
   );
 }
 
