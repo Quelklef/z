@@ -52,6 +52,9 @@ const baseKatexPrelude = String.raw`
   \newcommand{\surjects}{ \twoheadrightarrow }
   \newcommand{\projects}{ \twoheadrightarrow }
 
+  % good enough definition of yoneda
+  \newcommand{\yo}{よ}
+
 `;
 
 exports.commands = {};
