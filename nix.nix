@@ -56,6 +56,7 @@ with-quiver = texlive:
 runtime-deps = with pkgs; [
   nodejs-17_x
   (with-quiver pkgs.texlive)
+  pdf2svg
   dhall-json
 ];
 

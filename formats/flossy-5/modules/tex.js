@@ -296,8 +296,17 @@ function mkTeX({ packages, prefix, tex, isBlock }) {
 
   function toHtml(aff) {
 
+    // Note: make modifications to this function with care. It's taken
+    //   a surprising amount of effort to get a tex-to-html pipeline
+    //   which works relatively well.
+
+    // WANT: output doesn't automatically size very well. Is there a
+    //   good way to do auto-size, or do we just need to add a scale
+    //   parameter? If also, add the sep / row sep / column sep tikzcd
+    //   options.
+
     tex = String.raw`
-      \documentclass[dvisvgm]{standalone}
+      \documentclass{standalone}
 
       \usepackage{amsmath}
       \usepackage{amssymb}
@@ -325,13 +334,11 @@ function mkTeX({ packages, prefix, tex, isBlock }) {
 
         aff.fss.write(plib.resolve(tmp, 'it.tex'), tex);
 
-        // NOTE: the --no-merge option to dvisvgm prevents Firefox from
-        // choking on the resultant SVG.  (2022-11-21)
         const cmd = String.raw`
           cd ${tmp} \
-          && latex it.tex 1>&2 \
-          && dvisvgm it.dvi --no-merge \
-          && { cat *.svg | tail -n+3; }
+          && pdflatex it.tex 1>&2 \
+          && pdf2svg it.pdf it.svg \
+          && { cat it.svg; }
         `;
 
         let result;
@@ -347,6 +354,11 @@ function mkTeX({ packages, prefix, tex, isBlock }) {
 
       })
     );
+
+    // We re-package the svg as a data URI to avoid the possibility that two SVGs in the same
+    // document contain HTML elements with the same id, which can cause issues.
+    const b64 = btoa(unescape(encodeURIComponent(html)));
+    html = `<img src="data:image/svg+xml;base64,${b64}" width="auto" />`;
 
     if (isBlock)
       html = '<div class="tikz">' + html + '</div>';
@@ -423,9 +435,15 @@ function(s) {
   const body = p.p_block(s, p.p_toplevel_verbatim);
   const idxF = s.i;
 
-  const tikz = body;  // tikzcd code
+  let tikz = body;  // tikzcd code
 
-  s.quasi.env.env.log.warn(`Use of \\quiver-tikz, which is kinda broken cuz result diagrams are weirdly-padded and not centered`);
+  // Set the column/row sep
+  // Mostly this is for 'between origins', which makes diagrams 10x prettier
+  tikz = tikz.replace('\\begin{tikzcd}', '\\begin{tikzcd}[sep={3.5em,between origins}]');
+
+  // Scale the diagram up a bit, since otherwise I find the
+  // diagrams to be a big small.
+  tikz = String.raw`\adjustbox{scale=1.35}{${tikz}}`;
 
   return mkTeX({
     isBlock: true,
@@ -433,6 +451,7 @@ function(s) {
     packages: String.raw`
       \usepackage{tikz}
       \usepackage{quiver}
+      \usepackage{adjustbox}
       \usetikzlibrary{cd}
     `,
     tex: tikz,
