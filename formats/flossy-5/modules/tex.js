@@ -392,6 +392,8 @@ exports.prelude += String.raw`
 exports.commands['quiver-embed'] =
 function (s) {
 
+  s.quasi.env.env.log.warn('Prefer \\quiver-tikz over \\quiver-embed');
+
   const params = ppar.p_kvParams(s, {
     downscale_percent: ppar.p_arg_optionally(ppar.p_arg_integer, { default: 1 }),
   });

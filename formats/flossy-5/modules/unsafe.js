@@ -30,7 +30,8 @@ function unsafe_exec(s) {
     : null;
 
   // Set up eval() environment
-  const parse = (s, str) => {
+  const out_s = s;
+  const parse = (s = out_s, str) => {
     return p.local(s, s => {
       s.text = str;
       const i0 = s.i;
@@ -54,3 +55,4 @@ function unsafe_eval(s) {
 
   return repm.mkSeq(eval(code) + '', '\n');
 }
+

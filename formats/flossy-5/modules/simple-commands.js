@@ -43,44 +43,53 @@ exports.commands.href = function(s) {
   );
 }
 
-// generic "block of text with title"
-exports.commands.block = function(s) {
-  p.p_whitespace(s);
-  const title = p.p_inline(s, p.p_toplevel_markup);
+/*
+
+\fence:
+  \fence-sec [Proposition] A = B
+
+  \fence-sec [Proof] blah blah blah
+
+*/
+exports.commands.fence = function(s) {
   p.p_whitespace(s);
   const body = p.p_block(s, p.p_toplevel_markup);
   return (
     repm.h('div')
-      .a('class', 'generic-block')
-      .c(repm.h('span')
-          .a('class', 'generic-block-title')
-          .c(title))
-      .c(repm.h('span')
-          .a('class', 'generic-block-body')
-          .c(body))
+      .a('class', 'fence')
+      .c(body)
   );
-};
+}
+exports.commands['fence-sec'] = function(s) {
+  p.p_whitespace(s);
+  const word = p.p_inline(s, p.p_toplevel_markup);
+  return (
+    repm.h('span')
+      .a('class', 'fence-sec')
+      .c(word)
+  );
+}
 
 exports.prelude = String.raw`
 <style>
 
-.generic-block {
+.fence {
   margin-left: 1ch;
   padding: 1ch;
   padding-right: 0;
 }
-.generic-block-title:not(:empty) {
+.fence-sec {
   font-weight: bold;
-  margin-right: 1.5ch;
+  margin-right: 1ch;
 }
-.generic-block-title:not(:empty)::after {
+.fence-sec::after {
   content: '.';
 }
 
-.generic-block {
+.fence {
   position: relative;
 }
-.generic-block::before {
+.fence::before {
   --generic-block-width: 3ch;
   --generic-block-horizontal-padding: .75ch;
   --generic-block-vertical-padding: .25ch;
